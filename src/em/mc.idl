@@ -1,0 +1,160 @@
+interface Potential {
+  void setCutoff(double rc);
+  double getCutoff();
+  void setTruncationType(long tt);
+  long getTruncationType();
+};
+
+interface PotentialLJ : Potential {
+  void PotentialLJ(long tt, double rc);
+};
+
+PotentialLJ implements Potential;
+
+interface PotentialSS : Potential {
+  void PotentialSS(long p, long tt, double rc);
+};
+
+PotentialSS implements Potential;
+
+interface PotentialWCA : PotentialLJ {
+  void PotentialWCA();
+};
+
+PotentialWCA implements PotentialLJ;
+
+[JSImplementation="Potential"]
+interface PotentialJS {
+  void PotentialJS();
+  double u(double r2);
+  double du(double r2);
+  double d2u(double r2);
+};
+
+interface Box {
+  void Box();
+  long getNumAtoms();
+  void setNumAtoms(long numAtoms);
+  VoidPtr getBoxSize();
+  void setBoxSize(double x, double y, double z);
+  void initCoordinates();
+  VoidPtr getAtomPosition(long iAtom);
+};
+
+interface PotentialMaster {
+  void PotentialMaster([Ref] Potential p2, [Ref] Box box);
+};
+
+interface PotentialMasterCell : PotentialMaster {
+  void PotentialMasterCell([Ref] Potential p2, [Ref] Box box, double potentialRange, long cellRange);
+  void init();
+};
+
+PotentialMasterCell implements PotentialMaster;
+
+interface Random {
+  void Random();
+  void Random(long seed);
+  long getSeed();
+};
+
+interface MCMove {
+  double getAcceptance();
+  attribute double stepSize;
+  attribute boolean tunable;
+  attribute boolean verboseAdjust;
+};
+
+interface MCMoveDisplacement : MCMove {
+  void MCMoveDisplacement([Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double stepSize);
+};
+
+MCMoveDisplacement implements MCMove;
+
+interface MCMoveInsertDelete : MCMove {
+  void MCMoveInsertDelete([Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double mu);
+};
+
+MCMoveInsertDelete implements MCMove;
+
+interface IntegratorListener { };
+
+interface DataSink { };
+
+interface Average : DataSink {
+  void Average(long nData, long blockSize, long maxBlockCount);
+  VoidPtr getStatistics();
+  void reset();
+};
+
+Average implements DataSink;
+
+interface Meter {
+  VoidPtr getData();
+};
+
+interface PotentialCallback { };
+
+interface PotentialCallbackPressure : PotentialCallback {
+  void PotentialCallbackPressure([Ref] Box box, double temperature);
+};
+
+PotentialCallbackPressure implements PotentialCallback;
+
+interface PotentialCallbackHMA : PotentialCallback {
+  void PotentialCallbackHMA([Ref] Box box, double temperature, double Pharm);
+};
+
+PotentialCallbackHMA implements PotentialCallback;
+
+interface MeterPotentialEnergy : Meter {
+  void MeterPotentialEnergy([Ref] IntegratorMC integrator);
+};
+
+MeterPotentialEnergy implements Meter;
+
+interface MeterFullCompute : Meter {
+  void MeterFullCompute([Ref] PotentialMaster potentialMaster);
+  void addCallback(PotentialCallback pcb);
+};
+
+MeterFullCompute implements Meter;
+
+interface MeterNumAtoms : Meter {
+  void MeterNumAtoms([Ref] Box box);
+};
+
+MeterNumAtoms implements Meter;
+
+interface MeterDensity : Meter {
+  void MeterDensity([Ref] Box box);
+};
+
+MeterDensity implements Meter;
+
+interface DataPump : IntegratorListener {
+  void DataPump([Ref] Meter meter, long interval);
+  void DataPump([Ref] Meter meter, long interval, DataSink sink);
+  DataSink getDataSink();
+};
+
+DataPump implements IntegratorListener;
+
+interface IntegratorMC {
+  void IntegratorMC([Ref] PotentialMaster potentialMaster, [Ref] Random random);
+  void addMove(MCMove move, double moveProb);
+  void setTuning(boolean doTuning);
+  void doStep();
+  void doSteps(long steps);
+  void setTemperature(double temperature);
+  double getTemperature();
+  void reset();
+  double getPotentialEnergy();
+  void addListener(IntegratorListener listener);
+};
+
+interface ArrayUtil {
+  void ArrayUtil(VoidPtr p);
+  double x(long i);
+  double x2d(long i, long j);
+};
