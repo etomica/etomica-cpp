@@ -1,31 +1,43 @@
-default: mc.js
-
-# FLAGS = -O3 -std=c++11
-FLAGS = -Os -s WASM=1 -Wall
+CFLAGS = -Os -Wall -I../src/ -I. -Ibuild -DSFMT_MEXP=19937
+LFLAGS = -Os -Wall -s WASM=1
+WEBIDL = python /usr/data/build/emsdk/emscripten/incoming/tools/webidl_binder.py 
+# DEBUG flags
 #FLAGS = -O0 -Wall -s ASSERTIONS=2 -s SAFE_HEAP=1 -s STACK_OVERFLOW_CHECK=2 -s DEMANGLE_SUPPORT=1
 
-OBJ = box.o potential.o move.o potential-master.o integrator.o SFMT.o \
-			potential-master-cell.o average.o meter-potential-energy.o data-pump.o \
-			potential-callback-pressure.o meter-full-compute.o \
-			potential-callback-hma.o meter-num-atoms.o meter-density.o \
-			random.o glue-wrapper.o
+OBJDIR = build
 
-SFMT.o: SFMT.c SFMT.h SFMT-common.h SFMT-params.h SFMT-params19937.h
-	emcc -c $(FLAGS) -DSFMT_MEXP=19937 -o $@ $<
+WEBSTUFF = $(wildcard *.html) $(wildcard *.js)
+EMSRC = $(wildcard *.cpp)
+SRC = $(filter-out ../src/main.cpp, $(wildcard ../src/*.cpp))
+INC = $(wildcard *.h) $(wildcard ../src/*.h)
+IDL = $(wildcard *.idl)
+GLUECPP := $(patsubst %.idl,$(OBJDIR)/glue-%.cpp,$(IDL))
+GLUEJS := $(patsubst %.idl,$(OBJDIR)/glue-%.js,$(IDL))
+POSTJS := $(patsubst %,--post-js %,$(GLUEJS))
+EMOBJECTS := $(patsubst %.cpp,$(OBJDIR)/%.o,$(EMSRC))
+OBJECTS := $(patsubst ../src/%.cpp,$(OBJDIR)/%.o,$(SRC))
 
-#	g++ -fPIC -c -O0 -msse2 -g -DHAVE_SSE2 -DSFMT_MEXP=19937 -o $@ $<
+$(OBJDIR)/mc.js: $(OBJDIR) $(EMOBJECTS) $(OBJECTS) $(GLUEOBJECTS) $(GLUEJS)
+	em++ $(LFLAGS) $(POSTJS) -o $@ $(EMOBJECTS) $(OBJECTS) $(GLUEOBJECTS)  -lm
 
-glue-wrapper.o: glue.cpp
+$(OBJDIR):
+	@mkdir -p $(OBJDIR)
+	@for f in $(WEBSTUFF); do \
+		if [ ! -e $(OBJDIR)/$$f ]; then ln -s ../$$f build/; fi; \
+	done
 
-%.o: %.cpp *.h
-	em++ -c $(FLAGS) -DSFMT_MEXP=19937 -o $@ $<
+$(GLUEOBJECTS): %.o: %.cpp *.h ../src/*.h
+	em++ $(CFLAGS) -c -o $@ $<
 
-mc.js: $(OBJ) glue.js
-	em++ $(FLAGS) --post-js glue.js -o $@ $(OBJ) -lm
+$(EMOBJECTS): $(OBJDIR)/%.o: %.cpp *.h ../src/*.h $(GLUECPP)
+	em++ $(CFLAGS) -c -o $@ $<
 
-glue.cpp: mc.idl
-	python /usr/data/build/emsdk/emscripten/incoming/tools/webidl_binder.py mc.idl glue
+$(OBJECTS): $(OBJDIR)/%.o: ../src/%.cpp *.h ../src/*.h
+	em++ $(CFLAGS) -c -o $@ $<
 
-glue.js: mc.idl
-	python /usr/data/build/emsdk/emscripten/incoming/tools/webidl_binder.py mc.idl glue
+$(GLUECPP): $(OBJDIR)/glue-%.cpp: %.idl
+	$(WEBIDL) $< $(patsubst %.cpp,%,$@)
+
+$(GLUEJS): $(OBJDIR)/glue-%.js: %.idl
+	$(WEBIDL) $< $(patsubst %.js,%,$@)
 
