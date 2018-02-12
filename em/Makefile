@@ -6,7 +6,7 @@ WEBIDL = python /usr/data/build/emsdk/emscripten/incoming/tools/webidl_binder.py
 
 OBJDIR = build
 
-WEBSTUFF = $(wildcard *.html) $(wildcard *.js)
+WEBSTUFF = $(wildcard *.html) $(wildcard *.js) $(wildcard *.css)
 EMSRC = $(wildcard *.cpp)
 SRC = $(filter-out ../src/main.cpp, $(wildcard ../src/*.cpp))
 INC = $(wildcard *.h) $(wildcard ../src/*.h)
@@ -16,6 +16,8 @@ GLUEJS := $(patsubst %.idl,$(OBJDIR)/glue-%.js,$(IDL))
 POSTJS := $(patsubst %,--post-js %,$(GLUEJS))
 EMOBJECTS := $(patsubst %.cpp,$(OBJDIR)/%.o,$(EMSRC))
 OBJECTS := $(patsubst ../src/%.cpp,$(OBJDIR)/%.o,$(SRC))
+
+.PHONY: $(OBJDIR)
 
 $(OBJDIR)/mc.js: $(OBJDIR) $(EMOBJECTS) $(OBJECTS) $(GLUEOBJECTS) $(GLUEJS)
 	em++ $(LFLAGS) $(POSTJS) -o $@ $(EMOBJECTS) $(OBJECTS) $(GLUEOBJECTS)  -lm
