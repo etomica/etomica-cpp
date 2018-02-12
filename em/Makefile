@@ -19,13 +19,15 @@ OBJECTS := $(patsubst ../src/%.cpp,$(OBJDIR)/%.o,$(SRC))
 
 .PHONY: $(OBJDIR)
 
-$(OBJDIR)/mc.js: $(OBJDIR) $(EMOBJECTS) $(OBJECTS) $(GLUEOBJECTS) $(GLUEJS)
+default: $(OBJDIR) $(OBJDIR)/mc.js
+
+$(OBJDIR)/mc.js: $(EMOBJECTS) $(OBJECTS) $(GLUEOBJECTS) $(GLUEJS)
 	em++ $(LFLAGS) $(POSTJS) -o $@ $(EMOBJECTS) $(OBJECTS) $(GLUEOBJECTS)  -lm
 
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
-	@for f in $(WEBSTUFF); do \
-		if [ ! -e $(OBJDIR)/$$f ]; then ln -s ../$$f build/; fi; \
+	@for f in $(WEBSTUFF) $(EMSRC) $(SRC) $(INC) $(IDL) Makefile; do \
+		ln -s -f ../$$f $(OBJDIR)/; \
 	done
 
 $(GLUEOBJECTS): %.o: %.cpp *.h ../src/*.h
