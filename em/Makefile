@@ -6,7 +6,7 @@ WEBIDL = python /usr/data/build/emsdk/emscripten/incoming/tools/webidl_binder.py
 
 OBJDIR = build
 
-WEBSTUFF = $(wildcard *.html) $(wildcard *.js) $(wildcard *.css)
+WEBSTUFF = $(wildcard *.php) $(wildcard *.html) $(wildcard *.js) $(wildcard *.css)
 EMSRC = $(wildcard *.cpp)
 SRC = $(filter-out ../src/main.cpp, $(wildcard ../src/*.cpp))
 INC = $(wildcard *.h) $(wildcard ../src/*.h)
