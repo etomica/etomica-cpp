@@ -4,7 +4,6 @@
 #include "potential-master.h"
 
 PotentialMasterCell::PotentialMasterCell(Potential& p2, Box& box, double pRange, int cRange) : PotentialMaster(p2, box), range(pRange), cellRange(cRange) {
-  printf("potential master cell I am %p\n", this);
   boxOffsets = nullptr;
 }
 
