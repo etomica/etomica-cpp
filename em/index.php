@@ -19,7 +19,34 @@
       <progress value="0" max="100" id="progress" hidden=1></progress>  
     </div>
     <h1>Monte Carlo Simulation</h1>
-    <p><a style='margin-right: 2em;' href='./'>Home</a> Source: <a href='potential.c'>potential.c</a> <a href='potential.h'>potential.h</a> <a href='msmc.c'>msmc.c</a> <a href='mt.c'>mt.c</a> <a href='mt.h'>mt.h</a></p>
+<?php
+  $SFMTbits = array_merge(glob("SFMT*.h"), glob("SFMT*.cpp"));
+  echo "<p><a href='http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/'>SFMT random numbers</a>: ";
+  foreach ($SFMTbits as $f) {
+    echo "<a href='$f'>$f</a> ";
+  }
+  echo "</p>";
+  $hBits = glob("*.h");
+  echo "<p>Headers: ";
+  foreach ($hBits as $f) {
+    if (substr($f,0,4) == "SFMT") continue;
+    echo "<a href='$f'>$f</a> ";
+  }
+  echo "</p>";
+  $cppBits = glob("*.cpp");
+  echo "<p>Source: ";
+  foreach ($cppBits as $f) {
+    if (substr($f,0,4) == "SFMT") continue;
+    echo "<a href='$f'>$f</a> ";
+  }
+  echo "</p>";
+  $extra = array_merge(glob("*.idl"), glob("Makefile"));
+  echo "<p>Extra: ";
+  foreach ($extra as $f) {
+    echo "<a href='$f'>$f</a> ";
+  }
+  echo "</p>";
+?>
     <div id='parametersDiv' class='card'>
       <div class='card-header' role='tab' id='headingParameters'><h5 class='mb-0'><a role='button' data-toggle='collapse' href='#collapseParameters' aria-expanded='true' aria-controls='collapseParameters'>Parameters</a> <button type='button' id='btnNewParameters' style='display: none;' class='btn btn-sm btn-secondary'>New parameters</button></h5></div>
       <div id='collapseParameters' class='collapse show' aria-labelledby='headingParameters'>
