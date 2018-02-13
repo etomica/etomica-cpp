@@ -1,8 +1,13 @@
 CFLAGS = -Os -Wall -I../src/ -I. -Ibuild -DSFMT_MEXP=19937
 LFLAGS = -Os -Wall -s WASM=1
-WEBIDL = python /usr/data/build/emsdk/emscripten/incoming/tools/webidl_binder.py 
 # DEBUG flags
 #FLAGS = -O0 -Wall -s ASSERTIONS=2 -s SAFE_HEAP=1 -s STACK_OVERFLOW_CHECK=2 -s DEMANGLE_SUPPORT=1
+# define WEBIDL or create webidl.mk
+ifndef WEBIDL
+  # webidl.mk needs to include a line like:
+  #WEBIDL = python /usr/data/build/emsdk/emscripten/incoming/tools/webidl_binder.py 
+	include webidl.mk
+endif
 
 OBJDIR = build
 
