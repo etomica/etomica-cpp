@@ -1,11 +1,6 @@
 #include "move.h"
-#include "sfmt_more.h"
 
-MCMove::MCMove(Box& b, PotentialMaster& p, Random& r, double ss) : box(b), potentialMaster(p), sfmt(r.sfmt), stepSize(ss) {
-  init();
-}
-
-MCMove::MCMove(Box& b, PotentialMaster& p, sfmt_t& r, double ss) : box(b), potentialMaster(p), sfmt(r), stepSize(ss) {
+MCMove::MCMove(Box& b, PotentialMaster& p, Random& r, double ss) : box(b), potentialMaster(p), random(r), stepSize(ss) {
   init();
 }
 
@@ -96,22 +91,19 @@ void MCMove::adjustStepSize() {
 MCMoveDisplacement::MCMoveDisplacement(Box& b, PotentialMaster& p, Random& r, double ss) : MCMove(b,p,r,ss) {
 }
 
-MCMoveDisplacement::MCMoveDisplacement(Box& b, PotentialMaster& p, sfmt_t& r, double ss) : MCMove(b,p,r,ss) {
-}
-
 MCMoveDisplacement::~MCMoveDisplacement() {}
 
 bool MCMoveDisplacement::doTrial() {
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
   }
-  iAtom = sfmt_genrand_int_max(&sfmt, box.getNumAtoms());
+  iAtom = random.nextInt(box.getNumAtoms());
   uOld = potentialMaster.oldEnergy(iAtom);
   double* r = box.getAtomPosition(iAtom);
   std::copy(r, r+3, rOld);
-  r[0] += 2*stepSize*(sfmt_genrand_real1(&sfmt)-0.5);
-  r[1] += 2*stepSize*(sfmt_genrand_real1(&sfmt)-0.5);
-  r[2] += 2*stepSize*(sfmt_genrand_real1(&sfmt)-0.5);
+  r[0] += 2*stepSize*(random.nextDouble32()-0.5);
+  r[1] += 2*stepSize*(random.nextDouble32()-0.5);
+  r[2] += 2*stepSize*(random.nextDouble32()-0.5);
   box.nearestImage(r);
   numTrials++;
   return true;
@@ -152,27 +144,23 @@ MCMoveInsertDelete::MCMoveInsertDelete(Box& b, PotentialMaster& p, Random& r, do
   tunable = false;
 }
 
-MCMoveInsertDelete::MCMoveInsertDelete(Box& b, PotentialMaster& p, sfmt_t& r, double m) : MCMove(b,p,r,0), mu(m) {
-  tunable = false;
-}
-
 MCMoveInsertDelete::~MCMoveInsertDelete() {}
 
 bool MCMoveInsertDelete::doTrial() {
-  doInsert = sfmt_genrand_int_max(&sfmt, 2) == 0;
+  doInsert = random.nextInt(2) == 0;
   int n = box.getNumAtoms();
   if (doInsert) {
     uOld = 0;
     double *bs = box.getBoxSize();
     for (int j=0; j<3; j++) {
-      rNew[j] = bs[j]*(sfmt_genrand_real1(&sfmt)-0.5);
+      rNew[j] = bs[j]*(random.nextDouble32()-0.5);
     }
     potentialMaster.computeOne(n, rNew, uNew, true);
   }
   else {
     // delete
     if (n>0) {
-      iAtom = sfmt_genrand_int_max(&sfmt, n);
+      iAtom = random.nextInt(n);
       uOld = potentialMaster.oldEnergy(iAtom);
       uNew = 0;
     }

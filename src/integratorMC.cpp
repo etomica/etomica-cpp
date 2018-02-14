@@ -1,9 +1,6 @@
 #include "integrator.h"
 
-IntegratorMC::IntegratorMC(PotentialMaster& p, Random& r) : Integrator(p), sfmt(r.sfmt), pMoveSum(0), lastMove(NULL) {
-}
-
-IntegratorMC::IntegratorMC(PotentialMaster& p, sfmt_t& s) : Integrator(p), sfmt(s), pMoveSum(0), lastMove(NULL) {
+IntegratorMC::IntegratorMC(PotentialMaster& p, Random& r) : Integrator(p), random(r), pMoveSum(0), lastMove(NULL) {
 }
 
 IntegratorMC::~IntegratorMC(){}
@@ -25,7 +22,7 @@ void IntegratorMC::doStep() {
   MCMove* m = nullptr;
   int nm = moves.size();
   if (nm>1) {
-    double r = sfmt_genrand_real1(&sfmt)*pMoveSum;
+    double r = random.nextDouble32()*pMoveSum;
     double s = 0;
     for (int i=0; i<nm; i++) {
       s += moveProbabilities[i];
@@ -41,7 +38,7 @@ void IntegratorMC::doStep() {
   lastMove = m;
   m->doTrial();
   double chi = m->getChi(temperature);
-  if (chi<1 && chi<sfmt_genrand_res53(&sfmt)) {
+  if (chi<1 && chi<random.nextDouble()) {
     //printf("chi %e 0\n", chi);
     m->rejectNotify();
   }

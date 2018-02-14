@@ -35,14 +35,13 @@ class Integrator : public PotentialCallback {
 
 class IntegratorMC : public Integrator {
   private:
-    sfmt_t& sfmt;
+    Random& random;
     vector<MCMove*> moves;
     vector<double> moveProbabilities;
     double pMoveSum;
     MCMove* lastMove;
   public:
     IntegratorMC(PotentialMaster& potentialMaster, Random& random);
-    IntegratorMC(PotentialMaster& potentialMaster, sfmt_t& random);
     ~IntegratorMC();
     void addMove(MCMove* move, double probability);
     virtual void doStep();

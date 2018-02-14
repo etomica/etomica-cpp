@@ -9,7 +9,7 @@ class MCMove {
   protected:
     Box& box;
     PotentialMaster& potentialMaster;
-    sfmt_t& sfmt;
+    Random& random;
     double maxStepSize;
     long numTrials, numAccepted;
     double chiSum;
@@ -26,7 +26,6 @@ class MCMove {
     double stepSize;
 
     MCMove(Box& box, PotentialMaster& potentialMaster, Random& random, double stepSize);
-    MCMove(Box& box, PotentialMaster& potentialMaster, sfmt_t& random, double stepSize);
     virtual ~MCMove();
 
     virtual bool doTrial() = 0;
