@@ -199,14 +199,15 @@ function getInputInt(id) {
       rand = new Module.Random(seed);
     }
     document.getElementById("seed").value = seed;
-    move = new Module.MCMoveDisplacement(box, potentialMaster, rand, 0.2);
     var doMD = document.getElementById("doMD").checked;
     if (doMD) {
       integrator = new Module.IntegratorMD(potentialMaster, rand, box);
       var tStep = getInputInt("tStep");
       integrator.setTimeStep(tStep);
+      box.enableVelocities();
     }
     else {
+      move = new Module.MCMoveDisplacement(box, potentialMaster, rand, 0.2);
       integrator = new Module.IntegratorMC(potentialMaster, rand);
       integrator.addMove(move, 1);
       if (document.getElementById("grandCB").checked) {
@@ -289,16 +290,18 @@ document.getElementById('btnStart').addEventListener('click', function(){
 });
 
 function updateResults() {
-  var newStepSize = move.get_stepSize();
-  var avgChi = move.getAcceptance();
-  var avgChiGC = moveID ? moveID.getAcceptance() : "";
   var numAtoms = box.getNumAtoms();
   document.getElementById("stepCount").textContent = totalSteps;
   var speed = totalSteps/(Date.now()-startTime)*1000;
   document.getElementById("speed").textContent = speed.toPrecision(5);
-  document.getElementById("stepSize").textContent = newStepSize.toPrecision(6);
-  document.getElementById("chi").textContent = avgChi.toPrecision(6);
-  if (moveID) document.getElementById("chiID").textContent = avgChiGC.toPrecision(6);
+  if (move) {
+    var avgChiGC = moveID ? moveID.getAcceptance() : "";
+    var newStepSize = move.get_stepSize();
+    var avgChi = move.getAcceptance();
+    document.getElementById("stepSize").textContent = newStepSize.toPrecision(6);
+    document.getElementById("chi").textContent = avgChi.toPrecision(6);
+    if (moveID) document.getElementById("chiID").textContent = avgChiGC.toPrecision(6);
+  }
   for (var i=0; i<dataStreams.length; i++) {
     var s = dataStreams[i];
     var d = s.avg.getStatistics();

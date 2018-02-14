@@ -39,6 +39,8 @@ interface Box {
   void setBoxSize(double x, double y, double z);
   void initCoordinates();
   VoidPtr getAtomPosition(long iAtom);
+  void enableVelocities();
+  VoidPtr getAtomVelocity(long iAtom);
 };
 
 interface PotentialMaster {
