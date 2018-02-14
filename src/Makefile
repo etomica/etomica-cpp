@@ -1,19 +1,26 @@
 
-FLAGS = -O3 -std=c++11 -Wall -msse2 -DHAVE_SSE2
+FLAGS = -O0 -g -std=c++11 -Wall -msse2 -DHAVE_SSE2
 
 OBJDIR = build
 
-SRC = $(wildcard *.cpp)
+SRC = $(filter-out main%cpp, $(wildcard *.cpp))
+MAINSRC = main.cpp
+MAINMDSRC = mainMD.cpp
 INC = $(wildcard *.h)
 OBJECTS := $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC))
+MAINOBJ := $(patsubst %.cpp,$(OBJDIR)/%.o,$(MAINSRC))
+MAINMDOBJ := $(patsubst %.cpp,$(OBJDIR)/%.o,$(MAINMDSRC))
 
-default: directories $(OBJDIR)/mc
+default: directories $(OBJDIR)/mc $(OBJDIR)/md
 
 directories:
 	@mkdir -p $(OBJDIR)
 
-$(OBJDIR)/mc: directories $(OBJECTS) $(COBJECTS)
-	g++ $(FLAGS) -o $@ $(OBJECTS) $(COBJECTS) -lm
+$(OBJDIR)/mc: $(OBJECTS) $(MAINOBJ)
+	g++ $(FLAGS) -o $@ $(OBJECTS) $(MAINOBJ) -lm
 
-$(OBJECTS): $(OBJDIR)/%.o: %.cpp *.h
+$(OBJDIR)/md: $(OBJECTS) $(MAINMDOBJ)
+	g++ $(FLAGS) -o $@ $(OBJECTS) $(COBJECTS) $(MAINMDOBJ) -lm
+
+$(OBJECTS) $(MAINOBJ) $(MAINMDOBJ): $(OBJDIR)/%.o: %.cpp *.h
 	g++ -fPIC -c $(FLAGS) -DSFMT_MEXP=19937 -o $@ $<

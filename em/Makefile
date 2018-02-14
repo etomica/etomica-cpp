@@ -13,7 +13,7 @@ OBJDIR = build
 
 WEBSTUFF = $(wildcard *.php) $(wildcard *.html) $(wildcard *.js) $(wildcard *.css)
 EMSRC = $(wildcard *.cpp)
-SRC = $(filter-out ../src/main.cpp, $(wildcard ../src/*.cpp))
+SRC = $(filter-out ../src/main%.cpp, $(wildcard ../src/*.cpp))
 INC = $(wildcard *.h) $(wildcard ../src/*.h)
 IDL = $(wildcard *.idl)
 GLUECPP := $(patsubst %.idl,$(OBJDIR)/glue-%.cpp,$(IDL))

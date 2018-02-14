@@ -15,10 +15,10 @@ class Meter {
 
 class MeterPotentialEnergy : public Meter {
   private:
-    IntegratorMC& integrator;
+    Integrator& integrator;
     double data[1];
   public:
-    MeterPotentialEnergy(IntegratorMC& integrator);
+    MeterPotentialEnergy(Integrator& integrator);
     ~MeterPotentialEnergy() {}
     double* getData();
 };

@@ -1,12 +1,18 @@
 #include "integrator.h"
 
 IntegratorMD::IntegratorMD(PotentialMaster& p, Random& r, Box& b) : Integrator(p), random(r), box(b), forces(NULL), tStep(0.01), thermostat(THERMOSTAT_NONE) {
+  takesForces = true;
 }
 
 IntegratorMD::~IntegratorMD(){}
 
 void IntegratorMD::allComputeFinished(double uTotNew, double virialTotNew, double **f) {
+  energy = uTotNew;
   forces = f;
+}
+
+void IntegratorMD::setTimeStep(double t) {
+  tStep = t;
 }
 
 void IntegratorMD::doStep() {
@@ -58,4 +64,9 @@ void IntegratorMD::randomizeVelocities(bool zeroMomentum) {
       }
     }
   }
+}
+
+void IntegratorMD::reset() {
+  Integrator::reset();
+  randomizeVelocities(false);
 }

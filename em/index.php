@@ -78,6 +78,7 @@
   <div id='rcDiv'><label>Cutoff: <input class='form-control' id='rc' size='3' value='3' style='width: 5em;'></label></div></div>
 </div>
   <label><input type='checkbox' id='doCells'> Use cell lists</label><br>
+  <label><input type='checkbox' id='doMD'> Actually run MD</label> <label>timestep: <input style='width: 4rem;' id='tStep'></label><br>
     <label>Seed: <input class='form-control' id='seed' style='width: 10em;'></label></div>
     <button type='button' id='btnStart' class='btn btn-sm btn-primary'>Start</button></p>
     <div class='output' id="initOutput"></div>
@@ -199,18 +200,26 @@ function getInputInt(id) {
     }
     document.getElementById("seed").value = seed;
     move = new Module.MCMoveDisplacement(box, potentialMaster, rand, 0.2);
-    integrator = new Module.IntegratorMC(potentialMaster, rand);
-    integrator.addMove(move, 1);
-    if (document.getElementById("grandCB").checked) {
-      var mu = getInputInt("mu");
-      moveID = new Module.MCMoveInsertDelete(box, potentialMaster, rand, mu);
-      integrator.addMove(moveID, 1);
+    var doMD = document.getElementById("doMD").checked;
+    if (doMD) {
+      integrator = new Module.IntegratorMD(potentialMaster, rand, box);
+      var tStep = getInputInt("tStep");
+      integrator.setTimeStep(tStep);
+    }
+    else {
+      integrator = new Module.IntegratorMC(potentialMaster, rand);
+      integrator.addMove(move, 1);
+      if (document.getElementById("grandCB").checked) {
+        var mu = getInputInt("mu");
+        moveID = new Module.MCMoveInsertDelete(box, potentialMaster, rand, mu);
+        integrator.addMove(moveID, 1);
+      }
     }
     integrator.setTemperature(getInputInt("T"));
     integrator.reset();
     pcHMA = new Module.PotentialCallbackHMA(box, integrator.getTemperature(), 0);
 
-  var fields = ['potType','uCustom','duCustom','d2uCustom','truncType','numAtoms','T','seed','rc','density','mu','grandCB','doCells'];
+  var fields = ['potType','uCustom','duCustom','d2uCustom','truncType','numAtoms','T','seed','rc','density','mu','grandCB','doCells','doMD'];
   for (var i in fields) {
     var inp = document.getElementById(fields[i]);
     inp.setAttribute("readonly","true");
@@ -465,6 +474,8 @@ document.getElementById("grandCB").removeAttribute("readonly");
 document.getElementById("grandCB").removeAttribute("disabled");
 document.getElementById("doCells").removeAttribute("readonly");
 document.getElementById("doCells").removeAttribute("disabled");
+document.getElementById("doMD").removeAttribute("readonly");
+document.getElementById("doMD").removeAttribute("disabled");
     </script>
     <script async type="text/javascript" src="mc.js"></script>
   </body>

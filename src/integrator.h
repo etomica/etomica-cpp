@@ -65,7 +65,9 @@ class IntegratorMD : public Integrator {
   public:
     IntegratorMD(PotentialMaster& potentialMaster, Random& random, Box& box);
     ~IntegratorMD();
+    void setTimeStep(double tStep);
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
     virtual void doStep();
+    virtual void reset();
 };
 

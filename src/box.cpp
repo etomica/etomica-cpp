@@ -64,11 +64,11 @@ void Box::initCoordinates() {
     for (ixyz[1]=0; ixyz[1]<numCells[1]; ixyz[1]++) {
       for (ixyz[2]=0; ixyz[2]<numCells[2]; ixyz[2]++) {
         for (int i=0; i<4; i++) {
+          if (iAtom == numAtoms) break;
           for (int j=0; j<3; j++) {
             positions[iAtom][j] = (basisFCC[i][j] + ixyz[j] - 0.5*numCells[j]) * cellSize[j];
           }
           iAtom++;
-          if (iAtom == numAtoms) return;
         }
       }
     }

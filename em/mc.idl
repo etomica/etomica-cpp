@@ -160,6 +160,13 @@ interface IntegratorMC : Integrator {
 
 IntegratorMC implements Integrator;
 
+interface IntegratorMD : Integrator {
+  void IntegratorMD([Ref] PotentialMaster potentialMaster, [Ref] Random random, [Ref] Box box);
+  void setTimeStep(double tStep);
+};
+
+IntegratorMD implements Integrator;
+
 interface ArrayUtil {
   void ArrayUtil(VoidPtr p);
   double x(long i);
