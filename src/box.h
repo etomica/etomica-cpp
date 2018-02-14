@@ -2,7 +2,8 @@
 
 class Box {
   private:
-    double** coords;
+    double** positions;
+    double** velocities;
     double boxHalf[3];
     double boxSize[3];
 
@@ -17,7 +18,9 @@ class Box {
     void setNumAtoms(int numAtoms);
     void boxSizeUpdated();
     double* getAtomPosition(int iAtom);
+    double* getAtomVelocity(int iAtom);
     void nearestImage(double *dr);
     void initCoordinates();
     void setBoxSize(double x, double y, double z);
+    void enableVelocities();
 };

@@ -5,15 +5,13 @@
 #include "alloc2d.h"
 #include "box.h"
 
-Box::Box() {
+Box::Box() : positions(nullptr), velocities(nullptr), numAtoms(0), maxNumAtoms(0) {
   for (int i=0; i<3; i++) boxSize[i] = 0;
-  coords = nullptr;
-  numAtoms = 0;
-  maxNumAtoms = 0;
 }
 
 Box::~Box() {
-  free2D((void**)coords);
+  free2D((void**)positions);
+  if (velocities) free2D((void**)velocities);
 }
 
 int Box::getNumAtoms() {
@@ -67,7 +65,7 @@ void Box::initCoordinates() {
       for (ixyz[2]=0; ixyz[2]<numCells[2]; ixyz[2]++) {
         for (int i=0; i<4; i++) {
           for (int j=0; j<3; j++) {
-            coords[iAtom][j] = (basisFCC[i][j] + ixyz[j] - 0.5*numCells[j]) * cellSize[j];
+            positions[iAtom][j] = (basisFCC[i][j] + ixyz[j] - 0.5*numCells[j]) * cellSize[j];
           }
           iAtom++;
           if (iAtom == numAtoms) return;
@@ -79,7 +77,8 @@ void Box::initCoordinates() {
 
 void Box::setNumAtoms(int n) {
   if (n>maxNumAtoms) {
-    coords = (double**)realloc2D((void**)coords, n, 3, sizeof(double));
+    positions = (double**)realloc2D((void**)positions, n, 3, sizeof(double));
+    if (velocities) velocities = (double**)realloc2D((void**)velocities, n, 3, sizeof(double));
     maxNumAtoms = n;
   }
   numAtoms = n;
@@ -94,7 +93,11 @@ double* Box::getAtomPosition(int i) {
     printf("gAP oops %d > %d (%d)\n", i, numAtoms, maxNumAtoms);
     abort();
   }*/
-  return coords[i];
+  return positions[i];
+}
+
+double* Box::getAtomVelocity(int i) {
+  return velocities[i];
 }
 
 void Box::boxSizeUpdated() {
@@ -114,3 +117,12 @@ void Box::setBoxSize(double x, double y, double z) {
   boxSize[2] = z;
   boxSizeUpdated();
 }
+
+void Box::enableVelocities() {
+  if (velocities) {
+    fprintf(stderr, "velocities alread enabled\n");
+    return;
+  }
+  velocities = (double**)realloc2D((void**)velocities, maxNumAtoms, 3, sizeof(double));
+}
+
