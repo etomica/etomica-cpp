@@ -142,10 +142,7 @@ interface DataPump : IntegratorListener {
 
 DataPump implements IntegratorListener;
 
-interface IntegratorMC {
-  void IntegratorMC([Ref] PotentialMaster potentialMaster, [Ref] Random random);
-  void addMove(MCMove move, double moveProb);
-  void setTuning(boolean doTuning);
+interface Integrator {
   void doStep();
   void doSteps(long steps);
   void setTemperature(double temperature);
@@ -154,6 +151,14 @@ interface IntegratorMC {
   double getPotentialEnergy();
   void addListener(IntegratorListener listener);
 };
+
+interface IntegratorMC : Integrator {
+  void IntegratorMC([Ref] PotentialMaster potentialMaster, [Ref] Random random);
+  void addMove(MCMove move, double moveProb);
+  void setTuning(boolean doTuning);
+};
+
+IntegratorMC implements Integrator;
 
 interface ArrayUtil {
   void ArrayUtil(VoidPtr p);
