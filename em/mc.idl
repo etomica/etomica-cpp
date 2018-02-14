@@ -83,6 +83,7 @@ interface DataSink { };
 
 interface Average : DataSink {
   void Average(long nData, long blockSize, long maxBlockCount);
+  void setNumData(long newNumData);
   VoidPtr getStatistics();
   void reset();
 };
@@ -90,6 +91,7 @@ interface Average : DataSink {
 Average implements DataSink;
 
 interface Meter {
+  long getNumData();
   VoidPtr getData();
 };
 

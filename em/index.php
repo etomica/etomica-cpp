@@ -116,7 +116,7 @@
     <script src='util.js'></script>
     <script src='emscripten.js'></script>
     <script type='text/javascript'>
-var box = null, potentialMaster = null, rand = null, move = null, moveID = null, integrator = null, pcHMA = null;
+var box = null, potentialMaster = null, rand = null, move = null, moveID = null, integrator = null, pcHMA = null, meterFull = null, avgFull = null;
 var workSteps = 10, totalSteps = 0;
 stage = "init";
 var running = false, stopRequested = false;
@@ -407,27 +407,39 @@ document.getElementById("btnDataEnergy").addEventListener("click", function() {
 document.getElementById("btnDataPressure").addEventListener("click", function() {
     if (integrator==null) return;
     document.getElementById("btnDataPressure").style.display = "none";
-    var meter = new Module.MeterFullCompute(potentialMaster);
+    if (!meterFull) meterFull = new Module.MeterFullCompute(potentialMaster);
     var pcp = new Module.PotentialCallbackPressure(box, integrator.getTemperature());
-    meter.addCallback(pcp);
-    var av = new Module.Average(2, 1, 100);
-    var pump = new Module.DataPump(meter, 4*box.getNumAtoms(), av);
-    integrator.addListener(pump);
-    makeDataDiv("pressure", av);
-    dataStreams.push({name: "pressure", avg: av});
+    var nData0 = meterFull.getNumData();
+    meterFull.addCallback(pcp);
+    if (!avgFull) {
+      avgFull = new Module.Average(1, 1, 100);
+      var pump = new Module.DataPump(meterFull, 4*box.getNumAtoms(), avgFull);
+      integrator.addListener(pump);
+    }
+    else {
+      avgFull.setNumData(nData0+1);
+    }
+    makeDataDiv("pressure", avgFull);
+    dataStreams.push({name: "pressure", avg: avgFull, idx: nData0});
 });
 document.getElementById("btnDataHMA").addEventListener("click", function() {
     if (integrator==null) return;
     document.getElementById("btnDataHMA").style.display = "none";
-    var meter = new Module.MeterFullCompute(potentialMaster);
-    meter.addCallback(pcHMA);
-    var av = new Module.Average(2, 1, 100);
-    var pump = new Module.DataPump(meter, 4*box.getNumAtoms(), av);
-    integrator.addListener(pump);
-    makeDataDiv("HMA U", av);
-    dataStreams.push({name: "HMA U", avg: av, fac: 1/box.getNumAtoms()});
-    makeDataDiv("HMA P", av);
-    dataStreams.push({name: "HMA P", avg: av, idx: 1});
+    if (!meterFull) meterFull = new Module.MeterFullCompute(potentialMaster);
+    var nData0 = meterFull.getNumData();
+    meterFull.addCallback(pcHMA);
+    if (!avgFull) {
+      avgFull = new Module.Average(2, 1, 100);
+      var pump = new Module.DataPump(meter, 4*box.getNumAtoms(), avgFull);
+      integrator.addListener(pump);
+    }
+    else {
+      avgFull.setNumData(nData0+2);
+    }
+    makeDataDiv("HMA U", avgFull);
+    dataStreams.push({name: "HMA U", avg: avgFull, idx: nData0, fac: 1/box.getNumAtoms()});
+    makeDataDiv("HMA P", avgFull);
+    dataStreams.push({name: "HMA P", avg: avgFull, idx: nData0+1});
 });
 document.getElementById("btnDataNA").addEventListener("click", function() {
     if (integrator==null) return;
@@ -451,6 +463,8 @@ document.getElementById("btnDataDensity").addEventListener("click", function() {
 });
 document.getElementById("grandCB").removeAttribute("readonly");
 document.getElementById("grandCB").removeAttribute("disabled");
+document.getElementById("doCells").removeAttribute("readonly");
+document.getElementById("doCells").removeAttribute("disabled");
     </script>
     <script async type="text/javascript" src="mc.js"></script>
   </body>
