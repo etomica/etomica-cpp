@@ -19,10 +19,6 @@ int main(int argc, char** argv) {
   bool doHMA = false;
   bool doGC = false;
 
-  /*sfmt_t sfmt;
-  uint32_t seed = makeSeed();
-  printf("random seed: %u\n", seed);
-  sfmt_init_gen_rand(&sfmt, seed);*/
   Random rand;
   printf("random seed: %d\n", rand.getSeed());
 
