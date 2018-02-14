@@ -30,7 +30,7 @@ class Integrator : public PotentialCallback {
     void reset();
     double getPotentialEnergy();
     void addListener(IntegratorListener* listener);
-    void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f);
 };
 
 class IntegratorMC : public Integrator {
@@ -47,5 +47,25 @@ class IntegratorMC : public Integrator {
     virtual void doStep();
     void setTuning(bool doTuning);
     MCMove* getLastMove();
+};
+
+#define THERMOSTAT_NONE 0
+#define THERMOSTAT_NOSE_HOOVER 1
+#define THERMOSTAT_ANDERSEN 2
+#define THERMOSTAT_LANGEVIN 3
+
+class IntegratorMD : public Integrator {
+  protected:
+    Random& random;
+    Box& box;
+    double** forces;
+    double tStep;
+    int thermostat;
+    void randomizeVelocities(bool zeroMomentum);
+  public:
+    IntegratorMD(PotentialMaster& potentialMaster, Random& random, Box& box);
+    ~IntegratorMD();
+    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual void doStep();
 };
 
