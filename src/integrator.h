@@ -24,6 +24,7 @@ class IntegratorMC : public PotentialCallback {
     vector<IntegratorListener*> listeners;
     vector<PotentialCallback*> selfPotentialCallbackVec;
     double pMoveSum;
+    MCMove* lastMove;
   public:
     IntegratorMC(PotentialMaster& potentialMaster, Random& random);
     IntegratorMC(PotentialMaster& potentialMaster, sfmt_t& random);
@@ -38,5 +39,6 @@ class IntegratorMC : public PotentialCallback {
     void addListener(IntegratorListener* listener);
     void allComputeFinished(double uTot, double virialTot, double** f);
     void setTuning(bool doTuning);
+    MCMove* getLastMove();
 };
 

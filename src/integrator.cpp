@@ -1,11 +1,11 @@
 #include "integrator.h"
 
-IntegratorMC::IntegratorMC(PotentialMaster& p, Random& r) : potentialMaster(p), sfmt(r.sfmt), temperature(1), stepCount(0), pMoveSum(0) {
+IntegratorMC::IntegratorMC(PotentialMaster& p, Random& r) : potentialMaster(p), sfmt(r.sfmt), temperature(1), stepCount(0), pMoveSum(0), lastMove(NULL) {
   callFinished = true;
   selfPotentialCallbackVec.push_back(this);
 }
 
-IntegratorMC::IntegratorMC(PotentialMaster& p, sfmt_t& s) : potentialMaster(p), sfmt(s), temperature(1), stepCount(0), pMoveSum(0) {
+IntegratorMC::IntegratorMC(PotentialMaster& p, sfmt_t& s) : potentialMaster(p), sfmt(s), temperature(1), stepCount(0), pMoveSum(0), lastMove(NULL) {
   callFinished = true;
   selfPotentialCallbackVec.push_back(this);
 }
@@ -46,6 +46,7 @@ void IntegratorMC::doStep() {
   else {
     m = moves[0];
   }
+  lastMove = m;
   m->doTrial();
   double chi = m->getChi(temperature);
   if (chi<1 && chi<sfmt_genrand_res53(&sfmt)) {
@@ -91,6 +92,10 @@ double IntegratorMC::getPotentialEnergy() {
 
 void IntegratorMC::addListener(IntegratorListener* listener) {
   listeners.push_back(listener);
+}
+
+MCMove* IntegratorMC::getLastMove() {
+  return lastMove;
 }
 
 IntegratorListener::IntegratorListener() {}
