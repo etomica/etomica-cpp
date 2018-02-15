@@ -395,7 +395,7 @@ window.addEventListener("load", updateGC);
 var dataStreams = [];
 function makeDataDiv(name, av) {
   var row = makeElement("DIV", document.getElementById("dataContent"), {id: "data_"+name, className: "row"});
-  var label = makeElement("DIV", row, {className: "col-sm-12 col-md-3 col-lg-3 col-xl-2", textContent: name+" "});
+  var label = makeElement("DIV", row, {className: "col-sm-4 col-md-3 col-lg-3 col-xl-2", textContent: name+" "});
   makeElement("BUTTON", label, {className: 'btn btn-sm btn-success btn-reset', onclick: function(){av.reset();}, textContent: "reset"});
   var cur = makeElement("DIV", row, {className: "col-sm-4 col-md-4 col-lg-3 col-xl-2"});
   makeText("cur: ", cur);
