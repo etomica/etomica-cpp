@@ -1,6 +1,17 @@
 #include <math.h>
 #include "random.h"
 
+#include "SFMT.h"
+#ifdef HAVE_GETRANDOM
+#include <sys/random.h>
+#else
+#include <fcntl.h>
+#include <sys/time.h>
+#include <unistd.h>
+#endif
+
+#define MAXUINT ((uint32_t)-2)
+
 Random::Random() : hasNextGaussian(false) {
   seed = makeSeed();
   sfmt_init_gen_rand(&sfmt, seed);

@@ -7,7 +7,7 @@
 #include "box.h"
 #include "meter.h"
 #include "data-sink.h"
-#include "sfmt_more.h"
+#include "random.h"
 
 int main(int argc, char** argv) {
   int numAtoms = 500;
