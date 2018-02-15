@@ -1,6 +1,6 @@
 #pragma once
 
-#include "average.h"
+#include "data-sink.h"
 #include "integrator.h"
 
 class Meter {

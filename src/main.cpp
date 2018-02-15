@@ -6,7 +6,7 @@
 #include "move.h"
 #include "box.h"
 #include "meter.h"
-#include "average.h"
+#include "data-sink.h"
 #include "sfmt_more.h"
 
 int main(int argc, char** argv) {

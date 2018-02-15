@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "average.h"
+#include "data-sink.h"
 #include "alloc2d.h"
 
 Average::Average(int n, long bs, long mBC) : nData(n), defaultBlockSize(bs), blockSize(bs), blockCount(0),

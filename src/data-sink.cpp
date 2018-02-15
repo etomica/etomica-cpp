@@ -1,4 +1,4 @@
-#include "average.h"
+#include "data-sink.h"
 
 DataSink::DataSink() : pushInterval(1), intervalCountdown(1) {}
 
