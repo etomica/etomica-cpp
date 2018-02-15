@@ -105,7 +105,7 @@
       <div id='collapseData' class='collapse show' aria-labelledby='headingData'>
         <div class='card-body'>
           <p><button type='button' id='btnDataEnergy' class='btn btn-sm btn-info' style='display: none;'>Energy</button>
-          <button type='button' id='btnDataKineticEnergy' class='btn btn-sm btn-info' style='display: none;'>Kinetic Energy</button>
+          <button type='button' id='btnDataTemperature' class='btn btn-sm btn-info' style='display: none;'>Temperature</button>
           <button type='button' id='btnDataPressure' class='btn btn-sm btn-info' style='display: none;'>Pressure</button>
           <button type='button' id='btnDataHMA' class='btn btn-sm btn-info' style='display: none;'>HMA</button>
           <button type='button' id='btnDataNA' class='btn btn-sm btn-info' style='display: none;'># of atoms</button>
@@ -119,7 +119,7 @@
     <script src='emscripten.js'></script>
     <script type='text/javascript'>
 var box = null, potentialMaster = null, rand = null, move = null, moveID = null, integrator = null, pcHMA = null, meterFull = null, avgFull = null, doMD = false;
-var workSteps = 10, totalSteps = 0;
+var workSteps = 1, totalSteps = 0;
 stage = "init";
 var running = false, stopRequested = false;
 var uCustom = function(r) {return 0;}
@@ -281,7 +281,7 @@ document.getElementById('btnStart').addEventListener('click', function(){
     }
     var doMD = document.getElementById("doMD").checked;
     if (doMD) {
-      meters.push("KineticEnergy");
+      meters.push("Temperature");
     }
     for (var i=0; i<meters.length; i++) {
       document.getElementById("btnData"+meters[i]).style.display = "";
@@ -420,14 +420,17 @@ document.getElementById("btnDataEnergy").addEventListener("click", function() {
     makeDataDiv("energy", av);
     dataStreams.push({name: "energy", avg: av, fac: 1/box.getNumAtoms()});
 });
-document.getElementById("btnDataKineticEnergy").addEventListener("click", function() {
-    document.getElementById("btnDataKineticEnergy").style.display = "none";
+document.getElementById("btnDataTemperature").addEventListener("click", function() {
+    document.getElementById("btnDataTemperature").style.display = "none";
     var meter = new Module.MeterKineticEnergy(box);
-    var av = new Module.Average(1, 1, 100);
+    meter.setIntegrator(integrator);
+    var av = new Module.Average(2, 1, 100);
     var pump = new Module.DataPump(meter, 4, av);
     integrator.addListener(pump);
-    makeDataDiv("KE", av);
-    dataStreams.push({name: "KE", avg: av, fac: 1/box.getNumAtoms()});
+    makeDataDiv("T", av);
+    dataStreams.push({name: "T", avg: av, fac: (2.0/3.0)/box.getNumAtoms(), idx: 0});
+    makeDataDiv("total E", av);
+    dataStreams.push({name: "total E", avg: av, fac: 1/box.getNumAtoms(), idx: 1});
 });
 document.getElementById("btnDataPressure").addEventListener("click", function() {
     document.getElementById("btnDataPressure").style.display = "none";

@@ -119,6 +119,7 @@ MeterPotentialEnergy implements Meter;
 
 interface MeterKineticEnergy : Meter {
   void MeterKineticEnergy([Ref] Box box);
+  void setIntegrator(Integrator integrator);
 };
 
 MeterKineticEnergy implements Meter;

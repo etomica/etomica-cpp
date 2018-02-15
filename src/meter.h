@@ -46,10 +46,12 @@ class MeterDensity : public Meter {
 class MeterKineticEnergy : public Meter {
   private:
     Box& box;
-    double data[1];
+    Integrator* integrator;
+    double data[2];
   public:
     MeterKineticEnergy(Box& box);
     ~MeterKineticEnergy() {}
+    void setIntegrator(Integrator* integrator);
     double* getData();
 };
 
