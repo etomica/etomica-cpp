@@ -4,5 +4,5 @@
 #include "integrator.h"
 #include "em-util.h"
 #include "meter.h"
-#include "average.h"
+#include "data-sink.h"
 #include "glue-mc.cpp"
