@@ -426,8 +426,8 @@ document.getElementById("btnDataKineticEnergy").addEventListener("click", functi
     var av = new Module.Average(1, 1, 100);
     var pump = new Module.DataPump(meter, 4, av);
     integrator.addListener(pump);
-    makeDataDiv("kinetic-energy", av);
-    dataStreams.push({name: "kinetic-energy", avg: av, fac: 1/box.getNumAtoms()});
+    makeDataDiv("KE", av);
+    dataStreams.push({name: "KE", avg: av, fac: 1/box.getNumAtoms()});
 });
 document.getElementById("btnDataPressure").addEventListener("click", function() {
     document.getElementById("btnDataPressure").style.display = "none";

@@ -57,12 +57,12 @@ int main(int argc, char** argv) {
 
   integrator.doSteps(steps);
   if (doData) {
-    double* statsPE = ((Average*)pumpPE.getDataSink())->getStatistics()[0];
+    double* statsPE = ((Average*)pumpPE.getDataSink(0))->getStatistics()[0];
     statsPE[AVG_AVG] /= numAtoms;
     statsPE[AVG_ERR] /= numAtoms;
     printf("u avg: %f  err: %f  cor: %f\n", statsPE[AVG_AVG], statsPE[AVG_ERR], statsPE[AVG_ACOR]);
     if (doHMA) {
-      double** statsFull = ((Average*)pumpFull.getDataSink())->getStatistics();
+      double** statsFull = ((Average*)pumpFull.getDataSink(0))->getStatistics();
       double* statsP = statsFull[0];
       printf("p avg: %f  err: %f  cor: %f\n", statsP[AVG_AVG], statsP[AVG_ERR], statsP[AVG_ACOR]);
       double* statsUHMA = statsFull[1];

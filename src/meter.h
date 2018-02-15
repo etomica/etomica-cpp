@@ -70,11 +70,12 @@ class DataPump : public IntegratorListener {
     Meter& meter;
     int interval;
     int intervalCountdown;
-    DataSink* sink;
+    vector<DataSink*> sinks;
   public:
     DataPump(Meter& meter, int interval);
     DataPump(Meter& meter, int interval, DataSink* sink);
     ~DataPump();
     void stepFinished();
-    DataSink* getDataSink();
+    DataSink* getDataSink(int i);
+    void addDataSink(DataSink* sink);
 };

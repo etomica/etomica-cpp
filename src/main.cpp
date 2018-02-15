@@ -64,14 +64,14 @@ int main(int argc, char** argv) {
 
   integrator.doSteps(steps);
   if (doData) {
-    double* statsPE = ((Average*)pumpPE.getDataSink())->getStatistics()[0];
+    double* statsPE = ((Average*)pumpPE.getDataSink(0))->getStatistics()[0];
     if (!doGC) {
       statsPE[AVG_AVG] /= numAtoms;
       statsPE[AVG_ERR] /= numAtoms;
     }
     printf("u avg: %f  err: %f  cor: %f\n", statsPE[AVG_AVG], statsPE[AVG_ERR], statsPE[AVG_ACOR]);
     if (doHMA) {
-      double** statsFull = ((Average*)pumpFull.getDataSink())->getStatistics();
+      double** statsFull = ((Average*)pumpFull.getDataSink(0))->getStatistics();
       double* statsP = statsFull[0];
       printf("p avg: %f  err: %f  cor: %f\n", statsP[AVG_AVG], statsP[AVG_ERR], statsP[AVG_ACOR]);
       double* statsUHMA = statsFull[1];
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
       printf("pHMA avg: %f  err: %f  cor: %f\n", statsPHMA[AVG_AVG], statsPHMA[AVG_ERR], statsPHMA[AVG_ACOR]);
     }
     if (doGC) {
-      double* statsNA = ((Average*)pumpNA.getDataSink())->getStatistics()[0];
+      double* statsNA = ((Average*)pumpNA.getDataSink(0))->getStatistics()[0];
       printf("N avg: %f  err: %f  cor: %f\n", statsNA[AVG_AVG], statsNA[AVG_ERR], statsNA[AVG_ACOR]);
     }
   }

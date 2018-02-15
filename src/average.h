@@ -1,16 +1,25 @@
 #pragma once
 
+#include <vector>
+
+using namespace std;
+
+class DataSink {
+  protected:
+    vector<DataSink*> sinks;
+    int pushInterval, intervalCountdown;
+  public:
+    DataSink();
+    virtual ~DataSink() {}
+    virtual void addData(double* x) = 0;
+    void addDataSink(DataSink* sink);
+    void setPushInterval(int newPushInterval);
+};
+
 #define AVG_CUR 0
 #define AVG_AVG 1
 #define AVG_ERR 2
 #define AVG_ACOR 3
-
-class DataSink {
-  public:
-    DataSink() {}
-    virtual ~DataSink() {}
-    virtual void addData(double*) = 0;
-};
 
 class Average : public DataSink {
   private:

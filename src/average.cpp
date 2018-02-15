@@ -75,6 +75,7 @@ void Average::addData(double *x) {
       collapseBlocks();
     }
   }
+  // we don't push our data
 }
 
 void Average::collapseBlocks() {

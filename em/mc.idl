@@ -145,7 +145,7 @@ MeterDensity implements Meter;
 interface DataPump : IntegratorListener {
   void DataPump([Ref] Meter meter, long interval);
   void DataPump([Ref] Meter meter, long interval, DataSink sink);
-  DataSink getDataSink();
+  DataSink getDataSink(long i);
 };
 
 DataPump implements IntegratorListener;
