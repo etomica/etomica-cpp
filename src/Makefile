@@ -1,5 +1,5 @@
 
-FLAGS = -O0 -g -std=c++11 -Wall -msse2 -DHAVE_SSE2
+FLAGS = -O3 -std=c++11 -Wall -msse2 -DHAVE_SSE2
 
 OBJDIR = build
 
