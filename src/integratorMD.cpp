@@ -35,6 +35,9 @@ void IntegratorMD::doStep() {
       vi[j] += 0.5*tStep*forces[iAtom][j];
     }
   }
+  for (vector<IntegratorListener*>::iterator it = listeners.begin(); it!=listeners.end(); it++) {
+    (*it)->stepFinished();
+  }
 }
 
 void IntegratorMD::randomizeVelocities(bool zeroMomentum) {

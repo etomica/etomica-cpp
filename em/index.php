@@ -105,6 +105,7 @@
       <div id='collapseData' class='collapse show' aria-labelledby='headingData'>
         <div class='card-body'>
           <p><button type='button' id='btnDataEnergy' class='btn btn-sm btn-info' style='display: none;'>Energy</button>
+          <button type='button' id='btnDataKineticEnergy' class='btn btn-sm btn-info' style='display: none;'>Kinetic Energy</button>
           <button type='button' id='btnDataPressure' class='btn btn-sm btn-info' style='display: none;'>Pressure</button>
           <button type='button' id='btnDataHMA' class='btn btn-sm btn-info' style='display: none;'>HMA</button>
           <button type='button' id='btnDataNA' class='btn btn-sm btn-info' style='display: none;'># of atoms</button>
@@ -117,7 +118,7 @@
     <script src='util.js'></script>
     <script src='emscripten.js'></script>
     <script type='text/javascript'>
-var box = null, potentialMaster = null, rand = null, move = null, moveID = null, integrator = null, pcHMA = null, meterFull = null, avgFull = null;
+var box = null, potentialMaster = null, rand = null, move = null, moveID = null, integrator = null, pcHMA = null, meterFull = null, avgFull = null, doMD = false;
 var workSteps = 10, totalSteps = 0;
 stage = "init";
 var running = false, stopRequested = false;
@@ -199,7 +200,7 @@ function getInputInt(id) {
       rand = new Module.Random(seed);
     }
     document.getElementById("seed").value = seed;
-    var doMD = document.getElementById("doMD").checked;
+    doMD = document.getElementById("doMD").checked;
     if (doMD) {
       integrator = new Module.IntegratorMD(potentialMaster, rand, box);
       var tStep = getInputInt("tStep");
@@ -277,6 +278,10 @@ document.getElementById('btnStart').addEventListener('click', function(){
     if (doGC) {
       meters.push("NA");
       meters.push("Density");
+    }
+    var doMD = document.getElementById("doMD").checked;
+    if (doMD) {
+      meters.push("KineticEnergy");
     }
     for (var i=0; i<meters.length; i++) {
       document.getElementById("btnData"+meters[i]).style.display = "";
@@ -407,18 +412,26 @@ function makeDataDiv(name, av) {
   makeElement("HR", document.getElementById("dataContent"));
 }
 document.getElementById("btnDataEnergy").addEventListener("click", function() {
-    if (integrator==null) return;
     document.getElementById("btnDataEnergy").style.display = "none";
     var meter = new Module.MeterPotentialEnergy(integrator);
-    var av = new Module.Average(1, 1000, 100);
-    var pump = new Module.DataPump(meter, 10, av);
+    var av = new Module.Average(1, 10, 100);
+    var pump = new Module.DataPump(meter, doMD?1:10, av);
     integrator.addListener(pump);
     makeDataDiv("energy", av);
     dataStreams.push({name: "energy", avg: av, fac: 1/box.getNumAtoms()});
 });
+document.getElementById("btnDataKineticEnergy").addEventListener("click", function() {
+    document.getElementById("btnDataKineticEnergy").style.display = "none";
+    var meter = new Module.MeterKineticEnergy(box);
+    var av = new Module.Average(1, 1, 100);
+    var pump = new Module.DataPump(meter, 4, av);
+    integrator.addListener(pump);
+    makeDataDiv("kinetic-energy", av);
+    dataStreams.push({name: "kinetic-energy", avg: av, fac: 1/box.getNumAtoms()});
+});
 document.getElementById("btnDataPressure").addEventListener("click", function() {
-    if (integrator==null) return;
     document.getElementById("btnDataPressure").style.display = "none";
+    if (doMD) return;
     if (!meterFull) meterFull = new Module.MeterFullCompute(potentialMaster);
     var pcp = new Module.PotentialCallbackPressure(box, integrator.getTemperature());
     var nData0 = meterFull.getNumData();
@@ -435,14 +448,13 @@ document.getElementById("btnDataPressure").addEventListener("click", function() 
     dataStreams.push({name: "pressure", avg: avgFull, idx: nData0});
 });
 document.getElementById("btnDataHMA").addEventListener("click", function() {
-    if (integrator==null) return;
     document.getElementById("btnDataHMA").style.display = "none";
     if (!meterFull) meterFull = new Module.MeterFullCompute(potentialMaster);
     var nData0 = meterFull.getNumData();
     meterFull.addCallback(pcHMA);
     if (!avgFull) {
       avgFull = new Module.Average(2, 1, 100);
-      var pump = new Module.DataPump(meter, 4*box.getNumAtoms(), avgFull);
+      var pump = new Module.DataPump(meter, 4*(doMD?1:box.getNumAtoms()), avgFull);
       integrator.addListener(pump);
     }
     else {
@@ -454,7 +466,6 @@ document.getElementById("btnDataHMA").addEventListener("click", function() {
     dataStreams.push({name: "HMA P", avg: avgFull, idx: nData0+1});
 });
 document.getElementById("btnDataNA").addEventListener("click", function() {
-    if (integrator==null) return;
     document.getElementById("btnDataNA").style.display = "none";
     var meter = new Module.MeterNumAtoms(box);
     var av = new Module.Average(1, 1000, 100);

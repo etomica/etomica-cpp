@@ -112,10 +112,16 @@ interface PotentialCallbackHMA : PotentialCallback {
 PotentialCallbackHMA implements PotentialCallback;
 
 interface MeterPotentialEnergy : Meter {
-  void MeterPotentialEnergy([Ref] IntegratorMC integrator);
+  void MeterPotentialEnergy([Ref] Integrator integrator);
 };
 
 MeterPotentialEnergy implements Meter;
+
+interface MeterKineticEnergy : Meter {
+  void MeterKineticEnergy([Ref] Box box);
+};
+
+MeterKineticEnergy implements Meter;
 
 interface MeterFullCompute : Meter {
   void MeterFullCompute([Ref] PotentialMaster potentialMaster);

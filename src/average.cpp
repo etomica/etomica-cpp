@@ -101,7 +101,8 @@ void Average::collapseBlocks() {
 double** Average::getStatistics() {
   if (blockCount==0) {
     for (int i=0; i<nData; i++) {
-      stats[i][0] = stats[i][1] = stats[i][2] = stats[i][3] = NAN;
+      stats[i][AVG_CUR] = mostRecent[i];
+      stats[i][1] = stats[i][2] = stats[i][3] = NAN;
     }
     return stats;
   }

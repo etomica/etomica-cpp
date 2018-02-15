@@ -43,6 +43,16 @@ class MeterDensity : public Meter {
     double* getData();
 };
 
+class MeterKineticEnergy : public Meter {
+  private:
+    Box& box;
+    double data[1];
+  public:
+    MeterKineticEnergy(Box& box);
+    ~MeterKineticEnergy() {}
+    double* getData();
+};
+
 class MeterFullCompute : public Meter {
   protected:
     PotentialMaster& potentialMaster;
