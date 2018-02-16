@@ -57,3 +57,14 @@ class PotentialWCA: public PotentialLJ {
     PotentialWCA();
     ~PotentialWCA() {}
 };
+
+class PotentialHS: public Potential {
+  public:
+    PotentialHS();
+    ~PotentialHS() {}
+    double ur(double r);
+    double u(double r2);
+    double du(double r2);
+    double d2u(double r2);
+    void u012(double r2, double &u, double &du, double &d2u);
+};

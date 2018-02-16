@@ -173,3 +173,27 @@ void PotentialSS::u012(double r2, double &u, double &du, double &d2u) {
 }
 
 PotentialWCA::PotentialWCA() : PotentialLJ(TRUNC_SHIFT, 1.122462048309373) {}
+
+PotentialHS::PotentialHS() : Potential(TRUNC_NONE, 1) {
+  init();
+}
+
+double PotentialHS::ur(double r) {
+  return r>1 ? 0 : INFINITY;
+}
+
+double PotentialHS::u(double r2) {
+  return r2>1 ? 0 : INFINITY;
+}
+
+double PotentialHS::du(double r2) {
+  return 0;
+}
+
+double PotentialHS::d2u(double r2) {
+  return 0;
+}
+
+void PotentialHS::u012(double r2, double &u, double &du, double &d2u) {
+  u = r2>1 ? 0 : INFINITY;
+}
