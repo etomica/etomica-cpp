@@ -62,7 +62,8 @@
           <option value='0'>Soft sphere</option>
           <option value='1' selected>Lennard-Jones</option>
           <option value='2'>WCA</option>
-          <option value='3'>Custom</option>
+          <option value='3'>Hard sphere</option>
+          <option value='4'>Custom</option>
       </select></label> <span id='ssPowSpan' style='margin-left: 1rem; display: none'><label>Power: <input class='form-control' id='ssPow' size='3' value='12' style='width: 4rem;'></label></span><br>
       <div id='uCustomDiv' style='padding-left: 1rem; display: none'><label>u(r2) = <input class='form-control' id='uCustom' size='40' style='width: 40em;' value='4 * (Math.pow(r2,-6) - Math.pow(r2,-3))'></label>
         <label>r(du/dr) = <input class='form-control' id='duCustom' size='40' style='width: 40em;' value='4 * (-12*Math.pow(r2,-6) + 6*Math.pow(r2,-3))'></label><br>
@@ -174,6 +175,9 @@ function getInputInt(id) {
         potential = new Module.PotentialWCA();
         break;
       case 3:
+        potential = new Module.PotentialHS();
+        break;
+      case 4:
         potential = new PotentialJS();
         eval('potential.u = function(r2) { return '+document.getElementById('uCustom').value+';};');
         eval('potential.du = function(r2) { return '+document.getElementById('duCustom').value+';};');
@@ -181,7 +185,7 @@ function getInputInt(id) {
         potential.setCutoff(rc);
         potential.setTruncationType(truncType);
         break;
-      case 4:
+      default:
         throw new Exception("unknown potential type!");
     }
     box = new Module.Box();
@@ -362,9 +366,9 @@ function btnRunner(thisStage, btnID, cFunc, cb) {
 function updatePotType() {
   var potType = Number(document.getElementById("potType").value);
   var truncType = Number(document.getElementById("truncType").value);
-  document.getElementById("rcDiv").style.display = (truncType==0||potType==2) ? "none" : "block";
-  document.getElementById("ttDiv").style.display = potType==2 ? "none" : "block";
-  document.getElementById("uCustomDiv").style.display = potType==3 ? "block" : "none";
+  document.getElementById("rcDiv").style.display = (truncType==0||potType==2||potType==3) ? "none" : "block";
+  document.getElementById("ttDiv").style.display = (potType==2||potType==3) ? "none" : "block";
+  document.getElementById("uCustomDiv").style.display = potType==4 ? "block" : "none";
   document.getElementById("ssPowSpan").style.display = potType==0 ? "inline" : "none";
 }
 function updateTrunc() {
