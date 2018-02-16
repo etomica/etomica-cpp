@@ -85,18 +85,22 @@ void Box::setNumAtoms(int n) {
 }
 
 double* Box::getAtomPosition(int i) {
-  /*if (numAtoms != 500) {
-    printf("gAP oops %d %d (%d)\n", i, numAtoms, maxNumAtoms);
-    abort();
-  }
+#ifdef DEBUG
   if (i>=numAtoms) {
     printf("gAP oops %d > %d (%d)\n", i, numAtoms, maxNumAtoms);
     abort();
-  }*/
+  }
+#endif
   return positions[i];
 }
 
 double* Box::getAtomVelocity(int i) {
+#ifdef DEBUG
+  if (i>=numAtoms) {
+    printf("gAV oops %d > %d (%d)\n", i, numAtoms, maxNumAtoms);
+    abort();
+  }
+#endif
   return velocities[i];
 }
 
