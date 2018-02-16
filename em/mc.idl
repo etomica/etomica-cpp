@@ -23,6 +23,12 @@ interface PotentialWCA : PotentialLJ {
 
 PotentialWCA implements PotentialLJ;
 
+interface PotentialHS : Potential {
+  void PotentialHS();
+};
+
+PotentialHS implements Potential;
+
 [JSImplementation="Potential"]
 interface PotentialJS {
   void PotentialJS();
