@@ -461,7 +461,7 @@ document.getElementById("btnDataHMA").addEventListener("click", function() {
     meterFull.addCallback(pcHMA);
     if (!avgFull) {
       avgFull = new Module.Average(2, 1, 100);
-      var pump = new Module.DataPump(meter, 4*(doMD?1:box.getNumAtoms()), avgFull);
+      var pump = new Module.DataPump(meterFull, 4*(doMD?1:box.getNumAtoms()), avgFull);
       integrator.addListener(pump);
     }
     else {
