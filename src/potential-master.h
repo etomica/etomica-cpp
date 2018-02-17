@@ -107,3 +107,20 @@ class PotentialMasterCell : public PotentialMaster {
     int cellForCoord(double *r);
     int* getNumCells();
 };
+
+class PotentialMasterList : public PotentialMasterCell {
+  protected:
+    int **nbrs;
+    bool onlyUpNbrs; // standard MD only needs up.  MC or DMD needs down
+    int *numAtomNbrsUp, *numAtomNbrsDn;
+    int nbrsNumAtoms;
+    int maxNab;
+    bool forceReallocNbrs;
+
+    void checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2);
+  public:
+    PotentialMasterList(Potential& p2, Box& box, double potentialRange, int cellRange, double nbrRange);
+    ~PotentialMasterList();
+    void reset();
+
+};
