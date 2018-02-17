@@ -132,11 +132,11 @@ function getInputInt(id) {
   //if (num<=0) return 0;
   return num;
 }
-  function setParameters() {
+  function setup() {
     var density = Number(document.getElementById("density").value.trim());
     if (density <= 0) {
       alert("Invalid density "+density);
-      return;
+      return false;
     }
     var potType = Number(document.getElementById("potType").value);
     var truncType = Number(document.getElementById("truncType").value);
@@ -147,20 +147,21 @@ function getInputInt(id) {
     }
     if (truncType < 0 || truncType > 4 || truncType != Math.round(truncType)) {
       alert("Invalid truncation type " + truncType);
-      return;
+      return false;
     }
     var rc = Number(document.getElementById("rc").value);
     if (truncType>0 && rc <= 0) {
       alert("Invalid rc "+rc);
       document.getElementById("rc").focus();
-      return;
+      return false;
     }
+    var doCells = document.getElementById("doCells").checked;
     var numAtoms = getInputInt("numAtoms");
     var L = Math.pow(numAtoms/density, 1.0/3.0);
-    if (rc > 0.5*L) {
+    if ((rc > 0.5*L && !doCells) || rc>L) {
       alert("rc too large, must be less than half the box length ("+L+")");
       document.getElementById("rc").focus();
-      return;
+      return false;
     }
 
     switch (potType) {
@@ -192,7 +193,6 @@ function getInputInt(id) {
     box.setBoxSize(L,L,L);
     box.setNumAtoms(numAtoms);
     box.initCoordinates();
-    var doCells = document.getElementById("doCells").checked;
     potentialMaster = doCells ? new Module.PotentialMasterCell(potential, box, rc, 2) : new Module.PotentialMaster(potential, box);
     if (doCells) potentialMaster.init();
     var seed = getInputInt("seed");
@@ -231,6 +231,7 @@ function getInputInt(id) {
     inp.setAttribute("readonly","true");
     if (inp.type == "checkbox") inp.setAttribute("disabled", "true");
   }
+  return true;
 }
 function startOver() {
   if (running) {
@@ -277,6 +278,8 @@ document.getElementById('btnStart').addEventListener('click', function(){
     return;
   }
   if (box==null) {
+    var rv = setup();
+    if (!rv) return;
     var doGC = document.getElementById("grandCB").checked;
     var meters = ["Energy", "Pressure", "HMA"];
     if (doGC) {
@@ -291,7 +294,6 @@ document.getElementById('btnStart').addEventListener('click', function(){
       document.getElementById("btnData"+meters[i]).style.display = "";
     }
     document.getElementById("moveNoTune").removeAttribute("disabled");
-    setParameters();
   }
   startTime += Date.now();
   var mcFunc = function() {integrator.doSteps(workSteps); totalSteps += workSteps;}

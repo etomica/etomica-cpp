@@ -44,12 +44,15 @@ void PotentialMasterCell::init() {
   int totalCells = 1;
   double* bs = box.getBoxSize();
   for (int i=0; i<3; i++) {
-    // include cellRange of padding on each side of the box
-    numCells[i] = ((int)floor(bs[i]/minCellSize)) + cellRange*2;
-    if (numCells[i] < 4*cellRange+1) {
-      fprintf(stderr, "box not big enough to accomodate cells (%d: %d)\n", i, numCells[i]);
+    // with cell lists, we can accommodate rc>L/2
+    // we need the box to be at least the size of a cell.
+    // when rc>L/2, we'll end up doing a lattice sum
+    if (bs[i] < minCellSize) {
+      fprintf(stderr, "box not big enough to accomodate even 1 cell (%f < %f)\n", bs[i], minCellSize);
       exit(1);
     }
+    // include cellRange of padding on each side of the box
+    numCells[i] = ((int)floor(bs[i]/minCellSize)) + cellRange*2;
     totalCells *= numCells[i];
   }
   cellLastAtom.resize(totalCells);
