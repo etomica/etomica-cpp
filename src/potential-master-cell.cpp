@@ -318,7 +318,6 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
 }
 
 void PotentialMasterCell::computeOne(int iAtom, double *ri, double &u1, bool isTrial) {
-  int numAtoms = box.getNumAtoms();
   u1 = 0;
   double rc = potential.getCutoff();
   double rc2 = rc*rc;

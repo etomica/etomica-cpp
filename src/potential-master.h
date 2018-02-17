@@ -116,11 +116,13 @@ class PotentialMasterList : public PotentialMasterCell {
     int nbrsNumAtoms;
     int maxNab;
     bool forceReallocNbrs;
+    double potentialRange;
 
-    void checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2);
+    int checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2);
   public:
     PotentialMasterList(Potential& p2, Box& box, double potentialRange, int cellRange, double nbrRange);
     ~PotentialMasterList();
     void reset();
+    void setDoDownNbrs(bool doDown);
 
 };

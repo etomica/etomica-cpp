@@ -10,7 +10,7 @@
 #include "random.h"
 
 int main(int argc, char** argv) {
-  int numAtoms = 500;
+  int numAtoms = 2048;
   double temperature = 1.0;
   double density = 1.0;
   long steps = 1000;
@@ -33,7 +33,10 @@ int main(int argc, char** argv) {
   potentialMaster.init();
   int* numCells = potentialMaster.getNumCells();
   printf("cells: %d %d %d\n", numCells[0], numCells[1], numCells[2]);*/
-  PotentialMaster potentialMaster(plj, box);
+  PotentialMasterList potentialMaster(plj, box, 3.0, 2, 3.5);
+  potentialMaster.init();
+  potentialMaster.reset();
+  //PotentialMaster potentialMaster(plj, box);
   IntegratorMD integrator(potentialMaster, rand, box);
   integrator.setTimeStep(0.001);
   integrator.setTemperature(temperature);

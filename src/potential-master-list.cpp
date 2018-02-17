@@ -1,8 +1,8 @@
+#include <stdio.h>
 #include "potential-master.h"
 #include "alloc2d.h"
 
-PotentialMasterList::PotentialMasterList(Potential& p2, Box& box, double potentialRange, int cellRange, double nbrRange) : PotentialMasterCell(p2, box, potentialRange, cellRange), nbrs(nullptr), onlyUpNbrs(true), numAtomNbrsUp(nullptr), numAtomNbrsDn(nullptr), nbrsNumAtoms(0), maxNab(0), forceReallocNbrs(0) {
-}
+PotentialMasterList::PotentialMasterList(Potential& p2, Box& box, double pRange, int cellRange, double nbrRange) : PotentialMasterCell(p2, box, nbrRange, cellRange), nbrs(nullptr), onlyUpNbrs(true), numAtomNbrsUp(nullptr), numAtomNbrsDn(nullptr), nbrsNumAtoms(0), maxNab(0), forceReallocNbrs(false), potentialRange(pRange) { }
 
 PotentialMasterList::~PotentialMasterList() {
   if (numAtomNbrsUp) free(numAtomNbrsUp);
@@ -10,20 +10,29 @@ PotentialMasterList::~PotentialMasterList() {
   if (nbrs) free2D((void**)nbrs);
 }
 
-void PotentialMasterList::checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2) {
+void PotentialMasterList::setDoDownNbrs(bool doDown) {
+  onlyUpNbrs = !doDown;
+}
+
+int PotentialMasterList::checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2) {
   double r2 = 0;
   double dr[3];
   for (int k=0; k<3; k++) {
     dr[k] = rj[k]-ri[k];
     r2 += dr[k]*dr[k];
   }
-  if (r2 > rc2) return;
+  if (r2 > rc2) return 0;
+  if (numAtomNbrsUp[iAtom] >= maxNab) return 1;
   nbrs[iAtom][numAtomNbrsUp[iAtom]] = jAtom;
   numAtomNbrsUp[iAtom]++;
+  return 0;
 }
 
 void PotentialMasterList::reset() {
   int boxNumAtoms = box.getNumAtoms();
+// if an atom has more neighbors than we've allocated space for, then
+// maxNab will be increased and execution will return to this point
+resetStart:
   if ((!numAtomNbrsUp || boxNumAtoms > nbrsNumAtoms) && boxNumAtoms>0)  {
     numAtomNbrsUp = (int*)realloc(numAtomNbrsUp, boxNumAtoms*sizeof(int));
     if (!onlyUpNbrs) numAtomNbrsDn = (int*)realloc(numAtomNbrsDn, boxNumAtoms*sizeof(int));
@@ -39,17 +48,16 @@ void PotentialMasterList::reset() {
   assignCells();
 
   for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) numAtomNbrsUp[iAtom] = 0;
-  if (!onlyUpNbrs) for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) numAtomNbrsDn[iAtom] = 0;
 
-  double rc = potential.getCutoff();
-  double rc2 = rc*rc;
+  double rc2 = range*range;
   double rjp[3];
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+    int tooMuch = 0;
     double *ri = box.getAtomPosition(iAtom);
     int jAtom=iAtom;
     while ((jAtom = cellNextAtom[jAtom]) > -1) {
       double *rj = box.getAtomPosition(jAtom);
-      checkNbrPair(iAtom, jAtom, ri, rj, rc2);
+      tooMuch += checkNbrPair(iAtom, jAtom, ri, rj, rc2);
     }
     int iCell = atomCell[iAtom];
     for (vector<int>::iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
@@ -59,14 +67,38 @@ void PotentialMasterList::reset() {
       for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
         double *rj = box.getAtomPosition(jAtom);
         for (int k=0; k<3; k++) rjp[k] = rj[k] + jbo[k];
-        checkNbrPair(iAtom, jAtom, ri, rjp, rc2);
+        tooMuch += checkNbrPair(iAtom, jAtom, ri, rjp, rc2);
       }
     }
-    if (numAtomNbrsUp[iAtom] > maxNab) {
-      maxNab = numAtomNbrsUp[iAtom];
+    if (tooMuch > 0) {
+#ifdef DEBUG
+      printf("maxNab %d => %d\n", maxNab, maxNab+tooMuch);
+#endif
+      maxNab += tooMuch;
       forceReallocNbrs = true;
-      reset();
-      return;
+      goto resetStart;
     }
   }
+  if (!onlyUpNbrs) {
+    for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) numAtomNbrsDn[iAtom] = 0;
+    for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) {
+      int iNumNbrs = numAtomNbrsUp[iAtom];
+      int* iNbrs = nbrs[iAtom];
+      for (int j=0; j<iNumNbrs; j++) {
+        int jAtom = iNbrs[j];
+        if (numAtomNbrsDn[jAtom]+numAtomNbrsUp[jAtom] >= maxNab) {
+#ifdef DEBUG
+          printf("maxNab %d => %d\n", maxNab, maxNab*4/3);
+#endif
+          maxNab = (maxNab*4) / 3;
+          forceReallocNbrs = true;
+          goto resetStart;
+        }
+
+        nbrs[jAtom][maxNab-1-numAtomNbrsDn[jAtom]] = iAtom;
+        numAtomNbrsDn[jAtom]++;
+      }
+    }
+  }
+    
 }
