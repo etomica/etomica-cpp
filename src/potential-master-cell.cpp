@@ -301,14 +301,8 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
       handleComputeAll(i, jAtom, ri, rj, uAtom[i], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, doForces);
     }
     int iCell = atomCell[i];
-    if (iCell==-1) {
-      printf("oops %d is in %d\n", i, iCell);
-    }
     for (vector<int>::iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
       int jCell = iCell + *it;
-      if (jCell>=numCells[0]*numCells[1]*numCells[2] || jCell<0) {
-        printf("oops jCell %d  numCells %d %d %d  iCell %d\n", jCell, numCells[0], numCells[1], numCells[2], iCell);
-      }
       double *jbo = boxOffsets[jCell];
       jCell = wrapMap[jCell];
       for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
@@ -334,13 +328,7 @@ void PotentialMasterCell::computeOne(int iAtom, double *ri, double &u1, bool isT
   numAtomsChanged = 1;
   uAtomsChanged[0] = iAtom;
   duAtom[0] = 0;
-  if (iCell<0) {
-    printf("oops iCell %d for %d\n", iCell, iAtom);
-  }
   for (int jAtom = cellLastAtom[iCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
-    if (jAtom>=numAtoms) {
-      printf("oops jAtom %d in iCell %d\n", jAtom, iCell);
-    }
     if (jAtom!=iAtom) {
       double *rj = box.getAtomPosition(jAtom);
       handleComputeOne(ri, rj, jAtom, u1, rc2);
