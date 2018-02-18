@@ -71,8 +71,12 @@ void PotentialMasterList::reset() {
   }
   for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) {
     double *ri = box.getAtomPosition(iAtom);
+    box.nearestImage(ri);
     for (int j=0; j<3; j++) oldAtomPositions[iAtom][j] = ri[j];
   }
+
+  assignCells();
+
 // if an atom has more neighbors than we've allocated space for, then
 // maxNab will be increased and execution will return to this point
 resetStart:
@@ -88,8 +92,6 @@ resetStart:
     nbrBoxOffsets = (double***)realloc2D((void**)nbrBoxOffsets, nbrsNumAtoms, maxNab, sizeof(double*));
     forceReallocNbrs = false;
   }
-
-  assignCells();
 
   for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) numAtomNbrsUp[iAtom] = 0;
 
