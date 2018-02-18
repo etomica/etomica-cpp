@@ -3,12 +3,12 @@
 #include "alloc2d.h"
 #include "potential-master.h"
 
-PotentialMasterCell::PotentialMasterCell(Potential& p2, Box& box, double pRange, int cRange) : PotentialMaster(p2, box), range(pRange), cellRange(cRange) {
-  boxOffsets = nullptr;
+PotentialMasterCell::PotentialMasterCell(Potential& p2, Box& box, double pRange, int cRange) : PotentialMaster(p2, box), range(pRange), cellRange(cRange), rawBoxOffsets(nullptr), boxOffsets(nullptr) {
 }
 
 PotentialMasterCell::~PotentialMasterCell() {
-  if (boxOffsets) free2D((void**)boxOffsets);
+  if (rawBoxOffsets) free2D((void**)rawBoxOffsets);
+  if (boxOffsets) free(boxOffsets);
 }
 
 #define i_cell(ax,ay,az) ((az % numCells[2]) \
@@ -57,7 +57,8 @@ void PotentialMasterCell::init() {
   }
   cellLastAtom.resize(totalCells);
   wrapMap.resize(totalCells);
-  boxOffsets = (double**)realloc2D((void**)boxOffsets, totalCells, 3, sizeof(double));
+  boxOffsets = (double**)realloc(boxOffsets, totalCells*sizeof(double*));
+  rawBoxOffsets = (double**)realloc2D((void**)rawBoxOffsets, 3*3*3, 3, sizeof(double));
 
   int numOffsets = 0;
   switch (cellRange) {
@@ -123,6 +124,17 @@ void PotentialMasterCell::init() {
     }
   }
 
+  for (int ix=-1; ix<=1; ix++) {
+    for (int iy=-1; iy<=1; iy++) {
+      for (int iz=-1; iz<=1; iz++) {
+        int idx = (ix+1)*9+(iy+1)*3+(iz+1);
+        rawBoxOffsets[idx][0] = ix*bs[0];
+        rawBoxOffsets[idx][1] = iy*bs[1];
+        rawBoxOffsets[idx][2] = iz*bs[2];
+      }
+    }
+  }
+
   for (int ix=0; ix<numCells[0]; ix++) {
     int x2 = wrappedIndex(ix, numCells[0]);
     int xbo = (ix-x2)/(numCells[0]-2*cellRange);
@@ -135,9 +147,7 @@ void PotentialMasterCell::init() {
         int iMap = i_cell(ix, iy, iz);
         int dCell = i_cell(x2, y2, z2);
         wrapMap[iMap] = dCell;
-        boxOffsets[iMap][0] = xbo*bs[0];
-        boxOffsets[iMap][1] = ybo*bs[1];
-        boxOffsets[iMap][2] = zbo*bs[2];
+        boxOffsets[iMap] = rawBoxOffsets[(xbo+1)*9+(ybo+1)*3+(zbo+1)];
       }
     }
   }

@@ -61,11 +61,13 @@ class IntegratorMD : public Integrator {
     double** forces;
     double tStep;
     int thermostat;
+    int nbrCheckInterval, nbrCheckCountdown;
     void randomizeVelocities(bool zeroMomentum);
   public:
     IntegratorMD(PotentialMaster& potentialMaster, Random& random, Box& box);
     ~IntegratorMD();
     void setTimeStep(double tStep);
+    void setNbrCheckInterval(int interval);
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
     virtual void doStep();
     virtual void reset();

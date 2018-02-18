@@ -87,6 +87,7 @@ class PotentialMasterCell : public PotentialMaster {
     int jump[3];
     vector<int> cellOffsets;
     vector<int> wrapMap;
+    double** rawBoxOffsets;
     double** boxOffsets;
     int numAtoms;
 
@@ -115,14 +116,19 @@ class PotentialMasterList : public PotentialMasterCell {
     int *numAtomNbrsUp, *numAtomNbrsDn;
     int nbrsNumAtoms;
     int maxNab;
+    double ***nbrBoxOffsets;
     bool forceReallocNbrs;
     double potentialRange;
+    double **oldAtomPositions;
+    double safetyFac;
 
-    int checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2);
+    int checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2, double *jbo);
   public:
     PotentialMasterList(Potential& p2, Box& box, double potentialRange, int cellRange, double nbrRange);
     ~PotentialMasterList();
     void reset();
     void setDoDownNbrs(bool doDown);
+    void checkUpdateNbrs();
+    virtual void computeAll(vector<PotentialCallback*> &callbacks);
 
 };

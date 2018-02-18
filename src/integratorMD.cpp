@@ -1,10 +1,14 @@
 #include "integrator.h"
 
-IntegratorMD::IntegratorMD(PotentialMaster& p, Random& r, Box& b) : Integrator(p), random(r), box(b), forces(NULL), tStep(0.01), thermostat(THERMOSTAT_NONE) {
+IntegratorMD::IntegratorMD(PotentialMaster& p, Random& r, Box& b) : Integrator(p), random(r), box(b), forces(NULL), tStep(0.01), thermostat(THERMOSTAT_NONE), nbrCheckInterval(-1), nbrCheckCountdown(-1) {
   takesForces = true;
 }
 
 IntegratorMD::~IntegratorMD(){}
+
+void IntegratorMD::setNbrCheckInterval(int i) {
+  nbrCheckInterval = nbrCheckCountdown = i;
+}
 
 void IntegratorMD::allComputeFinished(double uTotNew, double virialTotNew, double **f) {
   energy = uTotNew;
@@ -16,6 +20,9 @@ void IntegratorMD::setTimeStep(double t) {
 }
 
 void IntegratorMD::doStep() {
+  if (nbrCheckCountdown==0) {
+    static_cast<PotentialMasterList&>(potentialMaster).checkUpdateNbrs();
+  }
   stepCount++;
   int n = box.getNumAtoms();
   for (int iAtom=0; iAtom<n; iAtom++) {
@@ -38,6 +45,7 @@ void IntegratorMD::doStep() {
   for (vector<IntegratorListener*>::iterator it = listeners.begin(); it!=listeners.end(); it++) {
     (*it)->stepFinished();
   }
+  if (nbrCheckInterval>0) nbrCheckCountdown--;
 }
 
 void IntegratorMD::randomizeVelocities(bool zeroMomentum) {
