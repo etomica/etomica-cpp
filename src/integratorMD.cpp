@@ -35,6 +35,16 @@ void IntegratorMD::doStep() {
     }
   }
 
+  selfPotentialCallbackVec.clear();
+  selfPotentialCallbackVec.push_back(this);
+  for (vector<struct PotentialCallbackInfo>::iterator it = allPotentialCallbacks.begin(); it!=allPotentialCallbacks.end(); it++) {
+    (*it).countdown--;
+    if ((*it).countdown == 0) {
+      (*it).countdown = (*it).interval;
+      (*it).pcb->reset();
+      selfPotentialCallbackVec.push_back((*it).pcb);
+    }
+  }
   potentialMaster.computeAll(selfPotentialCallbackVec);
 
   for (int iAtom=0; iAtom<n; iAtom++) {
@@ -85,4 +95,11 @@ void IntegratorMD::reset() {
   }
   Integrator::reset();
   randomizeVelocities(false);
+}
+
+void IntegratorMD::addPotentialCallback(PotentialCallback* callback, int interval) {
+  struct PotentialCallbackInfo pci;
+  pci.pcb = callback;
+  pci.interval = pci.countdown = interval;
+  allPotentialCallbacks.push_back(pci);
 }

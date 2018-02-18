@@ -54,6 +54,12 @@ class IntegratorMC : public Integrator {
 #define THERMOSTAT_ANDERSEN 2
 #define THERMOSTAT_LANGEVIN 3
 
+struct PotentialCallbackInfo {
+  PotentialCallback* pcb;
+  int interval;
+  int countdown;
+};
+
 class IntegratorMD : public Integrator {
   protected:
     Random& random;
@@ -63,6 +69,7 @@ class IntegratorMD : public Integrator {
     int thermostat;
     int nbrCheckInterval, nbrCheckCountdown;
     void randomizeVelocities(bool zeroMomentum);
+    vector<struct PotentialCallbackInfo> allPotentialCallbacks;
   public:
     IntegratorMD(PotentialMaster& potentialMaster, Random& random, Box& box);
     ~IntegratorMD();
@@ -71,5 +78,6 @@ class IntegratorMD : public Integrator {
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
     virtual void doStep();
     virtual void reset();
+    void addPotentialCallback(PotentialCallback* callback, int interval=1);
 };
 

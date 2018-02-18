@@ -60,11 +60,13 @@ class MeterFullCompute : public Meter {
     PotentialMaster& potentialMaster;
     double *data;
     vector<PotentialCallback*> callbacks;
+    bool doCompute;
   public:
     MeterFullCompute(PotentialMaster& potentialMaster);
     ~MeterFullCompute() {}
     double* getData();
     void addCallback(PotentialCallback* pcb);
+    void setDoCompute(bool doCompute);
 };
 
 class DataPump : public IntegratorListener {

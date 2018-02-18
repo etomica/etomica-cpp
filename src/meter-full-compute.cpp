@@ -1,6 +1,6 @@
 #include "meter.h"
 
-MeterFullCompute::MeterFullCompute(PotentialMaster& p) : Meter(0), potentialMaster(p), data(nullptr) {}
+MeterFullCompute::MeterFullCompute(PotentialMaster& p) : Meter(0), potentialMaster(p), data(nullptr), doCompute(false) {}
 
 void MeterFullCompute::addCallback(PotentialCallback* pcb) {
   callbacks.push_back(pcb);
@@ -8,11 +8,19 @@ void MeterFullCompute::addCallback(PotentialCallback* pcb) {
   data = (double*)realloc(data, nData*sizeof(double));
 }
 
+void MeterFullCompute::setDoCompute(bool doC) {
+  doCompute = doC;
+}
+
 double* MeterFullCompute::getData() {
-  for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
-    (*it)->reset();
+  if (doCompute) {
+    // probably MC, we need to invoke computeAll ourselves
+    // MD can invoke callbacks internally every step, then we just retrieve the data
+    for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
+      (*it)->reset();
+    }
+    potentialMaster.computeAll(callbacks);
   }
-  potentialMaster.computeAll(callbacks);
   int idx = 0;
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     double* d = (*it)->getData();
