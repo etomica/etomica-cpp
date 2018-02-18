@@ -22,6 +22,7 @@ void IntegratorMD::setTimeStep(double t) {
 void IntegratorMD::doStep() {
   if (nbrCheckCountdown==0) {
     static_cast<PotentialMasterList&>(potentialMaster).checkUpdateNbrs();
+    nbrCheckCountdown = nbrCheckInterval;
   }
   stepCount++;
   int n = box.getNumAtoms();
