@@ -10,17 +10,17 @@
 #include "random.h"
 
 int main(int argc, char** argv) {
-  int numAtoms = 2048;
-  double temperature = 1.0;
-  double density = 1.0;
+  int numAtoms = 32000;
+  double temperature = 1.44;
+  double density = 0.8442;
   long steps = 1000;
-  bool doData = false;
+  bool doData = true;
   bool doHMA = false;
 
   Random rand;
   printf("random seed: %d\n", rand.getSeed());
 
-  PotentialLJ plj(TRUNC_SIMPLE, 3.0);
+  PotentialLJ plj(TRUNC_SIMPLE, 2.5);
   Box box;
   double L = pow(numAtoms/density, 1.0/3.0);
   printf("box size: %f\n", L);
@@ -33,17 +33,18 @@ int main(int argc, char** argv) {
   potentialMaster.init();
   int* numCells = potentialMaster.getNumCells();
   printf("cells: %d %d %d\n", numCells[0], numCells[1], numCells[2]);*/
-  PotentialMasterList potentialMaster(plj, box, 3.0, 2, 3.5);
+  PotentialMasterList potentialMaster(plj, box, 2.5, 2, 2.8);
   potentialMaster.init();
   potentialMaster.reset();
   //PotentialMaster potentialMaster(plj, box);
   IntegratorMD integrator(potentialMaster, rand, box);
-  integrator.setTimeStep(0.001);
+  integrator.setTimeStep(0.005);
   integrator.setTemperature(temperature);
+  integrator.setNbrCheckInterval(20);
   integrator.reset();
   PotentialCallbackHMA pcHMA(box, temperature, 9.550752245164025e+00);
   printf("u: %f\n", integrator.getPotentialEnergy());
-  if (doData) integrator.doSteps(steps/10);
+  //if (doData) integrator.doSteps(steps/10);
   MeterPotentialEnergy meterPE(integrator);
   DataPump pumpPE(meterPE, 1);
   MeterFullCompute meterFull(potentialMaster);
@@ -51,11 +52,15 @@ int main(int argc, char** argv) {
   meterFull.addCallback(&pcp);
   if (doHMA) meterFull.addCallback(&pcHMA);
   DataPump pumpFull(meterFull, 4*numAtoms);
-  MeterNumAtoms meterNA(box);
-  DataPump pumpNA(meterNA, 10);
+  MeterKineticEnergy meterKE(box);
+  meterKE.setIntegrator(&integrator);
+  double* dataKE0 = meterKE.getData();
+  printf("T0: %f\n", dataKE0[0]/(1.5*(numAtoms-1)));
+  DataPump pumpKE(meterKE, 10);
   if (doData) {
     integrator.addListener(&pumpPE);
     if (doHMA) integrator.addListener(&pumpFull);
+    integrator.addListener(&pumpKE);
   }
 
   integrator.doSteps(steps);
@@ -64,6 +69,15 @@ int main(int argc, char** argv) {
     statsPE[AVG_AVG] /= numAtoms;
     statsPE[AVG_ERR] /= numAtoms;
     printf("u avg: %f  err: %f  cor: %f\n", statsPE[AVG_AVG], statsPE[AVG_ERR], statsPE[AVG_ACOR]);
+    double** statsKEE = ((Average*)pumpKE.getDataSink(0))->getStatistics();
+    double* statsKE = statsKEE[0];
+    statsKE[AVG_AVG] /= 1.5*(numAtoms-1);
+    statsKE[AVG_ERR] /= 1.5*(numAtoms-1);
+    printf("T avg: %f  err: %f  cor: %f\n", statsKE[AVG_AVG], statsKE[AVG_ERR], statsKE[AVG_ACOR]);
+    double* statsE = statsKEE[1];
+    statsE[AVG_AVG] /= numAtoms;
+    statsE[AVG_ERR] /= numAtoms;
+    printf("E avg: %f  err: %f  cor: %f\n", statsE[AVG_AVG], statsE[AVG_ERR], statsE[AVG_ACOR]);
     if (doHMA) {
       double** statsFull = ((Average*)pumpFull.getDataSink(0))->getStatistics();
       double* statsP = statsFull[0];
