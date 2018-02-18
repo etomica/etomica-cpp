@@ -35,7 +35,6 @@ int main(int argc, char** argv) {
   printf("cells: %d %d %d\n", numCells[0], numCells[1], numCells[2]);*/
   PotentialMasterList potentialMaster(plj, box, 2.5, 2, 2.8);
   potentialMaster.init();
-  potentialMaster.reset();
   //PotentialMaster potentialMaster(plj, box);
   IntegratorMD integrator(potentialMaster, rand, box);
   integrator.setTimeStep(0.005);

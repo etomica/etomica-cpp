@@ -79,6 +79,10 @@ void IntegratorMD::randomizeVelocities(bool zeroMomentum) {
 }
 
 void IntegratorMD::reset() {
+  if (nbrCheckInterval>0) {
+    static_cast<PotentialMasterList&>(potentialMaster).reset();
+    nbrCheckCountdown = nbrCheckInterval;
+  }
   Integrator::reset();
   randomizeVelocities(false);
 }
