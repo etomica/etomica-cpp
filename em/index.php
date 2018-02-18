@@ -78,9 +78,9 @@
 <div class='col-sm-12 col-md-4 col-lg-3'>
   <div id='rcDiv'><label>Cutoff: <input class='form-control' id='rc' size='3' value='3' style='width: 5em;'></label></div></div>
 </div>
-  <label><input type='checkbox' id='doMD' onchange='updateDoMD()'> Actually run MD</label> <label>timestep: <input style='width: 4rem;' id='tStep'></label><br>
+  <label><input type='checkbox' id='doMD' onchange='updateDoMD()'> Actually run MD</label> <label>timestep: <input class='form-control' style='width: 4rem;' id='tStep'></label><br>
   <div id='cellsDiv'><label><input type='checkbox' id='doCells'> Use cell lists</label></div>
-  <div id='nbrListDiv'><label><input type='checkbox' id='doNbrList'> Use neighbor lists</label> <label>range: <input style='width: 4rem;' id='nbrRange'></label></div>
+  <div id='nbrListDiv'><label><input type='checkbox' id='doNbrList'> Use neighbor lists</label> <label>range: <input class='form-control' style='width: 4rem;' id='nbrRange'></label></div>
     <label>Seed: <input class='form-control' id='seed' style='width: 10em;'></label></div>
     <button type='button' id='btnStart' class='btn btn-sm btn-primary'>Start</button></p>
     <div class='output' id="initOutput"></div>
