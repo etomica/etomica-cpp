@@ -78,8 +78,9 @@
 <div class='col-sm-12 col-md-4 col-lg-3'>
   <div id='rcDiv'><label>Cutoff: <input class='form-control' id='rc' size='3' value='3' style='width: 5em;'></label></div></div>
 </div>
-  <label><input type='checkbox' id='doCells'> Use cell lists</label><br>
-  <label><input type='checkbox' id='doMD'> Actually run MD</label> <label>timestep: <input style='width: 4rem;' id='tStep'></label><br>
+  <label><input type='checkbox' id='doMD' onchange='updateDoMD()'> Actually run MD</label> <label>timestep: <input style='width: 4rem;' id='tStep'></label><br>
+  <div id='cellsDiv'><label><input type='checkbox' id='doCells'> Use cell lists</label></div>
+  <div id='nbrListDiv'><label><input type='checkbox' id='doNbrList'> Use neighbor lists</label> <label>range: <input style='width: 4rem;' id='nbrRange'></label></div>
     <label>Seed: <input class='form-control' id='seed' style='width: 10em;'></label></div>
     <button type='button' id='btnStart' class='btn btn-sm btn-primary'>Start</button></p>
     <div class='output' id="initOutput"></div>
@@ -155,7 +156,21 @@ function getInputInt(id) {
       document.getElementById("rc").focus();
       return false;
     }
-    var doCells = document.getElementById("doCells").checked;
+    doMD = document.getElementById("doMD").checked;
+    var tStep = doMD ? getInputInt("tStep") : 0;
+    var doCells = !doMD && document.getElementById("doCells").checked;
+    var doNbrList = doMD && document.getElementById("doNbrList").checked;
+    var nbrRange = doNbrList ? getInputInt("nbrRange") : 0;
+    if (doMD && !tStep) {
+      alert("Must set the timestep");
+      document.getElementById("tStep").focus();
+      return false;
+    }
+    if (doNbrList && nbrRange < rc) {
+      alert("Neighbor range must be greater than cutoff");
+      document.getElementById("nbrRange").focus();
+      return false;
+    }
     var numAtoms = getInputInt("numAtoms");
     var L = Math.pow(numAtoms/density, 1.0/3.0);
     if ((rc > 0.5*L && !doCells) || rc>L) {
@@ -193,8 +208,16 @@ function getInputInt(id) {
     box.setBoxSize(L,L,L);
     box.setNumAtoms(numAtoms);
     box.initCoordinates();
-    potentialMaster = doCells ? new Module.PotentialMasterCell(potential, box, rc, 2) : new Module.PotentialMaster(potential, box);
-    if (doCells) potentialMaster.init();
+    if (doNbrList) {
+      potentialMaster = new Module.PotentialMasterList(potential, box, rc, 2, nbrRange);
+    }
+    else if (doCells) {
+      potentialMaster = new Module.PotentialMasterCell(potential, box, rc, 2);
+    }
+    else {
+      potentialMaster = new Module.PotentialMaster(potential, box);
+    }
+    if (doCells || doNbrList) potentialMaster.init();
     var seed = getInputInt("seed");
     if (seed == 0) {
       rand = new Module.Random();
@@ -204,12 +227,13 @@ function getInputInt(id) {
       rand = new Module.Random(seed);
     }
     document.getElementById("seed").value = seed;
-    doMD = document.getElementById("doMD").checked;
     if (doMD) {
       integrator = new Module.IntegratorMD(potentialMaster, rand, box);
-      var tStep = getInputInt("tStep");
       integrator.setTimeStep(tStep);
       box.enableVelocities();
+      if (doNbrList) {
+        integrator.setNbrCheckInterval(5);
+      }
     }
     else {
       move = new Module.MCMoveDisplacement(box, potentialMaster, rand, 0.2);
@@ -225,7 +249,7 @@ function getInputInt(id) {
     integrator.reset();
     pcHMA = new Module.PotentialCallbackHMA(box, integrator.getTemperature(), 0);
 
-  var fields = ['potType','uCustom','duCustom','d2uCustom','truncType','numAtoms','T','seed','rc','density','mu','grandCB','doCells','doMD'];
+  var fields = ['potType','uCustom','duCustom','d2uCustom','truncType','numAtoms','T','seed','rc','density','mu','grandCB','doCells','doMD','tStep','nbrRange','doNbrList'];
   for (var i in fields) {
     var inp = document.getElementById(fields[i]);
     inp.setAttribute("readonly","true");
@@ -387,6 +411,17 @@ function updateGC() {
     muInp.setAttribute("disabled", "true");
   }
 }
+function updateDoMD() {
+  var doMD = document.getElementById("doMD").checked;
+  if (doMD) {
+    document.getElementById("tStep").removeAttribute("disabled");
+  }
+  else {
+    document.getElementById("tStep").setAttribute("disabled", "true");
+  }
+  document.getElementById("cellsDiv").style.display = doMD ? "none" : "";
+  document.getElementById("nbrListDiv").style.display = doMD ? "" : "none";
+}
 document.getElementById("potType").addEventListener("change", updatePotType);
 document.getElementById("truncType").addEventListener("change", updateTrunc);
 document.getElementById("grandCB").addEventListener("change", updateGC);
@@ -398,6 +433,7 @@ document.getElementById("moveNoTune").addEventListener("click", function() {
 window.addEventListener("load", updatePotType);
 window.addEventListener("load", updateTrunc);
 window.addEventListener("load", updateGC);
+window.addEventListener("load", updateDoMD);
 var dataStreams = [];
 function makeDataDiv(name, av) {
   var row = makeElement("DIV", document.getElementById("dataContent"), {id: "data_"+name, className: "row"});
@@ -499,6 +535,8 @@ document.getElementById("doCells").removeAttribute("readonly");
 document.getElementById("doCells").removeAttribute("disabled");
 document.getElementById("doMD").removeAttribute("readonly");
 document.getElementById("doMD").removeAttribute("disabled");
+document.getElementById("doNbrList").removeAttribute("readonly");
+document.getElementById("doNbrList").removeAttribute("disabled");
     </script>
     <script async type="text/javascript" src="mc.js"></script>
   </body>

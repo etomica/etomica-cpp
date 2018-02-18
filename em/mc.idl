@@ -60,6 +60,12 @@ interface PotentialMasterCell : PotentialMaster {
 
 PotentialMasterCell implements PotentialMaster;
 
+interface PotentialMasterList : PotentialMasterCell {
+  void PotentialMasterList([Ref] Potential p2, [Ref] Box box, double potentialRange, long cellRange, double nbrRange);
+};
+
+PotentialMasterList implements PotentialMasterCell;
+
 interface Random {
   void Random();
   void Random(long seed);
@@ -178,6 +184,7 @@ IntegratorMC implements Integrator;
 interface IntegratorMD : Integrator {
   void IntegratorMD([Ref] PotentialMaster potentialMaster, [Ref] Random random, [Ref] Box box);
   void setTimeStep(double tStep);
+  void setNbrCheckInterval(long interval);
 };
 
 IntegratorMD implements Integrator;
