@@ -57,7 +57,7 @@ void IntegratorMD::randomizeVelocities(bool zeroMomentum) {
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
     double* vi = box.getAtomVelocity(iAtom);
     for (int j=0; j<3; j++) {
-      vi[j] = random.nextGaussian()/sqrtTM;
+      vi[j] = random.nextGaussian()*sqrtTM;
       if (zeroMomentum) {
         momentum[j] += vi[j]*imass;
         totalMass += imass;
