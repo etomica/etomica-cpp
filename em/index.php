@@ -476,14 +476,17 @@ document.getElementById("btnDataTemperature").addEventListener("click", function
 });
 document.getElementById("btnDataPressure").addEventListener("click", function() {
     document.getElementById("btnDataPressure").style.display = "none";
-    if (doMD) return;
-    if (!meterFull) meterFull = new Module.MeterFullCompute(potentialMaster);
+    if (!meterFull) {
+      meterFull = new Module.MeterFullCompute(potentialMaster);
+      if (doMD) meterFull.setDoCompute(false);
+    }
     var pcp = new Module.PotentialCallbackPressure(box, integrator.getTemperature());
+    if (doMD) integrator.addPotentialCallback(pcp, 4);
     var nData0 = meterFull.getNumData();
     meterFull.addCallback(pcp);
     if (!avgFull) {
       avgFull = new Module.Average(1, 1, 100);
-      var pump = new Module.DataPump(meterFull, 4*box.getNumAtoms(), avgFull);
+      var pump = new Module.DataPump(meterFull, doMD ? 4 : 4*box.getNumAtoms(), avgFull);
       integrator.addListener(pump);
     }
     else {
@@ -494,12 +497,16 @@ document.getElementById("btnDataPressure").addEventListener("click", function() 
 });
 document.getElementById("btnDataHMA").addEventListener("click", function() {
     document.getElementById("btnDataHMA").style.display = "none";
-    if (!meterFull) meterFull = new Module.MeterFullCompute(potentialMaster);
+    if (!meterFull) {
+      meterFull = new Module.MeterFullCompute(potentialMaster);
+      if (doMD) meterFull.setDoCompute(false);
+    }
     var nData0 = meterFull.getNumData();
     meterFull.addCallback(pcHMA);
+    if (doMD) integrator.addPotentialCallback(pcHMA, 4);
     if (!avgFull) {
       avgFull = new Module.Average(2, 1, 100);
-      var pump = new Module.DataPump(meterFull, 4*(doMD?1:box.getNumAtoms()), avgFull);
+      var pump = new Module.DataPump(meterFull, doMD ? 4 : 4*box.getNumAtoms(), avgFull);
       integrator.addListener(pump);
     }
     else {

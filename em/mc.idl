@@ -139,6 +139,7 @@ MeterKineticEnergy implements Meter;
 interface MeterFullCompute : Meter {
   void MeterFullCompute([Ref] PotentialMaster potentialMaster);
   void addCallback(PotentialCallback pcb);
+  void setDoCompute(boolean doCompute);
 };
 
 MeterFullCompute implements Meter;
@@ -185,6 +186,7 @@ interface IntegratorMD : Integrator {
   void IntegratorMD([Ref] PotentialMaster potentialMaster, [Ref] Random random, [Ref] Box box);
   void setTimeStep(double tStep);
   void setNbrCheckInterval(long interval);
+  void addPotentialCallback(PotentialCallback pc, long interval);
 };
 
 IntegratorMD implements Integrator;
