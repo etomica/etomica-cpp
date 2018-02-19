@@ -47,10 +47,15 @@ int main(int argc, char** argv) {
   MeterPotentialEnergy meterPE(integrator);
   DataPump pumpPE(meterPE, 1);
   MeterFullCompute meterFull(potentialMaster);
+  meterFull.setDoCompute(false);
   PotentialCallbackPressure pcp(box, temperature);
   meterFull.addCallback(&pcp);
-  if (doHMA) meterFull.addCallback(&pcHMA);
-  DataPump pumpFull(meterFull, 4*numAtoms);
+  integrator.addPotentialCallback(&pcp);
+  if (doHMA) {
+    meterFull.addCallback(&pcHMA);
+    integrator.addPotentialCallback(&pcHMA);
+  }
+  DataPump pumpFull(meterFull, 1);
   MeterKineticEnergy meterKE(box);
   meterKE.setIntegrator(&integrator);
   double* dataKE0 = meterKE.getData();

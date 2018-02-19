@@ -1,6 +1,6 @@
 #include "meter.h"
 
-MeterFullCompute::MeterFullCompute(PotentialMaster& p) : Meter(0), potentialMaster(p), data(nullptr), doCompute(false) {}
+MeterFullCompute::MeterFullCompute(PotentialMaster& p) : Meter(0), potentialMaster(p), data(nullptr), doCompute(true) {}
 
 void MeterFullCompute::addCallback(PotentialCallback* pcb) {
   callbacks.push_back(pcb);
