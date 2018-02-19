@@ -3,6 +3,7 @@ select.form-control {display: inline-block; width: auto;}
 input.form-control {display: inline;}
 button.btn-reset {line-height: 1;}
 .dataContent span {white-space: nowrap;}
+p.statusMC, p.statusMD {margin-bottom: 0;}
 
       .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
       div.emscripten { text-align: center; }

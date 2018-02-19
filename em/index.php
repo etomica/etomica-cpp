@@ -93,12 +93,13 @@
       <div id='collapseResults' class='collapse show' aria-labelledby='headingResults'>
         <div class='card-body'>
           <div class='output' id="resultsOutput"></div>
-          <p>Steps: <span id='stepCount'></span><br>
-          Speed: <span id='speed'></span> steps/s<br>
-          Displacement acceptance: <span id='chi'></span><br>
-          Step size: <span id='stepSize'></span><br>
-          Insert/Delete acceptance: <span id='chiID'></span></p>
-          <button class='btn btn-sm btn-reset btn-success' id='moveNoTune' disabled>Lock step sizes</button>
+          <p class='statusMD statusMC'>Steps: <span id='stepCount'></span><br>
+          Speed: <span id='speed'></span> steps/s</p>
+          <p class='statusMD'>Simulation time: <span id='simTime'></span></p>
+          <p class='statusMC'>Displacement acceptance: <span id='chi'></span><br></p>
+          <p class='statusMC'>Step size: <span id='stepSize'></span></p>
+          <p class='statusMC'>Insert/Delete acceptance: <span id='chiID'></span></p>
+          <p class='statusMC'><button class='btn btn-sm btn-reset btn-success' id='moveNoTune' disabled>Lock step sizes</button></p>
         </div>
       </div>
     </div>
@@ -327,6 +328,8 @@ document.getElementById('btnStart').addEventListener('click', function(){
 function updateResults() {
   var numAtoms = box.getNumAtoms();
   document.getElementById("stepCount").textContent = totalSteps;
+  var tStep = getInputInt("tStep");
+  document.getElementById("simTime").textContent = (tStep*totalSteps).toPrecision(6);
   var speed = totalSteps/(Date.now()-startTime)*1000;
   document.getElementById("speed").textContent = speed.toPrecision(5);
   if (move) {
@@ -413,6 +416,12 @@ function updateGC() {
 }
 function updateDoMD() {
   var doMD = document.getElementById("doMD").checked;
+  var mcBits = document.getElementsByClassName("statusMC");
+  var mdBits = document.getElementsByClassName("statusMD");
+  for (var i=0; i<mcBits.length; i++) mcBits[i].style.display = "none";
+  for (var i=0; i<mdBits.length; i++) mdBits[i].style.display = "none";
+  if (!doMD) for (var i=0; i<mcBits.length; i++) mcBits[i].style.display = "";
+  else for (var i=0; i<mdBits.length; i++) mdBits[i].style.display = "";
   if (doMD) {
     document.getElementById("tStep").removeAttribute("disabled");
   }
