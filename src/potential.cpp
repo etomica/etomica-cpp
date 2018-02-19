@@ -80,7 +80,7 @@ double PotentialLJ::du(double r2) {
   double s2 = 1/r2;
   double s6 = s2*s2*s2;
   double du = -48*s6*(s6 -0.5);
-  du += ufShift;
+  if (ufShift!=0) du += ufShift*sqrt(r2);
   return du;
 }
 
@@ -97,8 +97,9 @@ void PotentialLJ::u012(double r2, double &u, double &du, double &d2u) {
   u = 4*s6*(s6 - 1) + uShift;
   du = -4*12*s6*(s6 - 0.5);
   if (ufShift != 0) {
-    u += sqrt(r2)*ufShift;
-    du += ufShift;
+    double x = sqrt(r2)*ufShift;
+    u += x;
+    du += x;
   }
   d2u = 4*12*s6*(13*s6 - 0.5*7);
 }
@@ -153,7 +154,8 @@ double PotentialSS::u(double r2) {
 }
 
 double PotentialSS::du(double r2) {
-  double du = -exponent * rpow(r2) + ufShift;
+  double du = -exponent * rpow(r2);
+  if (ufShift!=0) du += ufShift*sqrt(r2);
   return du;
 }
 
@@ -167,8 +169,9 @@ void PotentialSS::u012(double r2, double &u, double &du, double &d2u) {
   d2u = -(exponent+1)*du;
   u += uShift;
   if (ufShift != 0) {
-    u += sqrt(r2)*ufShift;
-    du += ufShift;
+    double x = sqrt(r2)*ufShift;
+    u += x;
+    du += x;
   }
 }
 
