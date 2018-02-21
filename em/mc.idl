@@ -37,10 +37,23 @@ interface PotentialJS {
   double d2u(double r2);
 };
 
-interface Box {
-  void Box();
+interface SpeciesList {
+  void SpeciesList();
+  long size();
+  void add(Species species);
+  Species get(long iSpecies);
+};
+
+interface Species {
+  void Species(long numAtoms);
   long getNumAtoms();
-  void setNumAtoms(long numAtoms);
+};
+
+interface Box {
+  void Box([Ref] SpeciesList speciesList);
+  long getNumAtoms();
+  long getNumMolecules();
+  void setNumMolecules(long iSpecies, long numMolecules);
   VoidPtr getBoxSize();
   void setBoxSize(double x, double y, double z);
   void initCoordinates();
@@ -86,7 +99,7 @@ interface MCMoveDisplacement : MCMove {
 MCMoveDisplacement implements MCMove;
 
 interface MCMoveInsertDelete : MCMove {
-  void MCMoveInsertDelete([Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double mu);
+  void MCMoveInsertDelete([Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double mu, long iSpecies);
 };
 
 MCMoveInsertDelete implements MCMove;

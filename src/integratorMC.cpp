@@ -36,9 +36,9 @@ void IntegratorMC::doStep() {
     m = moves[0];
   }
   lastMove = m;
-  m->doTrial();
-  double chi = m->getChi(temperature);
-  if (chi<1 && chi<random.nextDouble()) {
+  bool success = m->doTrial();
+  double chi = success ? m->getChi(temperature) : 0;
+  if (chi==0 || (chi<1 && chi<random.nextDouble())) {
     //printf("chi %e 0\n", chi);
     m->rejectNotify();
   }

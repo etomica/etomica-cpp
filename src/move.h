@@ -47,7 +47,6 @@ class MCMoveDisplacement : public MCMove {
   public:
 
     MCMoveDisplacement(Box& box, PotentialMaster& potentialMaster, Random& random, double stepSize);
-    MCMoveDisplacement(Box& box, PotentialMaster& potentialMaster, sfmt_t& random, double stepSize);
     ~MCMoveDisplacement();
 
     virtual bool doTrial();
@@ -64,11 +63,11 @@ class MCMoveInsertDelete : public MCMove {
     int iAtom;
     bool doInsert;
     double mu;
+    int iSpecies;
 
   public:
 
-    MCMoveInsertDelete(Box& box, PotentialMaster& potentialMaster, Random& random, double mu);
-    MCMoveInsertDelete(Box& box, PotentialMaster& potentialMaster, sfmt_t& random, double mu);
+    MCMoveInsertDelete(Box& box, PotentialMaster& potentialMaster, Random& random, double mu, int iSpecies);
     ~MCMoveInsertDelete();
 
     virtual bool doTrial();

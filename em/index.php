@@ -205,9 +205,11 @@ function getInputInt(id) {
       default:
         throw new Exception("unknown potential type!");
     }
-    box = new Module.Box();
+    var speciesList = new SpeciesList();
+    speciesList.add(new Species(1));
+    box = new Module.Box(speciesList);
     box.setBoxSize(L,L,L);
-    box.setNumAtoms(numAtoms);
+    box.setNumMolecules(0, numAtoms);
     box.initCoordinates();
     if (doNbrList) {
       potentialMaster = new Module.PotentialMasterList(potential, box, rc, 2, nbrRange);

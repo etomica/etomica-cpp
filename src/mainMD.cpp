@@ -21,12 +21,14 @@ int main(int argc, char** argv) {
   printf("random seed: %d\n", rand.getSeed());
 
   PotentialLJ plj(TRUNC_SIMPLE, 2.5);
-  Box box;
+  SpeciesList speciesList;
+  speciesList.add(new Species(1));
+  Box box(speciesList);
   double L = pow(numAtoms/density, 1.0/3.0);
   printf("box size: %f\n", L);
   box.setBoxSize(L,L,L);
   box.boxSizeUpdated();
-  box.setNumAtoms(numAtoms);
+  box.setNumMolecules(0, numAtoms);
   box.initCoordinates();
   box.enableVelocities();
   /*PotentialMasterCell potentialMaster(plj, box, 3.0, 2);

@@ -23,12 +23,14 @@ int main(int argc, char** argv) {
   printf("random seed: %d\n", rand.getSeed());
 
   PotentialLJ plj(TRUNC_SIMPLE, 3.0);
-  Box box;
+  SpeciesList speciesList;
+  speciesList.add(new Species(1));
+  Box box(speciesList);
   double L = pow(numAtoms/density, 1.0/3.0);
   printf("box size: %f\n", L);
   box.setBoxSize(L,L,L);
   box.boxSizeUpdated();
-  box.setNumAtoms(numAtoms);
+  box.setNumMolecules(0, numAtoms);
   box.initCoordinates();
   PotentialMasterCell potentialMaster(plj, box, 3.0, 2);
   potentialMaster.init();
@@ -38,7 +40,7 @@ int main(int argc, char** argv) {
   IntegratorMC integrator(potentialMaster, rand);
   MCMoveDisplacement move(box, potentialMaster, rand, 0.2);
   integrator.addMove(&move, 1);
-  MCMoveInsertDelete moveID(box, potentialMaster, rand, mu);
+  MCMoveInsertDelete moveID(box, potentialMaster, rand, mu, 0);
   if (doGC) {
     integrator.addMove(&moveID, 1);
   }

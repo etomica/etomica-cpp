@@ -97,7 +97,12 @@ bool MCMoveDisplacement::doTrial() {
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
   }
-  iAtom = random.nextInt(box.getNumAtoms());
+  int na = box.getNumAtoms();
+  if (na==0) {
+    iAtom = -1;
+    return false;
+  }
+  iAtom = random.nextInt(na);
   uOld = potentialMaster.oldEnergy(iAtom);
   double* r = box.getAtomPosition(iAtom);
   std::copy(r, r+3, rOld);
@@ -129,6 +134,7 @@ void MCMoveDisplacement::acceptNotify() {
 
 void MCMoveDisplacement::rejectNotify() {
   //printf("rejected\n");
+  if (iAtom < 0) return;
   double* r = box.getAtomPosition(iAtom);
   std::copy(rOld, rOld+3, r);
   uNew = uOld;
@@ -140,7 +146,7 @@ double MCMoveDisplacement::energyChange() {
 }
 
 
-MCMoveInsertDelete::MCMoveInsertDelete(Box& b, PotentialMaster& p, Random& r, double m) : MCMove(b,p,r,0), mu(m) {
+MCMoveInsertDelete::MCMoveInsertDelete(Box& b, PotentialMaster& p, Random& r, double m, int s) : MCMove(b,p,r,0), mu(m), iSpecies(s) {
   tunable = false;
 }
 
@@ -194,10 +200,10 @@ double MCMoveInsertDelete::getChi(double T) {
 }
 
 void MCMoveInsertDelete::acceptNotify() {
-  int n = box.getNumAtoms();
+  int n = box.getNumMolecules();
   if (doInsert) {
     //printf("accept insert %d\n", n+1);
-    box.setNumAtoms(n+1);
+    box.setNumMolecules(iSpecies, n+1);
     double *ri = box.getAtomPosition(n);
     std::copy(rNew, rNew+3, ri);
     potentialMaster.newAtom();
@@ -214,7 +220,7 @@ void MCMoveInsertDelete::acceptNotify() {
     potentialMaster.removeAtom(iAtom);
     double *rn = box.getAtomPosition(n-1);
     std::copy(rn, rn+3, ri);
-    box.setNumAtoms(n-1);
+    box.setNumMolecules(iSpecies, n-1);
   }
 
   numAccepted++;
