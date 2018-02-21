@@ -20,7 +20,7 @@ $(OBJDIR)/mc: $(OBJECTS) $(MAINOBJ)
 	g++ $(FLAGS) -o $@ $(OBJECTS) $(MAINOBJ) -lm
 
 $(OBJDIR)/md: $(OBJECTS) $(MAINMDOBJ)
-	g++ $(FLAGS) -o $@ $(OBJECTS) $(COBJECTS) $(MAINMDOBJ) -lm
+	g++ $(FLAGS) -o $@ $(OBJECTS) $(MAINMDOBJ) -lm
 
 $(OBJECTS) $(MAINOBJ) $(MAINMDOBJ): $(OBJDIR)/%.o: %.cpp *.h
 	g++ -fPIC -c $(FLAGS) -DSFMT_MEXP=19937 -o $@ $<
