@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
 
   PotentialLJ plj(TRUNC_SIMPLE, 3.0);
   SpeciesList speciesList;
-  speciesList.add(new Species(1));
+  speciesList.add(new SpeciesSimple(1,1));
   Box box(speciesList);
   double L = pow(numAtoms/density, 1.0/3.0);
   printf("box size: %f\n", L);

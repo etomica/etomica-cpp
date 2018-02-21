@@ -1,19 +1,36 @@
 #pragma once
 
+#include "atom-info.h"
+
 class Species {
-  private:
-    int numAtoms;
+  protected:
+    int numAtoms, numAtomTypes;
+    int* atomTypes;
 
   public:
-    Species(int numAtoms);
-    virtual ~Species() {}
+    Species(int numAtoms, int numAtomTypes);
+    virtual ~Species();
+    // to be called by SpeciesList when Species is added
+    virtual void init(AtomInfo& atomInfo) = 0;
+    int* getAtomTypes();
     int getNumAtoms();
+};
+
+class SpeciesSimple : public Species {
+  private:
+    double mass;
+
+  public:
+    SpeciesSimple(int numAtoms, double mass);
+    virtual ~SpeciesSimple() {}
+    virtual void init(AtomInfo& atomInfo);
 };
 
 class SpeciesList {
   private:
     int nSpecies;
     Species** allSpecies;
+    AtomInfo atomInfo;
 
   public:
     SpeciesList();

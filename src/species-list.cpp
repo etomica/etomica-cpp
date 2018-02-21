@@ -16,6 +16,7 @@ void SpeciesList::add(Species* s) {
   allSpecies = (Species**)realloc(allSpecies, (nSpecies+1)*sizeof(Species*));
   allSpecies[nSpecies] = s;
   nSpecies++;
+  s->init(atomInfo);
 }
 
 Species* SpeciesList::get(int i) {
