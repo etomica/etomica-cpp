@@ -12,3 +12,7 @@ Species::~Species() {
 int Species::getNumAtoms() {
   return numAtoms;
 }
+
+int* Species::getAtomTypes() {
+  return atomTypes;
+}

@@ -1,8 +1,9 @@
 #include <cstddef>
 #include <stdlib.h>
+#include <stdio.h>
 #include "species.h"
 
-SpeciesList::SpeciesList() : nSpecies(0), allSpecies(nullptr) {}
+SpeciesList::SpeciesList() : nSpecies(0), allSpecies(nullptr), fixed(false) {}
 
 SpeciesList::~SpeciesList() {
   if (allSpecies) free(allSpecies);
@@ -13,6 +14,10 @@ int SpeciesList::size() {
 }
 
 void SpeciesList::add(Species* s) {
+  if (fixed) {
+    fprintf(stderr, "SpeciesList is already in use and cannot be added to\n");
+    abort();
+  }
   allSpecies = (Species**)realloc(allSpecies, (nSpecies+1)*sizeof(Species*));
   allSpecies[nSpecies] = s;
   nSpecies++;
@@ -20,5 +25,6 @@ void SpeciesList::add(Species* s) {
 }
 
 Species* SpeciesList::get(int i) {
+  fixed = true;
   return allSpecies[i];
 }

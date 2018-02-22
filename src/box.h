@@ -12,6 +12,7 @@ class Box {
     int knownNumSpecies;
     int *numAtomsBySpecies, *numMoleculesBySpecies, *maxNumMoleculesBySpecies;
     int **firstAtom, **moleculeIdx;
+    int **atomTypes;
 
     SpeciesList &speciesList;
 
@@ -29,5 +30,6 @@ class Box {
     void setNumMolecules(int iSpecies, int numMolecules);
     double* getAtomPosition(int iAtom);
     double* getAtomVelocity(int iAtom);
+    int getAtomType(int iAtom);
     void enableVelocities();
 };

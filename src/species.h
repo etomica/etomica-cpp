@@ -31,6 +31,7 @@ class SpeciesList {
     int nSpecies;
     Species** allSpecies;
     AtomInfo atomInfo;
+    bool fixed;
 
   public:
     SpeciesList();
