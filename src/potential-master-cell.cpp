@@ -18,15 +18,6 @@ PotentialMasterCell::~PotentialMasterCell() {
 #define dx (o[ix])
 #define dy (o[iy])
 #define dz (oz[iz])
-#define mapValue (dx+(dy+dz*numCells[1])*numCells[0])
-#define checkD if (dz==0) { \
-                if (dy<1) { \
-                 if (dx<1) continue; \
-                } \
-                else if (dx<0) { \
-                 continue; \
-                } \
-               } \
 
 int PotentialMasterCell::wrappedIndex(int i, int nc) {
   int rv = i;
@@ -72,68 +63,52 @@ void PotentialMasterCell::init() {
   boxOffsets = (double**)realloc(boxOffsets, totalCells*sizeof(double*));
   rawBoxOffsets = (double**)realloc2D((void**)rawBoxOffsets, 3*3*3, 3, sizeof(double));
 
-  int numOffsets = 0;
-  switch (cellRange) {
-    case 1:
-      numOffsets = 13;
-      break;
-    case 2:
-      numOffsets = 62;
-      break;
-    case 3:
-      numOffsets = 155;
-      break;
-  }
-  cellOffsets.resize(numOffsets);
-  int o[7] = {0, 1, -1, 2, -2, 3, -3};
-  int oz[4] = {0, 1, 2, 3};
+  cellOffsets.resize(0);
   int dCell = 0;
-  for (int iz=0; iz<2; iz++) {
-    for (int iy=0; iy<3; iy++) {
-      for (int ix=0; ix<3; ix++) {
-        checkD
-        cellOffsets[dCell] = mapValue;
-        dCell++;
-      }
-    }
-  }
-  if (cellRange>1) {
-    for (int iz=0; iz<3; iz++) {
-      for (int iy=0; iy<5; iy++) {
-        int ixMin = (iy<3 && iz!=2) ? 3 : 0;
-        for (int ix=ixMin; ix<5; ix++) {
-          checkD
-          cellOffsets[dCell] = mapValue;
+  int lastCellCount = 0;
+
+  for (int icd=1; icd<=cellRange+5; icd++) {
+    // we want all cells whose squared (index) distance is not more than icd
+    // but exclude any cells handle in the previous passes
+    int icd2 = icd*icd;
+    int iz2;
+    for (int iz=0; (iz2=iz*iz)<=icd2; iz++) {
+      int izm1 = iz==0 ? 0 : (abs(iz)-1);
+      int izm1Sq = izm1*izm1;
+      int iy2Max = icd2-iz2;
+      int iyMax = (int)sqrt(iy2Max+0.001);
+      for (int iy=-iyMax; iy<=iyMax; iy++) {
+        int iym1 = iy==0 ? 0 : (abs(iy)-1);
+        int iym1Sq = iym1*iym1;
+        int iy2 = iy*iy;
+        int ix2Max = iy2Max-iy2;
+        int ixMax = (int)sqrt(ix2Max+0.001);
+        int ix2Min = (icd-1)*(icd-1) - iz2 - iy2;
+        int ixMin;
+        if (ix2Min<0) {
+          ix2Min=0;
+          ixMin=-1;
+        }
+        else {
+          ixMin = (int)sqrt(ix2Min+0.001);
+        }
+        for (int ix=-ixMax; ix<=ixMax; ix++) {
+          if (ix>=-ixMin && ix<=ixMin) {ix = ixMin+1; if (ix>ixMax) break;}
+          if (iz==0) {
+            if (iy<1) {if (ix<1) continue;}
+            else if (ix<0) continue;
+          }
+          int ixm1 = ix==0 ? 0 : (abs(ix)-1);
+          int ixm1Sq = ixm1*ixm1;
+          if (ixm1Sq+iym1Sq+izm1Sq >= cellRange*cellRange) continue;
+          int mv = ix+(iy+iz*numCells[1])*numCells[0];
+          cellOffsets.push_back(mv);
           dCell++;
         }
       }
     }
-    if (cellRange>2) {
-      for (int iz=0; iz<4; iz++) {
-        for (int iy=0; iy<7; iy++) {
-          if (iy>5 && iz==4) {
-            for (int ix=0; ix<3; ix++) {
-              cellOffsets[dCell] = mapValue;
-              dCell++;
-            }
-            continue;
-          }
-          if (abs(dy)+dz==5) {  // 3+2
-            for (int ix=0; ix<5; ix++) {
-              cellOffsets[dCell] = mapValue;
-              dCell++;
-            }
-            continue;
-          }
-          int ixMin = (iy<5 && iz!=3) ? 5 : 0;
-          for (int ix=ixMin; ixMin<7; ixMin++) {
-            checkD;
-            cellOffsets[dCell] = mapValue;
-            dCell++;
-          }
-        }
-      }
-    }
+    if (dCell==lastCellCount) break;
+    lastCellCount = dCell;
   }
 
   for (int ix=-1; ix<=1; ix++) {
