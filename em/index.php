@@ -206,20 +206,21 @@ function getInputInt(id) {
         throw new Exception("unknown potential type!");
     }
     var speciesList = new SpeciesList();
-    speciesList.add(new Species(1));
+    speciesList.add(new SpeciesSimple(1,1));
     box = new Module.Box(speciesList);
     box.setBoxSize(L,L,L);
     box.setNumMolecules(0, numAtoms);
     box.initCoordinates();
     if (doNbrList) {
-      potentialMaster = new Module.PotentialMasterList(potential, box, rc, 2, nbrRange);
+      potentialMaster = new Module.PotentialMasterList(speciesList, box, 2, nbrRange);
     }
     else if (doCells) {
-      potentialMaster = new Module.PotentialMasterCell(potential, box, rc, 2);
+      potentialMaster = new Module.PotentialMasterCell(speciesList, box, 2);
     }
     else {
       potentialMaster = new Module.PotentialMaster(potential, box);
     }
+    potentialMaster.setPairPotential(0, 0, potential);
     if (doCells || doNbrList) potentialMaster.init();
     var seed = getInputInt("seed");
     if (seed == 0) {

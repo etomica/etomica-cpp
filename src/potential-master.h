@@ -52,7 +52,8 @@ class PotentialCallbackHMA : public PotentialCallback {
 
 class PotentialMaster {
   protected:
-    Potential& potential;
+    Potential*** pairPotentials;
+    double** pairCutoffs;
     Box& box;
     vector<double> uAtom;
     vector<double> duAtom;
@@ -60,10 +61,12 @@ class PotentialMaster {
     int numAtomsChanged;
     double** force;
     vector<PotentialCallback*> pairCallbacks;
+    int numAtomTypes;
   public:
-    PotentialMaster(Potential& p2, Box& box);
+    PotentialMaster(SpeciesList &speciesList, Box& box);
     virtual ~PotentialMaster() {}
     Box& getBox();
+    void setPairPotential(int iType, int jType, Potential* pij);
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
     virtual void computeOne(int iAtom, double *ri, double &energy, bool isTrial);
     virtual void updateAtom(int iAtom) {}
@@ -77,7 +80,6 @@ class PotentialMaster {
 
 class PotentialMasterCell : public PotentialMaster {
   protected:
-    double range;
     int cellRange;
     double boxHalf[3];
     int numCells[3];
@@ -91,14 +93,15 @@ class PotentialMasterCell : public PotentialMaster {
     double** boxOffsets;
     int numAtoms;
 
-    void handleComputeAll(int iAtom, int jAtom, double *ri, double *rj, double &ui, double &uj, double *fi, double *fj, double& uTot, double& virialTot, double rc2, bool doForces);
-    void handleComputeOne(double *ri, double *rj, int jAtom, double& uTot, double rc2);
+    void handleComputeAll(int iAtom, int jAtom, double *ri, double *rj, Potential* pij, double &ui, double &uj, double *fi, double *fj, double& uTot, double& virialTot, double rc2, bool doForces);
+    void handleComputeOne(Potential* pij, double *ri, double *rj, int jAtom, double& uTot, double rc2);
     int wrappedIndex(int i, int nc);
     void moveAtomIndex(int oldIndex, int newIndex);
   public:
-    PotentialMasterCell(Potential& p2, Box& box, double potentialRange, int cellRange);
+    PotentialMasterCell(SpeciesList &speciesList, Box& box, int cellRange);
     ~PotentialMasterCell();
-    void init();
+    virtual double getRange();
+    virtual void init();
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
     virtual void computeOne(int iAtom, double *ri, double &energy, bool isTrial);
     virtual void updateAtom(int iAtom);
@@ -111,6 +114,7 @@ class PotentialMasterCell : public PotentialMaster {
 
 class PotentialMasterList : public PotentialMasterCell {
   protected:
+    double nbrRange;
     int **nbrs;
     bool onlyUpNbrs; // standard MD only needs up.  MC or DMD needs down
     int *numAtomNbrsUp, *numAtomNbrsDn;
@@ -118,14 +122,16 @@ class PotentialMasterList : public PotentialMasterCell {
     int maxNab;
     double ***nbrBoxOffsets;
     bool forceReallocNbrs;
-    double potentialRange;
     double **oldAtomPositions;
     double safetyFac;
+    double *maxR2, *maxR2Unsafe;
 
     int checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2, double *jbo);
   public:
-    PotentialMasterList(Potential& p2, Box& box, double potentialRange, int cellRange, double nbrRange);
+    PotentialMasterList(SpeciesList& speciesList, Box& box, int cellRange, double nbrRange);
     ~PotentialMasterList();
+    virtual double getRange();
+    virtual void init();
     void reset();
     void setDoDownNbrs(bool doDown);
     void checkUpdateNbrs();

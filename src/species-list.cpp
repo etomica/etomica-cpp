@@ -28,3 +28,7 @@ Species* SpeciesList::get(int i) {
   fixed = true;
   return allSpecies[i];
 }
+
+AtomInfo& SpeciesList::getAtomInfo() {
+  return atomInfo;
+}

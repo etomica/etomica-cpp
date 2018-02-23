@@ -2,7 +2,10 @@
 #include "potential-master.h"
 #include "alloc2d.h"
 
-PotentialMasterList::PotentialMasterList(Potential& p2, Box& box, double pRange, int cellRange, double nbrRange) : PotentialMasterCell(p2, box, nbrRange, cellRange), nbrs(nullptr), onlyUpNbrs(true), numAtomNbrsUp(nullptr), numAtomNbrsDn(nullptr), nbrsNumAtoms(0), maxNab(0), nbrBoxOffsets(nullptr), forceReallocNbrs(false), potentialRange(pRange), oldAtomPositions(nullptr), safetyFac(0.1) { }
+PotentialMasterList::PotentialMasterList(SpeciesList& sl, Box& box, int cellRange, double nRange) : PotentialMasterCell(sl, box, cellRange), nbrRange(nRange), nbrs(nullptr), onlyUpNbrs(true), numAtomNbrsUp(nullptr), numAtomNbrsDn(nullptr), nbrsNumAtoms(0), maxNab(0), nbrBoxOffsets(nullptr), forceReallocNbrs(false), oldAtomPositions(nullptr), safetyFac(0.1) {
+  maxR2 = (double*)malloc(numAtomTypes*sizeof(double));
+  maxR2Unsafe = (double*)malloc(numAtomTypes*sizeof(double));
+}
 
 PotentialMasterList::~PotentialMasterList() {
   if (numAtomNbrsUp) free(numAtomNbrsUp);
@@ -10,6 +13,26 @@ PotentialMasterList::~PotentialMasterList() {
   if (nbrs) free2D((void**)nbrs);
   if (nbrBoxOffsets) free2D((void**)nbrBoxOffsets);
   if (oldAtomPositions) free2D((void**)oldAtomPositions);
+}
+
+double PotentialMasterList::getRange() {
+  return nbrRange;
+}
+
+void PotentialMasterList::init() {
+  PotentialMasterCell::init();
+  for (int i=0; i<numAtomTypes; i++) {
+    maxR2Unsafe[i] = maxR2[i] = 1e100;
+    for (int j=0; j<numAtomTypes; j++) {
+      double rc = pairPotentials[i][j]->getCutoff();
+      double maxDrUnsafe = (nbrRange-rc)*0.5;
+      double x = maxDrUnsafe*maxDrUnsafe;
+      if (maxR2Unsafe[i] < x) continue;
+      maxR2Unsafe[i] = x;
+      double maxDr = maxDrUnsafe*(1-safetyFac);
+      maxR2[i] = maxDr*maxDr;
+    }
+  }
 }
 
 void PotentialMasterList::setDoDownNbrs(bool doDown) {
@@ -33,23 +56,20 @@ int PotentialMasterList::checkNbrPair(int iAtom, int jAtom, double *ri, double *
 
 void PotentialMasterList::checkUpdateNbrs() {
   int boxNumAtoms = box.getNumAtoms();
-  double maxDrUnsafe = (range-potential.getCutoff())*0.5;
 #ifdef DEBUG
-  double maxR2Unsafe = maxDrUnsafe*maxDrUnsafe;
-#endif
-  double maxDr = maxDrUnsafe*(1-safetyFac);
-  double maxR2 = maxDr*maxDr;
   bool needsUpdate = false;
+#endif
   for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) {
     double *ri = box.getAtomPosition(iAtom);
     double r2 = 0;
+    int iType = box.getAtomType(iAtom);
     for (int j=0; j<3; j++) {
       double dr = ri[j]-oldAtomPositions[iAtom][j];
       r2 += dr*dr;
     }
-    if (r2 > maxR2) {
+    if (r2 > maxR2[iType]) {
 #ifdef DEBUG
-      if (safetyFac>0 && r2 > maxR2Unsafe) {
+      if (safetyFac>0 && r2 > maxR2Unsafe[iType]) {
         fprintf(stderr, "atom %d drifted into unsafe zone before nbr update\n");
       }
       needsUpdate = true;
@@ -59,7 +79,9 @@ void PotentialMasterList::checkUpdateNbrs() {
 #endif
     }
   }
+#ifdef DEBUG
   if (needsUpdate) reset();
+#endif
 }
 
 void PotentialMasterList::reset() {
@@ -95,7 +117,7 @@ resetStart:
 
   for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) numAtomNbrsUp[iAtom] = 0;
 
-  double rc2 = range*range;
+  double rc2 = nbrRange*nbrRange;
   double rjp[3];
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
     int tooMuch = 0;
@@ -161,8 +183,6 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
   }
   int numAtoms = box.getNumAtoms();
   double uTot=0, virialTot=0;
-  double rc = potential.getCutoff();
-  double rc2 = rc*rc;
   double rjp[3];
   for (int i=0; i<numAtoms; i++) {
     uAtom[i] = 0;
@@ -170,16 +190,22 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
   }
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
     double *ri = box.getAtomPosition(iAtom);
+    int iType = box.getAtomType(iAtom);
+    double *iCutoffs = pairCutoffs[iType];
+    Potential** iPotentials = pairPotentials[iType];
     double *fi = doForces ? force[iAtom] : nullptr;
     int iNumNbrs = numAtomNbrsUp[iAtom];
     int* iNbrs = nbrs[iAtom];
     double** iNbrBoxOffsets = nbrBoxOffsets[iAtom];
     for (int j=0; j<iNumNbrs; j++) {
       int jAtom = iNbrs[j];
+      int jType = box.getAtomType(jAtom);
+      double rc2 = iCutoffs[jType];
+      Potential* pij = iPotentials[jType];
       double *rj = box.getAtomPosition(jAtom);
       double *jbo = iNbrBoxOffsets[j];
       for (int k=0; k<3; k++) rjp[k] = rj[k] + jbo[k];
-      handleComputeAll(iAtom, jAtom, ri, rjp, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, doForces);
+      handleComputeAll(iAtom, jAtom, ri, rjp, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, doForces);
     }
   }
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {

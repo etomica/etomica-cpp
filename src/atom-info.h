@@ -10,5 +10,6 @@ class AtomInfo {
     virtual ~AtomInfo();
     int addAtomType(double mass);
     double getMass(int iType);
+    int getNumTypes();
 };
 

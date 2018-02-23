@@ -39,4 +39,5 @@ class SpeciesList {
     int size();
     void add(Species* species);
     Species* get(int iSpecies);
+    AtomInfo& getAtomInfo();
 };

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <cstddef>
 
 #include "atom-info.h"
 
@@ -13,4 +14,8 @@ int AtomInfo::addAtomType(double m) {
   mass[numAtomTypes] = m;
   numAtomTypes++;
   return numAtomTypes-1;
+}
+
+int AtomInfo::getNumTypes() {
+  return numAtomTypes;
 }

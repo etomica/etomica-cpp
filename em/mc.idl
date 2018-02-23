@@ -45,9 +45,15 @@ interface SpeciesList {
 };
 
 interface Species {
-  void Species(long numAtoms);
   long getNumAtoms();
+  VoidPtr getAtomTypes();
 };
+
+interface SpeciesSimple : Species {
+  void SpeciesSimple(long numAtoms, double mass);
+};
+
+SpeciesSimple implements Species;
 
 interface Box {
   void Box([Ref] SpeciesList speciesList);
@@ -63,18 +69,19 @@ interface Box {
 };
 
 interface PotentialMaster {
-  void PotentialMaster([Ref] Potential p2, [Ref] Box box);
+  void PotentialMaster([Ref] SpeciesList sl, [Ref] Box box);
+  void setPairPotential(long iType, long jType, Potential pij);
 };
 
 interface PotentialMasterCell : PotentialMaster {
-  void PotentialMasterCell([Ref] Potential p2, [Ref] Box box, double potentialRange, long cellRange);
+  void PotentialMasterCell([Ref] SpeciesList sl, [Ref] Box box, long cellRange);
   void init();
 };
 
 PotentialMasterCell implements PotentialMaster;
 
 interface PotentialMasterList : PotentialMasterCell {
-  void PotentialMasterList([Ref] Potential p2, [Ref] Box box, double potentialRange, long cellRange, double nbrRange);
+  void PotentialMasterList([Ref] SpeciesList sl, [Ref] Box box, long cellRange, double nbrRange);
 };
 
 PotentialMasterList implements PotentialMasterCell;

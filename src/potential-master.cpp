@@ -4,12 +4,30 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(Potential& p2, Box& b) : potential(p2), box(b) {
+PotentialMaster::PotentialMaster(SpeciesList& sl, Box& b) : box(b), numAtomsChanged(0), force(nullptr) {
+  numAtomTypes = sl.getAtomInfo().getNumTypes();
+
+  pairPotentials = (Potential***)malloc2D(numAtomTypes, numAtomTypes, sizeof(Potential*));
+  pairCutoffs = (double**)malloc2D(numAtomTypes, numAtomTypes, sizeof(double));
+  for (int i=0; i<numAtomTypes; i++) {
+    for (int j=0; j<numAtomTypes; j++) {
+      pairPotentials[i][j] = nullptr;
+      pairCutoffs[i][j] = 0;
+    }
+  }
   uAtom.resize(b.getNumAtoms());
   duAtom.resize(b.getNumAtoms());
   uAtomsChanged.resize(b.getNumAtoms());
-  numAtomsChanged = 0;
-  force = nullptr;
+}
+
+void PotentialMaster::setPairPotential(int iType, int jType, Potential* p) {
+  for (int i=0; i<numAtomTypes; i++) {
+    for (int j=0; j<numAtomTypes; j++) {
+      pairPotentials[i][j] = p;
+      double rc = p->getCutoff();
+      pairCutoffs[i][j] = rc*rc;
+    }
+  }
 }
 
 Box& PotentialMaster::getBox() {
@@ -29,8 +47,6 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
 
   int numAtoms = box.getNumAtoms();
   double uTot = 0, virialTot = 0;
-  double rc = potential.getCutoff();
-  double rc2 = rc*rc;
   double u, du, d2u;
   double dr[3];
   for (int i=0; i<numAtoms; i++) {
@@ -39,14 +55,17 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   }
   for (int i=0; i<numAtoms; i++) {
     double *ri = box.getAtomPosition(i);
+    int iType = box.getAtomType(i);
     for (int j=i+1; j<numAtoms; j++) {
+      int jType = box.getAtomType(j);
       double *rj = box.getAtomPosition(j);
       for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
       box.nearestImage(dr);
       double r2 = 0;
       for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
+      double rc2 = pairCutoffs[iType][jType];
       if (r2 > rc2) continue;
-      potential.u012(r2, u, du, d2u);
+      pairPotentials[iType][jType]->u012(r2, u, du, d2u);
       uAtom[i] += 0.5*u;
       uAtom[j] += 0.5*u;
       uTot += u;
@@ -87,22 +106,24 @@ void PotentialMaster::processAtomU(int coeff) {
 void PotentialMaster::computeOne(int iAtom, double *ri, double &u1, bool isTrial) {
   int numAtoms = box.getNumAtoms();
   u1 = 0;
-  double rc = potential.getCutoff();
-  double rc2 = rc*rc;
   double dr[3];
   numAtomsChanged = 1;
   uAtomsChanged[0] = iAtom;
   duAtom[0] = 0;
+  int iType = box.getAtomType(iAtom);
+  double* iCutoffs = pairCutoffs[iType];
+  Potential** iPotentials = pairPotentials[iType];
   for (int j=0; j<numAtoms; j++) {
     if (j==iAtom) continue;
+    int jType = box.getAtomType(j);
     double *rj = box.getAtomPosition(j);
     for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
     box.nearestImage(dr);
     double r2 = 0;
     for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
-    if (r2 > rc2) continue;
+    if (r2 > iCutoffs[jType]) continue;
     uAtomsChanged[numAtomsChanged] = j;
-    double uij = potential.u(r2);
+    double uij = iPotentials[jType]->u(r2);
     duAtom[0] += 0.5*uij;
     duAtom[numAtomsChanged] = 0.5*uij;
     numAtomsChanged++;

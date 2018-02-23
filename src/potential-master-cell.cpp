@@ -3,7 +3,7 @@
 #include "alloc2d.h"
 #include "potential-master.h"
 
-PotentialMasterCell::PotentialMasterCell(Potential& p2, Box& box, double pRange, int cRange) : PotentialMaster(p2, box), range(pRange), cellRange(cRange), rawBoxOffsets(nullptr), boxOffsets(nullptr) {
+PotentialMasterCell::PotentialMasterCell(SpeciesList& sl, Box& box, int cRange) : PotentialMaster(sl, box), cellRange(cRange), rawBoxOffsets(nullptr), boxOffsets(nullptr) {
 }
 
 PotentialMasterCell::~PotentialMasterCell() {
@@ -39,7 +39,19 @@ int PotentialMasterCell::wrappedIndex(int i, int nc) {
   return rv;
 }
 
+double PotentialMasterCell::getRange() {
+  double range = 0;
+  for (int iType=0; iType<numAtomTypes; iType++) {
+    for (int jType=iType; jType<numAtomTypes; jType++) {
+      double rc = pairPotentials[iType][jType]->getCutoff();
+      if (rc > range) range = rc;
+    }
+  }
+  return range;
+}
+
 void PotentialMasterCell::init() {
+  double range = getRange();
   double minCellSize = range/cellRange;
   int totalCells = 1;
   double* bs = box.getBoxSize();
@@ -175,7 +187,7 @@ void PotentialMasterCell::assignCells() {
     fprintf(stderr, "box has 0 volume, can't assign cells\n");
     return;
   }
-  if (range == 0 || cellRange == 0) {
+  if (getRange() == 0 || cellRange == 0) {
     fprintf(stderr, "range and cell range need to be non-zero\n");
     return;
   }
@@ -241,7 +253,7 @@ void PotentialMasterCell::updateAtom(int iAtom) {
   cellLastAtom[cellNum] = iAtom;
 }
 
-void PotentialMasterCell::handleComputeAll(int iAtom, int jAtom, double *ri, double *rj, double &ui, double &uj, double* fi, double* fj, double& uTot, double& virialTot, double rc2, bool doForces) {
+void PotentialMasterCell::handleComputeAll(int iAtom, int jAtom, double *ri, double *rj, Potential* pij, double &ui, double &uj, double* fi, double* fj, double& uTot, double& virialTot, double rc2, bool doForces) {
   double r2 = 0;
   double dr[3];
   for (int k=0; k<3; k++) {
@@ -250,7 +262,7 @@ void PotentialMasterCell::handleComputeAll(int iAtom, int jAtom, double *ri, dou
   }
   if (r2 > rc2) return;
   double u, du, d2u;
-  potential.u012(r2, u, du, d2u);
+  pij->u012(r2, u, du, d2u);
   ui += 0.5*u;
   uj += 0.5*u;
   uTot += u;
@@ -268,14 +280,14 @@ void PotentialMasterCell::handleComputeAll(int iAtom, int jAtom, double *ri, dou
   }
 }
 
-void PotentialMasterCell::handleComputeOne(double *ri, double *rj, int jAtom, double& uTot, double rc2) {
+void PotentialMasterCell::handleComputeOne(Potential* pij, double *ri, double *rj, int jAtom, double& uTot, double rc2) {
   double r2 = 0;
   for (int k=0; k<3; k++) {
     double dr = ri[k]-rj[k];
     r2 += dr*dr;
   }
   if (r2 > rc2) return;
-  double uij = potential.u(r2);
+  double uij = pij->u(r2);
   uAtomsChanged[numAtomsChanged] = jAtom;
   duAtom[0] += 0.5*uij;
   duAtom[numAtomsChanged] = 0.5*uij;
@@ -295,30 +307,33 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   }
   int numAtoms = box.getNumAtoms();
   double uTot=0, virialTot=0;
-  double rc = potential.getCutoff();
-  double rc2 = rc*rc;
   double rjp[3];
   for (int i=0; i<numAtoms; i++) {
     uAtom[i] = 0;
     if (doForces) for (int k=0; k<3; k++) force[i][k] = 0;
   }
-  for (int i=0; i<numAtoms; i++) {
-    double *ri = box.getAtomPosition(i);
-    double *fi = doForces ? force[i] : nullptr;
-    int jAtom=i;
+  for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+    int iType = 0; //box.getAtomType(iAtom);
+    double *iCutoffs = pairCutoffs[iType];
+    Potential** iPotentials = pairPotentials[iType];
+    double *ri = box.getAtomPosition(iAtom);
+    double *fi = doForces ? force[iAtom] : nullptr;
+    int jAtom=iAtom;
     while ((jAtom = cellNextAtom[jAtom]) > -1) {
       double *rj = box.getAtomPosition(jAtom);
-      handleComputeAll(i, jAtom, ri, rj, uAtom[i], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, doForces);
+      int jType = 0; //box.getAtomType(jAtom);
+      handleComputeAll(iAtom, jAtom, ri, rj, iPotentials[jType], uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], doForces);
     }
-    int iCell = atomCell[i];
+    int iCell = atomCell[iAtom];
     for (vector<int>::iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
       int jCell = iCell + *it;
       double *jbo = boxOffsets[jCell];
       jCell = wrapMap[jCell];
       for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
+        int jType = 0; //box.getAtomType(jAtom);
         double *rj = box.getAtomPosition(jAtom);
         for (int k=0; k<3; k++) rjp[k] = rj[k] + jbo[k];
-        handleComputeAll(i, jAtom, ri, rjp, uAtom[i], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, doForces);
+        handleComputeAll(iAtom, jAtom, ri, rjp, iPotentials[jType], uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], doForces);
       }
     }
   }
@@ -329,8 +344,9 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
 
 void PotentialMasterCell::computeOne(int iAtom, double *ri, double &u1, bool isTrial) {
   u1 = 0;
-  double rc = potential.getCutoff();
-  double rc2 = rc*rc;
+  int iType = box.getAtomType(iAtom);
+  double *iCutoffs = pairCutoffs[iType];
+  Potential** iPotentials = pairPotentials[iType];
   double rjp[3];
 
   int iCell = isTrial ? cellForCoord(ri) : atomCell[iAtom];
@@ -339,8 +355,9 @@ void PotentialMasterCell::computeOne(int iAtom, double *ri, double &u1, bool isT
   duAtom[0] = 0;
   for (int jAtom = cellLastAtom[iCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
     if (jAtom!=iAtom) {
+      int jType = box.getAtomType(jAtom);
       double *rj = box.getAtomPosition(jAtom);
-      handleComputeOne(ri, rj, jAtom, u1, rc2);
+      handleComputeOne(iPotentials[jType], ri, rj, jAtom, u1, iCutoffs[jType]);
     }
   }
 
@@ -351,7 +368,8 @@ void PotentialMasterCell::computeOne(int iAtom, double *ri, double &u1, bool isT
     for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
       double *rj = box.getAtomPosition(jAtom);
       for (int k=0; k<3; k++) rjp[k] = rj[k] + jbo[k];
-      handleComputeOne(ri, rjp, jAtom, u1, rc2);
+      int jType = box.getAtomType(jAtom);
+      handleComputeOne(iPotentials[jType], ri, rjp, jAtom, u1, iCutoffs[jType]);
     }
     jCell = iCell - *it;
     jbo = boxOffsets[jCell];
@@ -359,7 +377,8 @@ void PotentialMasterCell::computeOne(int iAtom, double *ri, double &u1, bool isT
     for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
       double *rj = box.getAtomPosition(jAtom);
       for (int k=0; k<3; k++) rjp[k] = rj[k] + jbo[k];
-      handleComputeOne(ri, rjp, jAtom, u1, rc2);
+      int jType = box.getAtomType(jAtom);
+      handleComputeOne(iPotentials[jType], ri, rjp, jAtom, u1, iCutoffs[jType]);
     }
   }
 }

@@ -134,9 +134,9 @@ void Box::setNumMolecules(int iSpecies, int n) {
     int* speciesAtomTypes = s->getAtomTypes();
     for (int i=numMoleculesBySpecies[iSpecies]; i<n; i++) {
       firstAtom[iSpecies][i] = i*sna;
-      for (int j=firstAtom[iSpecies][i]; j<sna; j++) {
+      for (int j=i*sna; j<(i+1)*sna; j++) {
         moleculeIdx[iSpecies][j] = i;
-        atomTypes[iSpecies][j] = speciesAtomTypes[j];
+        atomTypes[iSpecies][j] = speciesAtomTypes[j-(i*sna)];
       }
     }
     maxNumMoleculesBySpecies[iSpecies] = n;

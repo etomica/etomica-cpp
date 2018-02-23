@@ -32,7 +32,8 @@ int main(int argc, char** argv) {
   box.boxSizeUpdated();
   box.setNumMolecules(0, numAtoms);
   box.initCoordinates();
-  PotentialMasterCell potentialMaster(plj, box, 3.0, 2);
+  PotentialMasterCell potentialMaster(speciesList, box, 2);
+  potentialMaster.setPairPotential(0, 0, &plj);
   potentialMaster.init();
   int* numCells = potentialMaster.getNumCells();
   printf("cells: %d %d %d\n", numCells[0], numCells[1], numCells[2]);
