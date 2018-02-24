@@ -58,7 +58,6 @@ class PotentialMaster {
     vector<double> uAtom;
     vector<double> duAtom;
     vector<int> uAtomsChanged;
-    int numAtomsChanged;
     double** force;
     vector<PotentialCallback*> pairCallbacks;
     int numAtomTypes;

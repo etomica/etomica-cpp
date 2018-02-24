@@ -263,10 +263,9 @@ void PotentialMasterCell::handleComputeOne(Potential* pij, double *ri, double *r
   }
   if (r2 > rc2) return;
   double uij = pij->u(r2);
-  uAtomsChanged[numAtomsChanged] = jAtom;
+  uAtomsChanged.push_back(jAtom);
   duAtom[0] += 0.5*uij;
-  duAtom[numAtomsChanged] = 0.5*uij;
-  numAtomsChanged++;
+  duAtom.push_back(0.5*uij);
   uTot += uij;
 }
 
@@ -325,7 +324,9 @@ void PotentialMasterCell::computeOne(int iAtom, double *ri, double &u1, bool isT
   double rjp[3];
 
   int iCell = isTrial ? cellForCoord(ri) : atomCell[iAtom];
-  numAtomsChanged = 1;
+
+  uAtomsChanged.resize(1);
+  duAtom.resize(1);
   uAtomsChanged[0] = iAtom;
   duAtom[0] = 0;
   for (int jAtom = cellLastAtom[iCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {

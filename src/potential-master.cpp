@@ -4,7 +4,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(SpeciesList& sl, Box& b) : box(b), numAtomsChanged(0), force(nullptr) {
+PotentialMaster::PotentialMaster(SpeciesList& sl, Box& b) : box(b), force(nullptr) {
   numAtomTypes = sl.getAtomInfo().getNumTypes();
 
   pairPotentials = (Potential***)malloc2D(numAtomTypes, numAtomTypes, sizeof(Potential*));
@@ -16,8 +16,6 @@ PotentialMaster::PotentialMaster(SpeciesList& sl, Box& b) : box(b), numAtomsChan
     }
   }
   uAtom.resize(b.getNumAtoms());
-  duAtom.resize(b.getNumAtoms());
-  uAtomsChanged.resize(b.getNumAtoms());
 }
 
 void PotentialMaster::setPairPotential(int iType, int jType, Potential* p) {
@@ -93,21 +91,24 @@ double PotentialMaster::oldEnergy(int iAtom) {
 }
 
 void PotentialMaster::resetAtomDU() {
-  numAtomsChanged = 0;
+  uAtomsChanged.resize(0);
 }
 
 void PotentialMaster::processAtomU(int coeff) {
+  int numAtomsChanged = uAtomsChanged.size();
   for (int i=0; i<numAtomsChanged; i++) {
     int iAtom = uAtomsChanged[i];
     uAtom[iAtom] += coeff*duAtom[i];
   }
+  uAtomsChanged.resize(0);
 }
 
 void PotentialMaster::computeOne(int iAtom, double *ri, double &u1, bool isTrial) {
   int numAtoms = box.getNumAtoms();
   u1 = 0;
   double dr[3];
-  numAtomsChanged = 1;
+  uAtomsChanged.resize(1);
+  duAtom.resize(1);
   uAtomsChanged[0] = iAtom;
   duAtom[0] = 0;
   int iType = box.getAtomType(iAtom);
@@ -122,11 +123,10 @@ void PotentialMaster::computeOne(int iAtom, double *ri, double &u1, bool isTrial
     double r2 = 0;
     for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
     if (r2 > iCutoffs[jType]) continue;
-    uAtomsChanged[numAtomsChanged] = j;
+    uAtomsChanged.push_back(j);
     double uij = iPotentials[jType]->u(r2);
     duAtom[0] += 0.5*uij;
-    duAtom[numAtomsChanged] = 0.5*uij;
-    numAtomsChanged++;
+    duAtom.push_back(0.5*uij);
     u1 += uij;
   }
 }
@@ -136,7 +136,6 @@ void PotentialMaster::newAtom() {
   uAtom.resize(n);
   uAtom[n-1] = 0;
   duAtom.resize(n);
-  uAtomsChanged.resize(n);
 }
 
 void PotentialMaster::removeAtom(int iAtom) {
@@ -144,5 +143,4 @@ void PotentialMaster::removeAtom(int iAtom) {
   uAtom[iAtom] = uAtom[n-1];
   uAtom.resize(n);
   duAtom.resize(n);
-  uAtomsChanged.resize(n);
 }
