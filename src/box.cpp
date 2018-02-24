@@ -218,6 +218,35 @@ int Box::getAtomType(int i) {
   return atomTypes[iSpecies][idx];
 }
 
+int Box::getMolecule(int iAtom) {
+  int idx = iAtom, iSpecies = 0;
+  for ( ; iSpecies<knownNumSpecies-1 && idx > numAtomsBySpecies[iSpecies]; iSpecies++) {
+    idx -= numAtomsBySpecies[iSpecies];
+  }
+#ifdef DEBUG
+  if (idx>=numAtomsBySpecies[iSpecies]) {
+    printf("gAT oops i %d is more atoms than I have\n", i);
+    abort();
+  }
+#endif
+  return firstAtom[iSpecies][idx];
+}
+
+void Box::getFirstLastAtom(int iMolecule, int &fa, int &la) {
+  int idx = iMolecule, iSpecies = 0;
+  for ( ; iSpecies<knownNumSpecies-1 && idx > numMoleculesBySpecies[iSpecies]; iSpecies++) {
+    idx -= numMoleculesBySpecies[iSpecies];
+  }
+#ifdef DEBUG
+  if (idx>=numMoleculesBySpecies[iSpecies]) {
+    printf("gFA oops i %d is more molecules than I have\n", i);
+    abort();
+  }
+#endif
+  fa = firstAtom[iSpecies][idx];
+  la = fa + speciesList.get(iSpecies)->getNumAtoms() - 1;
+}
+
 void Box::boxSizeUpdated() {
   for (int i=0; i<3; i++) boxHalf[i] = 0.5*boxSize[i];
 }

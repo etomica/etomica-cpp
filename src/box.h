@@ -32,4 +32,6 @@ class Box {
     double* getAtomVelocity(int iAtom);
     int getAtomType(int iAtom);
     void enableVelocities();
+    void getFirstLastAtom(int iMolecule, int &firstAtom, int &lastAtom);
+    int getMolecule(int iAtom);
 };
