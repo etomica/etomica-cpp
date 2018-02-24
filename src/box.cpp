@@ -126,8 +126,39 @@ void Box::setNumMolecules(int iSpecies, int n) {
   int sna = s->getNumAtoms();
   int na = n*sna;
   if (n>maxNumMoleculesBySpecies[iSpecies]) {
-    positions[iSpecies] = (double**)realloc2D((void**)positions[iSpecies], na, 3, sizeof(double));
-    if (velocities) velocities[iSpecies] = (double**)realloc2D((void**)velocities[iSpecies], na, 3, sizeof(double));
+    if (iSpecies==0) {
+      int newTotalAtoms = getNumAtoms() + (n-numMoleculesBySpecies[iSpecies])*sna;
+      positions[0] = (double**)realloc2D0((void**)positions[0], na, newTotalAtoms, 3, sizeof(double));
+      if (velocities) velocities[0] = (double**)realloc2D0((void**)velocities[0], na, newTotalAtoms, 3, sizeof(double));
+      // positions[0] will properly point to the raw positions for species 0.  it has memory allocated
+      // to point to raw positions for other species, but those pointers have not been assigned.
+      // do that now.
+      int jAtom = na;
+      for (int jSpecies=1; jSpecies<knownNumSpecies; jSpecies++) {
+        for (int j=0; j<numAtomsBySpecies[jSpecies]; j++) {
+          positions[0][jAtom] = positions[jSpecies][j];
+          velocities[0][jAtom] = velocities[jSpecies][j];
+          jAtom++;
+        }
+      }
+    }
+    else {
+      if (velocities) velocities[iSpecies] = (double**)realloc2D((void**)velocities[iSpecies], na, 3, sizeof(double));
+      positions[iSpecies] = (double**)realloc2D((void**)positions[iSpecies], na, 3, sizeof(double));
+      // positions[0] needs to be updated to point to our new positions as well
+      int jAtom = 0;
+      for (int jSpecies=0; jSpecies<knownNumSpecies; jSpecies++) {
+        if (jSpecies<iSpecies) {
+          jAtom += numAtomsBySpecies[jSpecies];
+          continue;
+        }
+        for (int j=0; j<numAtomsBySpecies[jSpecies]; j++) {
+          positions[0][jAtom] = positions[jSpecies][j];
+          velocities[0][jAtom] = velocities[jSpecies][j];
+          jAtom++;
+        }
+      }
+    }
     firstAtom[iSpecies] = (int*)realloc(firstAtom[iSpecies], n*sizeof(int));
     moleculeIdx[iSpecies] = (int*)realloc(moleculeIdx[iSpecies], n*sizeof(int));
     atomTypes[iSpecies] = (int*)realloc(atomTypes[iSpecies], n*sizeof(int));
@@ -146,31 +177,31 @@ void Box::setNumMolecules(int iSpecies, int n) {
 }
 
 double* Box::getAtomPosition(int i) {
+#ifdef DEBUG
   int idx = i, iSpecies = 0;
   for ( ; iSpecies<knownNumSpecies-1 && idx > numAtomsBySpecies[iSpecies]; iSpecies++) {
     idx -= numAtomsBySpecies[iSpecies];
   }
-#ifdef DEBUG
   if (idx>=numAtomsBySpecies[iSpecies]) {
     printf("gAP oops i %d is more atoms than I have\n", i);
     abort();
   }
 #endif
-  return positions[iSpecies][idx];
+  return positions[0][i];
 }
 
 double* Box::getAtomVelocity(int i) {
+#ifdef DEBUG
   int idx = i, iSpecies = 0;
   for ( ; iSpecies<knownNumSpecies-1 && idx > numAtomsBySpecies[iSpecies]; iSpecies++) {
     idx -= numAtomsBySpecies[iSpecies];
   }
-#ifdef DEBUG
   if (idx>=numAtomsBySpecies[iSpecies]) {
     printf("gAP oops i %d is more atoms than I have\n", i);
     abort();
   }
 #endif
-  return velocities[iSpecies][idx];
+  return velocities[0][i];
 }
 
 int Box::getAtomType(int i) {

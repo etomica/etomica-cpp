@@ -9,10 +9,29 @@ inline static void** malloc2D(int rows, int cols, size_t s) {
   return array;
 }
 
+inline static void** malloc2D0(int rows, int totalRows, int cols, size_t s) {
+  void* raw = malloc(s*rows*cols);
+  void** array = (void**)malloc(totalRows*sizeof(void*));
+  for (int i=0; i<rows; i++) {
+    array[i] = ((char*)raw)+s*cols*i;
+  }
+  return array;
+}
+
 inline static void** realloc2D(void** array, int rows, int cols, size_t s) {
   if (!array) return malloc2D(rows, cols, s);
   void* newRaw = realloc(*array, s*rows*cols);
   void** newArray = (void**)realloc(array, rows*sizeof(void*));
+  for (int i=0; i<rows; i++) {
+    newArray[i] = ((char*)newRaw)+s*cols*i;
+  }
+  return newArray;
+}
+
+inline static void** realloc2D0(void** array, int rows, int totalRows, int cols, size_t s) {
+  if (!array) return malloc2D0(rows, totalRows, cols, s);
+  void* newRaw = realloc(*array, s*rows*cols);
+  void** newArray = (void**)realloc(array, totalRows*sizeof(void*));
   for (int i=0; i<rows; i++) {
     newArray[i] = ((char*)newRaw)+s*cols*i;
   }
