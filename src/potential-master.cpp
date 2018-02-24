@@ -17,7 +17,7 @@ PotentialMaster::PotentialMaster(SpeciesList& sl, Box& b) : speciesList(sl), box
     }
   }
   uAtom.resize(b.getNumAtoms());
-  bondedPairs = new vector<vector<int*>>[sl.size()];
+  bondedPairs = new vector<vector<int*> >[sl.size()];
   bondedPotentials = new vector<Potential*>[sl.size()];
   bondedAtoms = new vector<int>*[sl.size()];
 }

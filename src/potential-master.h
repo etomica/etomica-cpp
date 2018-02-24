@@ -62,7 +62,7 @@ class PotentialMaster {
     double** force;
     vector<PotentialCallback*> pairCallbacks;
     int numAtomTypes;
-    vector<vector<int*>> *bondedPairs;
+    vector<vector<int*> > *bondedPairs;
     vector<int> **bondedAtoms;
     vector<Potential*> *bondedPotentials;
     bool pureAtoms;
