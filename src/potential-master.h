@@ -52,6 +52,7 @@ class PotentialCallbackHMA : public PotentialCallback {
 
 class PotentialMaster {
   protected:
+    SpeciesList& speciesList;
     Potential*** pairPotentials;
     double** pairCutoffs;
     Box& box;
@@ -61,11 +62,17 @@ class PotentialMaster {
     double** force;
     vector<PotentialCallback*> pairCallbacks;
     int numAtomTypes;
+    vector<vector<int*>> *bondedPairs;
+    vector<int> **bondedAtoms;
+    vector<Potential*> *bondedPotentials;
+    bool pureAtoms;
+
   public:
     PotentialMaster(SpeciesList &speciesList, Box& box);
     virtual ~PotentialMaster() {}
     Box& getBox();
     void setPairPotential(int iType, int jType, Potential* pij);
+    void setBondPotential(int iSpecies, vector<int*> &bondedPairs, Potential *pBond);
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
     virtual void computeOne(int iAtom, double *ri, double &energy, bool isTrial);
     virtual void updateAtom(int iAtom) {}

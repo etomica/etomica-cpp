@@ -1,10 +1,11 @@
+#include <algorithm>
 #include <stdio.h>
 #include "potential-master.h"
 #include "alloc2d.h"
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(SpeciesList& sl, Box& b) : box(b), force(nullptr) {
+PotentialMaster::PotentialMaster(SpeciesList& sl, Box& b) : speciesList(sl), box(b), force(nullptr), pureAtoms(false) {
   numAtomTypes = sl.getAtomInfo().getNumTypes();
 
   pairPotentials = (Potential***)malloc2D(numAtomTypes, numAtomTypes, sizeof(Potential*));
@@ -16,6 +17,9 @@ PotentialMaster::PotentialMaster(SpeciesList& sl, Box& b) : box(b), force(nullpt
     }
   }
   uAtom.resize(b.getNumAtoms());
+  bondedPairs = new vector<vector<int*>>[sl.size()];
+  bondedPotentials = new vector<Potential*>[sl.size()];
+  bondedAtoms = new vector<int>*[sl.size()];
 }
 
 void PotentialMaster::setPairPotential(int iType, int jType, Potential* p) {
@@ -25,6 +29,26 @@ void PotentialMaster::setPairPotential(int iType, int jType, Potential* p) {
       double rc = p->getCutoff();
       pairCutoffs[i][j] = rc*rc;
     }
+  }
+}
+
+void PotentialMaster::setBondPotential(int iSpecies, vector<int*> &bp, Potential *p) {
+  pureAtoms = false;
+  bondedPairs[iSpecies].push_back(bp);
+  bondedPotentials[iSpecies].push_back(p);
+  Species* s = speciesList.get(iSpecies);
+  // bondedAtoms keeps track of all atoms bonded to a given atom, so that they can be
+  // excluded as a pair for standard (LJ) interactions
+  bondedAtoms[iSpecies] = new vector<int>[s->getNumAtoms()];
+  vector<int> *&myBA = bondedAtoms[iSpecies];
+  for (int i=0; i<(int)bp.size(); i++) {
+    int a0 = bp[i][0];
+    int a1 = bp[i][1];
+    if (!binary_search(myBA[a0].begin(), myBA[a0].end(), a1)) myBA[a0].push_back(a1);
+    if (!binary_search(myBA[a1].begin(), myBA[a1].end(), a0)) myBA[a1].push_back(a0);
+  }
+  for (int i=0; i<s->getNumAtoms(); i++) {
+    sort(myBA[i].begin(), myBA[i].end());
   }
 }
 
