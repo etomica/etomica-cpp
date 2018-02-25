@@ -558,9 +558,7 @@ document.getElementById("doNbrList").removeAttribute("readonly");
 document.getElementById("doNbrList").removeAttribute("disabled");
     </script>
 <?php
-  #ensure browser always fetches mc.js when it changes
-  $sha = base64_encode(hash_file("sha256","mc.js",TRUE));
-  echo "<script async type='text/javascript' src='mc.js' integrity='sha256-$sha' crossorigin='anonymous'></script>";
+  echo "<script async type='text/javascript' src='mc.js'></script>";
 ?>
   </body>
 </html>
