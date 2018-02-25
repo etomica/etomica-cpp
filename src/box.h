@@ -23,7 +23,8 @@ class Box {
     double* getBoxSize() {return boxSize;}
     void boxSizeUpdated();
     int getNumAtoms();
-    int getNumMolecules();
+    int getTotalNumMolecules();
+    int getNumMolecules(int iSpecies);
     void nearestImage(double *dr);
     void initCoordinates();
     void setBoxSize(double x, double y, double z);
@@ -32,6 +33,8 @@ class Box {
     double* getAtomVelocity(int iAtom);
     int getAtomType(int iAtom);
     void enableVelocities();
-    void getFirstLastAtom(int iMolecule, int &firstAtom, int &lastAtom);
+    void getAtomInfo(int iMolecule, int iSpecies);
+    int getFirstAtom(int iSpecies, int iMoleculeInSpecies);
+    void getMoleculeInfo(int iMolecule, int &iSpecies, int &firstAtom, int &lastAtom);
     int getMolecule(int iAtom);
 };

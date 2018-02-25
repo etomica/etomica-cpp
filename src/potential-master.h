@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <math.h>
+#include <cstddef>
 #include "box.h"
 #include "potential.h"
 
@@ -66,6 +67,8 @@ class PotentialMaster {
     vector<int> **bondedAtoms;
     vector<Potential*> *bondedPotentials;
     bool pureAtoms;
+    bool rigidMolecules;
+    void computeAllBonds(bool doForces, double &uTot, double &virialTot);
 
   public:
     PotentialMaster(SpeciesList &speciesList, Box& box);

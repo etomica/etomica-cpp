@@ -5,7 +5,12 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(SpeciesList& sl, Box& b) : speciesList(sl), box(b), force(nullptr), pureAtoms(false) {
+PotentialMaster::PotentialMaster(SpeciesList& sl, Box& b) : speciesList(sl), box(b), force(nullptr), rigidMolecules(true) {
+  pureAtoms = true;
+  for (int i=0; pureAtoms && i<sl.size(); i++) {
+    pureAtoms = sl.get(i)->getNumAtoms() == 1;
+  }
+
   numAtomTypes = sl.getAtomInfo().getNumTypes();
 
   pairPotentials = (Potential***)malloc2D(numAtomTypes, numAtomTypes, sizeof(Potential*));
@@ -76,9 +81,33 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
     if (doForces) for (int k=0; k<3; k++) force[i][k] = 0;
   }
   for (int i=0; i<numAtoms; i++) {
+    int iMolecule = i, iFirstAtom = i, iChildIndex = 0, iLastAtom = i, iSpecies = 0;
+    vector<int> *iBondedAtoms;
+    if (!pureAtoms) {
+      iMolecule = box.getMolecule(i);
+      if (!rigidMolecules) {
+        box.getMoleculeInfo(iMolecule, iSpecies, iFirstAtom, iLastAtom);
+        iChildIndex = i-iFirstAtom;
+        iBondedAtoms = &bondedAtoms[iSpecies][iChildIndex];
+      }
+    }
     double *ri = box.getAtomPosition(i);
     int iType = box.getAtomType(i);
     for (int j=i+1; j<numAtoms; j++) {
+      int jMolecule = j, jFirstAtom = j, jChildIndex = 0, jLastAtom = j, jSpecies = 0;
+      if (!pureAtoms) {
+        jMolecule = box.getMolecule(j);
+        if (rigidMolecules) {
+          if (iMolecule == jMolecule) continue;
+        }
+        else {
+          box.getMoleculeInfo(jMolecule, jSpecies, jFirstAtom, jLastAtom);
+          jChildIndex = j-jFirstAtom;
+          if (binary_search(iBondedAtoms->begin(), iBondedAtoms->end(), jChildIndex)) {
+            continue;
+          }
+        }
+      }
       int jType = box.getAtomType(j);
       double *rj = box.getAtomPosition(j);
       for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
@@ -105,8 +134,60 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
       }
     }
   }
+  if (!pureAtoms && !rigidMolecules) {
+    computeAllBonds(doForces, uTot, virialTot);
+  }
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);
+  }
+}
+
+void PotentialMaster::computeAllBonds(bool doForces, double &uTot, double &virialTot) {
+  int numSpecies = speciesList.size();
+  int iMolecule = 0, firstAtom = 0;
+  for (int iSpecies=0; iSpecies<numSpecies; iSpecies++) {
+    vector<Potential*> &iBondedPotentials = bondedPotentials[iSpecies];
+    if (iBondedPotentials.size() == 0) continue;
+    int sna = speciesList.get(iSpecies)->getNumAtoms();
+    vector<vector<int*> > iBondedPairs = bondedPairs[iSpecies];
+    for (int j=0; j<(int)iBondedPotentials.size(); j++) {
+      Potential* p = iBondedPotentials[j];
+      vector<int*> jBondedPairs = iBondedPairs[j];
+      for (int k=0; k<box.getNumMolecules(iSpecies); k++) {
+        for (int l=0; l<(int)jBondedPairs.size(); l++) {
+          int* lBondedPair = jBondedPairs[l];
+          int iAtom = firstAtom + lBondedPair[0];
+          int jAtom = firstAtom + lBondedPair[1];
+
+          double *ri = box.getAtomPosition(iAtom);
+          double *rj = box.getAtomPosition(jAtom);
+          double dr[3];
+          for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
+          box.nearestImage(dr);
+          double r2 = 0;
+          for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
+          double u, du, d2u;
+          p->u012(r2, u, du, d2u);
+          uAtom[iAtom] += 0.5*u;
+          uAtom[jAtom] += 0.5*u;
+          uTot += u;
+          virialTot += du;
+          for (vector<PotentialCallback*>::iterator it = pairCallbacks.begin(); it!=pairCallbacks.end(); it++) {
+            (*it)->pairCompute(iAtom, jAtom, dr, u, du, d2u);
+          }
+
+          // f0 = dr du / r^2
+          if (!doForces) continue;
+          du /= r2;
+          for (int m=0; m<3; m++) {
+            force[iAtom][m] += dr[m]*du;
+            force[jAtom][m] -= dr[m]*du;
+          }
+        }
+        iMolecule++;
+        firstAtom += sna;
+      }
+    }
   }
 }
 

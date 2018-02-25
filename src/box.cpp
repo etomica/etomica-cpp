@@ -27,7 +27,11 @@ Box::~Box() {
   free(atomTypes);
 }
 
-int Box::getNumMolecules() {
+int Box::getNumMolecules(int iSpecies) {
+  return numMoleculesBySpecies[iSpecies];
+}
+
+int Box::getTotalNumMolecules() {
   int s = 0;
   for (int i=0; i<knownNumSpecies; i++) s += numMoleculesBySpecies[i];
   return s;
@@ -232,8 +236,13 @@ int Box::getMolecule(int iAtom) {
   return firstAtom[iSpecies][idx];
 }
 
-void Box::getFirstLastAtom(int iMolecule, int &fa, int &la) {
-  int idx = iMolecule, iSpecies = 0;
+int Box::getFirstAtom(int iSpecies, int iMoleculeInSpecies) {
+  return firstAtom[iSpecies][iMoleculeInSpecies];
+}
+
+void Box::getMoleculeInfo(int iMolecule, int &iSpecies, int &fa, int &la) {
+  int idx = iMolecule;
+  iSpecies = 0;
   for ( ; iSpecies<knownNumSpecies-1 && idx > numMoleculesBySpecies[iSpecies]; iSpecies++) {
     idx -= numMoleculesBySpecies[iSpecies];
   }

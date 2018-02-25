@@ -54,7 +54,7 @@ double MCMoveInsertDelete::getChi(double T) {
 }
 
 void MCMoveInsertDelete::acceptNotify() {
-  int n = box.getNumMolecules();
+  int n = box.getTotalNumMolecules();
   if (doInsert) {
     //printf("accept insert %d\n", n+1);
     box.setNumMolecules(iSpecies, n+1);
