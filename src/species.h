@@ -40,4 +40,5 @@ class SpeciesList {
     void add(Species* species);
     Species* get(int iSpecies);
     AtomInfo& getAtomInfo();
+    bool isPurelyAtomic();
 };

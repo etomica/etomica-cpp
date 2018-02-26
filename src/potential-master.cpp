@@ -5,11 +5,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(SpeciesList& sl, Box& b) : speciesList(sl), box(b), force(nullptr), rigidMolecules(true) {
-  pureAtoms = true;
-  for (int i=0; pureAtoms && i<sl.size(); i++) {
-    pureAtoms = sl.get(i)->getNumAtoms() == 1;
-  }
+PotentialMaster::PotentialMaster(SpeciesList& sl, Box& b) : speciesList(sl), box(b), force(nullptr), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true) {
 
   numAtomTypes = sl.getAtomInfo().getNumTypes();
 
@@ -38,7 +34,7 @@ void PotentialMaster::setPairPotential(int iType, int jType, Potential* p) {
 }
 
 void PotentialMaster::setBondPotential(int iSpecies, vector<int*> &bp, Potential *p) {
-  pureAtoms = false;
+  rigidMolecules = false;
   bondedPairs[iSpecies].push_back(bp);
   bondedPotentials[iSpecies].push_back(p);
   Species* s = speciesList.get(iSpecies);
@@ -82,7 +78,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   }
   for (int i=0; i<numAtoms; i++) {
     int iMolecule = i, iFirstAtom = i, iChildIndex = 0, iLastAtom = i, iSpecies = 0;
-    vector<int> *iBondedAtoms;
+    vector<int> *iBondedAtoms = nullptr;
     if (!pureAtoms) {
       iMolecule = box.getMolecule(i);
       if (!rigidMolecules) {
@@ -94,20 +90,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
     double *ri = box.getAtomPosition(i);
     int iType = box.getAtomType(i);
     for (int j=i+1; j<numAtoms; j++) {
-      int jMolecule = j, jFirstAtom = j, jChildIndex = 0, jLastAtom = j, jSpecies = 0;
-      if (!pureAtoms) {
-        jMolecule = box.getMolecule(j);
-        if (rigidMolecules) {
-          if (iMolecule == jMolecule) continue;
-        }
-        else {
-          box.getMoleculeInfo(jMolecule, jSpecies, jFirstAtom, jLastAtom);
-          jChildIndex = j-jFirstAtom;
-          if (binary_search(iBondedAtoms->begin(), iBondedAtoms->end(), jChildIndex)) {
-            continue;
-          }
-        }
-      }
+      if (checkSkip(j, iMolecule, iBondedAtoms)) continue;
       int jType = box.getAtomType(j);
       double *rj = box.getAtomPosition(j);
       for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
@@ -206,6 +189,11 @@ void PotentialMaster::processAtomU(int coeff) {
     uAtom[iAtom] += coeff*duAtom[i];
   }
   uAtomsChanged.resize(0);
+  for (set<int>::iterator it = uAtomsChangedSet.begin(); it != uAtomsChangedSet.end(); it++) {
+    int iAtom = *it;
+    uAtom[iAtom] += coeff*duAtom[iAtom];
+  }
+  uAtomsChangedSet.clear();
 }
 
 void PotentialMaster::computeOne(int iAtom, double *ri, double &u1, bool isTrial) {
@@ -216,23 +204,69 @@ void PotentialMaster::computeOne(int iAtom, double *ri, double &u1, bool isTrial
   duAtom.resize(1);
   uAtomsChanged[0] = iAtom;
   duAtom[0] = 0;
+  int iMolecule = iAtom, iFirstAtom = iAtom, iChildIndex = 0, iLastAtom = iAtom, iSpecies = 0;
+  vector<int> *iBondedAtoms = nullptr;
+  if (!pureAtoms) {
+    iMolecule = box.getMolecule(iAtom);
+    if (!rigidMolecules) {
+      box.getMoleculeInfo(iMolecule, iSpecies, iFirstAtom, iLastAtom);
+      iChildIndex = iAtom-iFirstAtom;
+      iBondedAtoms = &bondedAtoms[iSpecies][iChildIndex];
+    }
+  }
   int iType = box.getAtomType(iAtom);
   double* iCutoffs = pairCutoffs[iType];
   Potential** iPotentials = pairPotentials[iType];
-  for (int j=0; j<numAtoms; j++) {
-    if (j==iAtom) continue;
-    int jType = box.getAtomType(j);
-    double *rj = box.getAtomPosition(j);
+  for (int jAtom=0; jAtom<numAtoms; jAtom++) {
+    if (jAtom==iAtom) continue;
+    if (checkSkip(jAtom, iMolecule, iBondedAtoms)) continue;
+    int jType = box.getAtomType(jAtom);
+    double *rj = box.getAtomPosition(jAtom);
     for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
     box.nearestImage(dr);
     double r2 = 0;
     for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
     if (r2 > iCutoffs[jType]) continue;
-    uAtomsChanged.push_back(j);
+    uAtomsChanged.push_back(jAtom);
     double uij = iPotentials[jType]->u(r2);
     duAtom[0] += 0.5*uij;
     duAtom.push_back(0.5*uij);
     u1 += uij;
+  }
+}
+
+void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial) {
+  int numAtoms = box.getNumAtoms();
+  u1 = 0;
+  double dr[3];
+  uAtomsChangedSet.clear();
+  duAtom.resize(numAtoms);
+  int iSpecies, firstAtom, lastAtom;
+  box.getMoleculeInfo(iMolecule, iSpecies, firstAtom, lastAtom);
+  for (int iAtom=firstAtom; iAtom<=lastAtom; iAtom++) {
+    pair<set<int>::iterator,bool> rv = uAtomsChangedSet.insert(iAtom);
+    if (rv.second==false) duAtom[iAtom] = 0;
+    int iType = box.getAtomType(iAtom);
+    double *ri = box.getAtomPosition(iAtom);
+    double* iCutoffs = pairCutoffs[iType];
+    Potential** iPotentials = pairPotentials[iType];
+    for (int jAtom=0; jAtom<numAtoms; jAtom++) {
+      if (jAtom==iAtom) continue;
+      if (box.getMolecule(jAtom) == iMolecule && jAtom<iAtom) continue;
+      int jType = box.getAtomType(jAtom);
+      double *rj = box.getAtomPosition(jAtom);
+      for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
+      box.nearestImage(dr);
+      double r2 = 0;
+      for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
+      if (r2 > iCutoffs[jType]) continue;
+      rv = uAtomsChangedSet.insert(jAtom);
+      if (rv.second==false) duAtom[jAtom] = 0;
+      double uij = iPotentials[jType]->u(r2);
+      duAtom[jAtom] += 0.5*uij;
+      duAtom[iAtom] += 0.5*uij;
+      u1 += uij;
+    }
   }
 }
 

@@ -3,6 +3,8 @@
 #include <vector>
 #include <math.h>
 #include <cstddef>
+#include <set>
+#include <algorithm>
 #include "box.h"
 #include "potential.h"
 
@@ -60,15 +62,24 @@ class PotentialMaster {
     vector<double> uAtom;
     vector<double> duAtom;
     vector<int> uAtomsChanged;
+    set<int> uAtomsChangedSet;
     double** force;
     vector<PotentialCallback*> pairCallbacks;
     int numAtomTypes;
     vector<vector<int*> > *bondedPairs;
     vector<int> **bondedAtoms;
     vector<Potential*> *bondedPotentials;
-    bool pureAtoms;
+    const bool pureAtoms;
     bool rigidMolecules;
     void computeAllBonds(bool doForces, double &uTot, double &virialTot);
+    inline bool checkSkip(int jAtom, int iMolecule, vector<int> *iBondedAtoms) {
+      if (pureAtoms) return false;
+      int jMolecule = box.getMolecule(jAtom);
+      if (rigidMolecules) return iMolecule == jMolecule;
+      int jFirstAtom = jAtom, jLastAtom = jAtom, jSpecies = 0;
+      box.getMoleculeInfo(jMolecule, jSpecies, jFirstAtom, jLastAtom);
+      return binary_search(iBondedAtoms->begin(), iBondedAtoms->end(), jAtom-jFirstAtom);
+    }
 
   public:
     PotentialMaster(SpeciesList &speciesList, Box& box);
@@ -78,6 +89,7 @@ class PotentialMaster {
     void setBondPotential(int iSpecies, vector<int*> &bondedPairs, Potential *pBond);
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
     virtual void computeOne(int iAtom, double *ri, double &energy, bool isTrial);
+    virtual void computeOneMolecule(int iMolecule, double &energy, bool isTrial);
     virtual void updateAtom(int iAtom) {}
     virtual void newAtom();
     virtual void removeAtom(int iAtom);

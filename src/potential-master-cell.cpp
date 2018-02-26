@@ -329,8 +329,19 @@ void PotentialMasterCell::computeOne(int iAtom, double *ri, double &u1, bool isT
   duAtom.resize(1);
   uAtomsChanged[0] = iAtom;
   duAtom[0] = 0;
+  int iMolecule = iAtom, iFirstAtom = iAtom, iChildIndex = 0, iLastAtom = iAtom, iSpecies = 0;
+  vector<int> *iBondedAtoms = nullptr;
+  if (!pureAtoms) {
+    iMolecule = box.getMolecule(iAtom);
+    if (!rigidMolecules) {
+      box.getMoleculeInfo(iMolecule, iSpecies, iFirstAtom, iLastAtom);
+      iChildIndex = iAtom-iFirstAtom;
+      iBondedAtoms = &bondedAtoms[iSpecies][iChildIndex];
+    }
+  }
   for (int jAtom = cellLastAtom[iCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
     if (jAtom!=iAtom) {
+      if (checkSkip(jAtom, iMolecule, iBondedAtoms)) continue;
       int jType = box.getAtomType(jAtom);
       double *rj = box.getAtomPosition(jAtom);
       handleComputeOne(iPotentials[jType], ri, rj, jAtom, u1, iCutoffs[jType]);
@@ -342,6 +353,7 @@ void PotentialMasterCell::computeOne(int iAtom, double *ri, double &u1, bool isT
     double *jbo = boxOffsets[jCell];
     jCell = wrapMap[jCell];
     for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
+      if (checkSkip(jAtom, iMolecule, iBondedAtoms)) continue;
       double *rj = box.getAtomPosition(jAtom);
       for (int k=0; k<3; k++) rjp[k] = rj[k] + jbo[k];
       int jType = box.getAtomType(jAtom);
@@ -351,6 +363,7 @@ void PotentialMasterCell::computeOne(int iAtom, double *ri, double &u1, bool isT
     jbo = boxOffsets[jCell];
     jCell = wrapMap[jCell];
     for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
+      if (checkSkip(jAtom, iMolecule, iBondedAtoms)) continue;
       double *rj = box.getAtomPosition(jAtom);
       for (int k=0; k<3; k++) rjp[k] = rj[k] + jbo[k];
       int jType = box.getAtomType(jAtom);
