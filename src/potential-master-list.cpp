@@ -120,6 +120,17 @@ resetStart:
   double rc2 = nbrRange*nbrRange;
   double rjp[3];
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+    int iMolecule = iAtom;
+    vector<int> *iBondedAtoms = nullptr;
+    if (!pureAtoms) {
+      iMolecule = box.getMolecule(iAtom);
+      if (!rigidMolecules) {
+        int iSpecies, iLastAtom, iFirstAtom;
+        box.getMoleculeInfo(iMolecule, iSpecies, iFirstAtom, iLastAtom);
+        int iChildIndex = iAtom-iFirstAtom;
+        iBondedAtoms = &bondedAtoms[iSpecies][iChildIndex];
+      }
+    }
     int tooMuch = 0;
     double *ri = box.getAtomPosition(iAtom);
     int jAtom=iAtom;
@@ -134,6 +145,7 @@ resetStart:
       jbo = boxOffsets[jCell];
       jCell = wrapMap[jCell];
       for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
+        if (checkSkip(jAtom, iMolecule, iBondedAtoms)) continue;
         double *rj = box.getAtomPosition(jAtom);
         for (int k=0; k<3; k++) rjp[k] = rj[k] + jbo[k];
         tooMuch += checkNbrPair(iAtom, jAtom, ri, rjp, rc2, jbo);
