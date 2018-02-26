@@ -9,15 +9,14 @@ Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpe
   for (int i=0; i<3; i++) boxSize[i] = 0;
 
   int ss = knownNumSpecies;
-  numAtomsBySpecies = (int*)realloc(numAtomsBySpecies, ss*sizeof(int));
-  numMoleculesBySpecies = (int*)realloc(numMoleculesBySpecies, ss*sizeof(int));
-  maxNumMoleculesBySpecies = (int*)realloc(maxNumMoleculesBySpecies, ss*sizeof(int));
-  positions = (double***)realloc(positions, ss*sizeof(double**));
-  if (velocities) velocities = (double***)realloc(velocities, ss*sizeof(double**));
-  firstAtom = (int**)realloc(firstAtom, ss*sizeof(int*));
-  moleculeIdx = (int**)realloc(moleculeIdx, ss*sizeof(int*));
-  atomTypes = (int**)realloc(atomTypes, ss*sizeof(int*));
-  if (velocities) velocities = (double***)realloc(velocities, ss*sizeof(double**));
+  numAtomsBySpecies = new int[ss];
+  numMoleculesBySpecies = new int[ss];
+  maxNumMoleculesBySpecies = new int[ss];
+  positions = (double***)malloc(ss*sizeof(double**));
+  velocities = nullptr;
+  firstAtom = (int**)malloc(ss*sizeof(int*));
+  moleculeIdx = (int**)malloc(ss*sizeof(int*));
+  atomTypes = (int**)malloc(ss*sizeof(int*));
   for (int i=0; i<ss; i++) {
     positions[i] = nullptr;
     if (velocities) velocities[i] = nullptr;
@@ -28,9 +27,9 @@ Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpe
 
 Box::~Box() {
   if (knownNumSpecies==0) return;
-  free(numAtomsBySpecies);
-  free(numMoleculesBySpecies);
-  free(maxNumMoleculesBySpecies);
+  delete[] numAtomsBySpecies;
+  delete[] numMoleculesBySpecies;
+  delete[] maxNumMoleculesBySpecies;
   for (int i=0; i<knownNumSpecies; i++) {
     free2D((void**)positions[i]);
     if (velocities)free2D((void**)velocities[i]);
@@ -42,22 +41,6 @@ Box::~Box() {
   free(firstAtom);
   free(moleculeIdx);
   free(atomTypes);
-}
-
-int Box::getNumMolecules(int iSpecies) {
-  return numMoleculesBySpecies[iSpecies];
-}
-
-int Box::getTotalNumMolecules() {
-  int s = 0;
-  for (int i=0; i<knownNumSpecies; i++) s += numMoleculesBySpecies[i];
-  return s;
-}
-
-int Box::getNumAtoms() {
-  int s = 0;
-  for (int i=0; i<knownNumSpecies; i++) s += numAtomsBySpecies[i];
-  return s;
 }
 
 void Box::initCoordinates() {
@@ -178,20 +161,6 @@ void Box::setNumMolecules(int iSpecies, int n) {
   numAtomsBySpecies[iSpecies] = na;
 }
 
-double* Box::getAtomPosition(int i) {
-#ifdef DEBUG
-  int idx = i, iSpecies = 0;
-  for ( ; iSpecies<knownNumSpecies-1 && idx > numAtomsBySpecies[iSpecies]; iSpecies++) {
-    idx -= numAtomsBySpecies[iSpecies];
-  }
-  if (idx>=numAtomsBySpecies[iSpecies]) {
-    printf("gAP oops i %d is more atoms than I have\n", i);
-    abort();
-  }
-#endif
-  return positions[0][i];
-}
-
 double* Box::getAtomVelocity(int i) {
 #ifdef DEBUG
   int idx = i, iSpecies = 0;
@@ -206,20 +175,6 @@ double* Box::getAtomVelocity(int i) {
   return velocities[0][i];
 }
 
-int Box::getAtomType(int i) {
-  int idx = i, iSpecies = 0;
-  for ( ; iSpecies<knownNumSpecies-1 && idx > numAtomsBySpecies[iSpecies]; iSpecies++) {
-    idx -= numAtomsBySpecies[iSpecies];
-  }
-#ifdef DEBUG
-  if (idx>=numAtomsBySpecies[iSpecies]) {
-    printf("gAT oops i %d is more atoms than I have\n", i);
-    abort();
-  }
-#endif
-  return atomTypes[iSpecies][idx];
-}
-
 int Box::getMolecule(int iAtom) {
   int idx = iAtom, iSpecies = 0;
   for ( ; iSpecies<knownNumSpecies-1 && idx > numAtomsBySpecies[iSpecies]; iSpecies++) {
@@ -232,10 +187,6 @@ int Box::getMolecule(int iAtom) {
   }
 #endif
   return firstAtom[iSpecies][idx];
-}
-
-int Box::getFirstAtom(int iSpecies, int iMoleculeInSpecies) {
-  return firstAtom[iSpecies][iMoleculeInSpecies];
 }
 
 void Box::getMoleculeInfo(int iMolecule, int &iSpecies, int &fa, int &la) {
