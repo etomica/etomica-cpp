@@ -5,9 +5,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), force(nullptr), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true) {
-
-  numAtomTypes = sl.getNumAtomTypes();
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), force(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true) {
 
   pairPotentials = (Potential***)malloc2D(numAtomTypes, numAtomTypes, sizeof(Potential*));
   pairCutoffs = (double**)malloc2D(numAtomTypes, numAtomTypes, sizeof(double));
