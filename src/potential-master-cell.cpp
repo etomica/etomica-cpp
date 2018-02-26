@@ -287,7 +287,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     if (doForces) for (int k=0; k<3; k++) force[i][k] = 0;
   }
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
-    int iType = 0; //box.getAtomType(iAtom);
+    int iType = box.getAtomType(iAtom);
     double *iCutoffs = pairCutoffs[iType];
     Potential** iPotentials = pairPotentials[iType];
     double *ri = box.getAtomPosition(iAtom);
@@ -295,7 +295,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     int jAtom=iAtom;
     while ((jAtom = cellNextAtom[jAtom]) > -1) {
       double *rj = box.getAtomPosition(jAtom);
-      int jType = 0; //box.getAtomType(jAtom);
+      int jType = box.getAtomType(jAtom);
       handleComputeAll(iAtom, jAtom, ri, rj, iPotentials[jType], uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], doForces);
     }
     int iCell = atomCell[iAtom];
@@ -304,7 +304,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
       double *jbo = boxOffsets[jCell];
       jCell = wrapMap[jCell];
       for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
-        int jType = 0; //box.getAtomType(jAtom);
+        int jType = box.getAtomType(jAtom);
         double *rj = box.getAtomPosition(jAtom);
         for (int k=0; k<3; k++) rjp[k] = rj[k] + jbo[k];
         handleComputeAll(iAtom, jAtom, ri, rjp, iPotentials[jType], uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], doForces);
