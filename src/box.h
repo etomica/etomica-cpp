@@ -9,7 +9,7 @@ class Box {
 
     double ***positions, ***velocities;
 
-    int knownNumSpecies;
+    const int knownNumSpecies;
     int *numAtomsBySpecies, *numMoleculesBySpecies, *maxNumMoleculesBySpecies;
     int **firstAtom, **moleculeIdx;
     int **atomTypes;

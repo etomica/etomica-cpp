@@ -34,6 +34,7 @@ AtomInfo& SpeciesList::getAtomInfo() {
 }
 
 bool SpeciesList::isPurelyAtomic() {
+  fixed = true;
   for (int i=0; i<nSpecies; i++) {
     if (allSpecies[i]->getNumAtoms() > 1) return false;
   }

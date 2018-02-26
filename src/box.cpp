@@ -5,8 +5,25 @@
 #include "alloc2d.h"
 #include "box.h"
 
-Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpecies(0), numAtomsBySpecies(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), moleculeIdx(nullptr), atomTypes(nullptr), speciesList(sl) {
+Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpecies(sl.size()), numAtomsBySpecies(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), moleculeIdx(nullptr), atomTypes(nullptr), speciesList(sl) {
   for (int i=0; i<3; i++) boxSize[i] = 0;
+
+  int ss = knownNumSpecies;
+  numAtomsBySpecies = (int*)realloc(numAtomsBySpecies, ss*sizeof(int));
+  numMoleculesBySpecies = (int*)realloc(numMoleculesBySpecies, ss*sizeof(int));
+  maxNumMoleculesBySpecies = (int*)realloc(maxNumMoleculesBySpecies, ss*sizeof(int));
+  positions = (double***)realloc(positions, ss*sizeof(double**));
+  if (velocities) velocities = (double***)realloc(velocities, ss*sizeof(double**));
+  firstAtom = (int**)realloc(firstAtom, ss*sizeof(int*));
+  moleculeIdx = (int**)realloc(moleculeIdx, ss*sizeof(int*));
+  atomTypes = (int**)realloc(atomTypes, ss*sizeof(int*));
+  if (velocities) velocities = (double***)realloc(velocities, ss*sizeof(double**));
+  for (int i=0; i<ss; i++) {
+    positions[i] = nullptr;
+    if (velocities) velocities[i] = nullptr;
+    numMoleculesBySpecies[i] = numAtomsBySpecies[i] = maxNumMoleculesBySpecies[i] = 0;
+    atomTypes[i] = firstAtom[i] = moleculeIdx[i] = nullptr;
+  }
 }
 
 Box::~Box() {
@@ -103,28 +120,9 @@ void Box::initCoordinates() {
 }
 
 void Box::setNumMolecules(int iSpecies, int n) {
-  if (iSpecies>=knownNumSpecies) {
-    int ss = speciesList.size();
-    if (iSpecies>=ss) {
-      fprintf(stderr, "species index %d too large (%d species)\n", iSpecies, ss);
-      abort();
-    }
-    numAtomsBySpecies = (int*)realloc(numAtomsBySpecies, ss*sizeof(int));
-    numMoleculesBySpecies = (int*)realloc(numMoleculesBySpecies, ss*sizeof(int));
-    maxNumMoleculesBySpecies = (int*)realloc(maxNumMoleculesBySpecies, ss*sizeof(int));
-    positions = (double***)realloc(positions, ss*sizeof(double**));
-    if (velocities) velocities = (double***)realloc(velocities, ss*sizeof(double**));
-    firstAtom = (int**)realloc(firstAtom, ss*sizeof(int*));
-    moleculeIdx = (int**)realloc(moleculeIdx, ss*sizeof(int*));
-    atomTypes = (int**)realloc(atomTypes, ss*sizeof(int*));
-    if (velocities) velocities = (double***)realloc(velocities, ss*sizeof(double**));
-    for (int i=knownNumSpecies; i<ss; i++) {
-      positions[i] = nullptr;
-      if (velocities) velocities[i] = nullptr;
-      numMoleculesBySpecies[i] = numAtomsBySpecies[i] = maxNumMoleculesBySpecies[i] = 0;
-      atomTypes[i] = firstAtom[i] = moleculeIdx[i] = nullptr;
-    }
-    knownNumSpecies = ss;
+  if (iSpecies<0 || iSpecies>=knownNumSpecies) {
+    fprintf(stderr, "unknown species id %d\n", iSpecies);
+    abort();
   }
   Species* s = speciesList.get(iSpecies);
   int sna = s->getNumAtoms();
