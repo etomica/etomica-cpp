@@ -324,6 +324,9 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
       }
     }
   }
+  if (!pureAtoms && !rigidMolecules) {
+    computeAllBonds(doForces, uTot, virialTot);
+  }
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);
   }
