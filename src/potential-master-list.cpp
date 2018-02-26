@@ -2,7 +2,7 @@
 #include "potential-master.h"
 #include "alloc2d.h"
 
-PotentialMasterList::PotentialMasterList(SpeciesList& sl, Box& box, int cellRange, double nRange) : PotentialMasterCell(sl, box, cellRange), nbrRange(nRange), nbrs(nullptr), onlyUpNbrs(true), numAtomNbrsUp(nullptr), numAtomNbrsDn(nullptr), nbrsNumAtoms(0), maxNab(0), nbrBoxOffsets(nullptr), forceReallocNbrs(false), oldAtomPositions(nullptr), safetyFac(0.1) {
+PotentialMasterList::PotentialMasterList(const SpeciesList& sl, Box& box, int cellRange, double nRange) : PotentialMasterCell(sl, box, cellRange), nbrRange(nRange), nbrs(nullptr), onlyUpNbrs(true), numAtomNbrsUp(nullptr), numAtomNbrsDn(nullptr), nbrsNumAtoms(0), maxNab(0), nbrBoxOffsets(nullptr), forceReallocNbrs(false), oldAtomPositions(nullptr), safetyFac(0.1) {
   maxR2 = (double*)malloc(numAtomTypes*sizeof(double));
   maxR2Unsafe = (double*)malloc(numAtomTypes*sizeof(double));
 }

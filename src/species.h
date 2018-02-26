@@ -36,9 +36,10 @@ class SpeciesList {
   public:
     SpeciesList();
     ~SpeciesList();
-    int size();
+    int size() const;
     void add(Species* species);
-    Species* get(int iSpecies);
+    Species* get(int iSpecies) const;
     AtomInfo& getAtomInfo();
-    bool isPurelyAtomic();
+    int getNumAtomTypes() const;
+    bool isPurelyAtomic() const;
 };

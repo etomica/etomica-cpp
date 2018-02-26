@@ -16,6 +16,10 @@ int AtomInfo::addAtomType(double m) {
   return numAtomTypes-1;
 }
 
-int AtomInfo::getNumTypes() {
+int AtomInfo::getNumTypes() const {
   return numAtomTypes;
+}
+
+double AtomInfo::getMass(int iType) const {
+  return mass[iType];
 }

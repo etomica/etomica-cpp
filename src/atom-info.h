@@ -9,7 +9,7 @@ class AtomInfo {
     AtomInfo();
     virtual ~AtomInfo();
     int addAtomType(double mass);
-    double getMass(int iType);
-    int getNumTypes();
+    double getMass(int iType) const;
+    int getNumTypes() const;
 };
 

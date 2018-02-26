@@ -9,7 +9,7 @@ SpeciesList::~SpeciesList() {
   if (allSpecies) free(allSpecies);
 }
 
-int SpeciesList::size() {
+int SpeciesList::size() const {
   return nSpecies;
 }
 
@@ -24,8 +24,7 @@ void SpeciesList::add(Species* s) {
   s->init(atomInfo);
 }
 
-Species* SpeciesList::get(int i) {
-  fixed = true;
+Species* SpeciesList::get(int i) const {
   return allSpecies[i];
 }
 
@@ -33,8 +32,11 @@ AtomInfo& SpeciesList::getAtomInfo() {
   return atomInfo;
 }
 
-bool SpeciesList::isPurelyAtomic() {
-  fixed = true;
+int SpeciesList::getNumAtomTypes() const {
+  return atomInfo.getNumTypes();
+}
+
+bool SpeciesList::isPurelyAtomic() const {
   for (int i=0; i<nSpecies; i++) {
     if (allSpecies[i]->getNumAtoms() > 1) return false;
   }

@@ -3,7 +3,7 @@
 #include "alloc2d.h"
 #include "potential-master.h"
 
-PotentialMasterCell::PotentialMasterCell(SpeciesList& sl, Box& box, int cRange) : PotentialMaster(sl, box), cellRange(cRange), rawBoxOffsets(nullptr), boxOffsets(nullptr) {
+PotentialMasterCell::PotentialMasterCell(const SpeciesList& sl, Box& box, int cRange) : PotentialMaster(sl, box), cellRange(cRange), rawBoxOffsets(nullptr), boxOffsets(nullptr) {
 }
 
 PotentialMasterCell::~PotentialMasterCell() {

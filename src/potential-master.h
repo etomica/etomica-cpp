@@ -55,7 +55,7 @@ class PotentialCallbackHMA : public PotentialCallback {
 
 class PotentialMaster {
   protected:
-    SpeciesList& speciesList;
+    const SpeciesList& speciesList;
     Potential*** pairPotentials;
     double** pairCutoffs;
     Box& box;
@@ -82,7 +82,7 @@ class PotentialMaster {
     }
 
   public:
-    PotentialMaster(SpeciesList &speciesList, Box& box);
+    PotentialMaster(const SpeciesList &speciesList, Box& box);
     virtual ~PotentialMaster() {}
     Box& getBox();
     void setPairPotential(int iType, int jType, Potential* pij);
@@ -119,7 +119,7 @@ class PotentialMasterCell : public PotentialMaster {
     int wrappedIndex(int i, int nc);
     void moveAtomIndex(int oldIndex, int newIndex);
   public:
-    PotentialMasterCell(SpeciesList &speciesList, Box& box, int cellRange);
+    PotentialMasterCell(const SpeciesList &speciesList, Box& box, int cellRange);
     ~PotentialMasterCell();
     virtual double getRange();
     virtual void init();
@@ -149,7 +149,7 @@ class PotentialMasterList : public PotentialMasterCell {
 
     int checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2, double *jbo);
   public:
-    PotentialMasterList(SpeciesList& speciesList, Box& box, int cellRange, double nbrRange);
+    PotentialMasterList(const SpeciesList& speciesList, Box& box, int cellRange, double nbrRange);
     ~PotentialMasterList();
     virtual double getRange();
     virtual void init();
