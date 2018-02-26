@@ -125,7 +125,6 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
 
 void PotentialMaster::computeAllBonds(bool doForces, double &uTot, double &virialTot) {
   int numSpecies = speciesList.size();
-  int iMolecule = 0, firstAtom = 0;
   for (int iSpecies=0; iSpecies<numSpecies; iSpecies++) {
     vector<Potential*> &iBondedPotentials = bondedPotentials[iSpecies];
     if (iBondedPotentials.size() == 0) continue;
@@ -134,7 +133,8 @@ void PotentialMaster::computeAllBonds(bool doForces, double &uTot, double &viria
     for (int j=0; j<(int)iBondedPotentials.size(); j++) {
       Potential* p = iBondedPotentials[j];
       vector<int*> jBondedPairs = iBondedPairs[j];
-      for (int k=0; k<box.getNumMolecules(iSpecies); k++) {
+      int firstAtom = box.getFirstAtom(iSpecies, 0);
+      for (int kMolecule=0; kMolecule<box.getNumMolecules(iSpecies); kMolecule++) {
         for (int l=0; l<(int)jBondedPairs.size(); l++) {
           int* lBondedPair = jBondedPairs[l];
           int iAtom = firstAtom + lBondedPair[0];
@@ -165,10 +165,39 @@ void PotentialMaster::computeAllBonds(bool doForces, double &uTot, double &viria
             force[jAtom][m] -= dr[m]*du;
           }
         }
-        iMolecule++;
         firstAtom += sna;
       }
     }
+  }
+}
+
+void PotentialMaster::computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1, const bool isTrial) {
+  vector<Potential*> &iBondedPotentials = bondedPotentials[iSpecies];
+  if (iBondedPotentials.size() == 0) return;
+  int sna = speciesList.get(iSpecies)->getNumAtoms();
+  vector<vector<int*> > iBondedPairs = bondedPairs[iSpecies];
+  for (int j=0; j<(int)iBondedPotentials.size(); j++) {
+    Potential* p = iBondedPotentials[j];
+    vector<int*> jBondedPairs = iBondedPairs[j];
+    int firstAtom = box.getFirstAtom(iSpecies, iMolecule);
+    for (int l=0; l<(int)jBondedPairs.size(); l++) {
+      int* lBondedPair = jBondedPairs[l];
+      int iAtom = firstAtom + lBondedPair[0];
+      int jAtom = firstAtom + lBondedPair[1];
+
+      double *ri = box.getAtomPosition(iAtom);
+      double *rj = box.getAtomPosition(jAtom);
+      double dr[3];
+      for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
+      box.nearestImage(dr);
+      double r2 = 0;
+      for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
+      double u = p->u(r2);
+      uAtom[iAtom] += 0.5*u;
+      uAtom[jAtom] += 0.5*u;
+      u1 += u;
+    }
+    firstAtom += sna;
   }
 }
 
@@ -238,7 +267,9 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
   u1 = 0;
   double dr[3];
   uAtomsChangedSet.clear();
+  for (int i=0; i<numAtoms; i++) uAtomsChangedSet.insert(iMolecule);
   duAtom.resize(numAtoms);
+  fill(duAtom.begin(), duAtom.end(), 0.0);
   int iSpecies, firstAtom, lastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, firstAtom, lastAtom);
   for (int iAtom=firstAtom; iAtom<=lastAtom; iAtom++) {
@@ -258,13 +289,15 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
       double r2 = 0;
       for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
       if (r2 > iCutoffs[jType]) continue;
-      rv = uAtomsChangedSet.insert(jAtom);
-      if (rv.second==false) duAtom[jAtom] = 0;
+      uAtomsChangedSet.insert(jAtom);
       double uij = iPotentials[jType]->u(r2);
       duAtom[jAtom] += 0.5*uij;
       duAtom[iAtom] += 0.5*uij;
       u1 += uij;
     }
+  }
+  if (!pureAtoms && !rigidMolecules) {
+    computeOneMoleculeBonds(iSpecies, iMolecule, u1, isTrial);
   }
 }
 

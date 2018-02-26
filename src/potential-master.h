@@ -71,6 +71,7 @@ class PotentialMaster {
     vector<Potential*> *bondedPotentials;
     const bool pureAtoms;
     bool rigidMolecules;
+    virtual void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1, const bool isTrial);
     void computeAllBonds(bool doForces, double &uTot, double &virialTot);
     inline bool checkSkip(int jAtom, int iMolecule, vector<int> *iBondedAtoms) {
       if (pureAtoms) return false;
