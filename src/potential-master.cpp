@@ -196,7 +196,7 @@ void PotentialMaster::processAtomU(int coeff) {
   uAtomsChangedSet.clear();
 }
 
-void PotentialMaster::computeOne(int iAtom, double *ri, double &u1, bool isTrial) {
+void PotentialMaster::computeOne(const int iAtom, const double *ri, double &u1, const bool isTrial) {
   int numAtoms = box.getNumAtoms();
   u1 = 0;
   double dr[3];

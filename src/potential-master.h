@@ -88,7 +88,7 @@ class PotentialMaster {
     void setPairPotential(int iType, int jType, Potential* pij);
     void setBondPotential(int iSpecies, vector<int*> &bondedPairs, Potential *pBond);
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
-    virtual void computeOne(int iAtom, double *ri, double &energy, bool isTrial);
+    virtual void computeOne(const int iAtom, const double *ri, double &energy, const bool isTrial);
     virtual void computeOneMolecule(int iMolecule, double &energy, bool isTrial);
     virtual void updateAtom(int iAtom) {}
     virtual void newAtom();
@@ -114,8 +114,8 @@ class PotentialMasterCell : public PotentialMaster {
     double** boxOffsets;
     int numAtoms;
 
-    void handleComputeAll(int iAtom, int jAtom, double *ri, double *rj, Potential* pij, double &ui, double &uj, double *fi, double *fj, double& uTot, double& virialTot, double rc2, bool doForces);
-    void handleComputeOne(Potential* pij, double *ri, double *rj, int jAtom, double& uTot, double rc2);
+    void handleComputeAll(const int iAtom, const int jAtom, const double *ri, const double *rj, Potential* pij, double &ui, double &uj, double *fi, double *fj, double& uTot, double& virialTot, const double rc2, const bool doForces);
+    void handleComputeOne(Potential* pij, const double *ri, const double *rj, const int jAtom, double& uTot, double rc2);
     int wrappedIndex(int i, int nc);
     void moveAtomIndex(int oldIndex, int newIndex);
   public:
@@ -124,12 +124,12 @@ class PotentialMasterCell : public PotentialMaster {
     virtual double getRange();
     virtual void init();
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
-    virtual void computeOne(int iAtom, double *ri, double &energy, bool isTrial);
+    virtual void computeOne(const int iAtom, const double *ri, double &energy, const bool isTrial);
     virtual void updateAtom(int iAtom);
     virtual void newAtom();
     virtual void removeAtom(int iAtom);
     void assignCells();
-    int cellForCoord(double *r);
+    int cellForCoord(const double *r);
     int* getNumCells();
 };
 
