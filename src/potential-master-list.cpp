@@ -220,6 +220,9 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
       handleComputeAll(iAtom, jAtom, ri, rjp, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, doForces);
     }
   }
+  if (!pureAtoms && !rigidMolecules) {
+    computeAllBonds(doForces, uTot, virialTot);
+  }
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);
   }
