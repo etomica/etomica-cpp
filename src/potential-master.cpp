@@ -275,7 +275,7 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
   u1 = 0;
   double dr[3];
   uAtomsChangedSet.clear();
-  for (int i=0; i<numAtoms; i++) uAtomsChangedSet.insert(iMolecule);
+  for (int i=0; i<numAtoms; i++) uAtomsChangedSet.insert(i);
   duAtom.resize(numAtoms);
   fill(duAtom.begin(), duAtom.end(), 0.0);
   int iSpecies, firstAtom, lastAtom;

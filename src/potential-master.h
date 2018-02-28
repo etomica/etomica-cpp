@@ -103,6 +103,14 @@ class PotentialMaster {
     void addCallback(PotentialCallback* pcb);
 };
 
+class PotentialMasterVirial : public PotentialMaster {
+  public:
+    PotentialMasterVirial(const SpeciesList &speciesList, Box& box);
+    virtual ~PotentialMasterVirial() {}
+    // inter-molecular energy of a group of molecules
+    virtual void computeMolecules(int* iMolecules, int nMolecules, double &energy);
+}
+
 class PotentialMasterCell : public PotentialMaster {
   protected:
     int cellRange;
