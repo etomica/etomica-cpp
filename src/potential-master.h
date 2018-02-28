@@ -108,8 +108,8 @@ class PotentialMasterVirial : public PotentialMaster {
     PotentialMasterVirial(const SpeciesList &speciesList, Box& box);
     virtual ~PotentialMasterVirial() {}
     // inter-molecular energy of a group of molecules
-    virtual void computeMolecules(int* iMolecules, int nMolecules, double &energy);
-}
+    virtual void computeMolecules(const int* iMolecules, const int nMolecules, double &energy);
+};
 
 class PotentialMasterCell : public PotentialMaster {
   protected:
