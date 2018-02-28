@@ -58,7 +58,8 @@ SpeciesSimple implements Species;
 interface Box {
   void Box([Ref] SpeciesList speciesList);
   long getNumAtoms();
-  long getNumMolecules();
+  long getNumMolecules(long iSpecies);
+  long getTotalNumMolecules();
   void setNumMolecules(long iSpecies, long numMolecules);
   VoidPtr getBoxSize();
   void setBoxSize(double x, double y, double z);
