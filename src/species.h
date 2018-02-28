@@ -6,6 +6,7 @@ class Species {
   protected:
     int numAtoms, numAtomTypes;
     int* atomTypes;
+    double** positions;
 
   public:
     Species(int numAtoms, int numAtomTypes);
@@ -14,6 +15,7 @@ class Species {
     virtual void init(AtomInfo& atomInfo) = 0;
     int* getAtomTypes();
     int getNumAtoms();
+    double* getAtomPosition(int iAtom);
 };
 
 class SpeciesSimple : public Species {
@@ -24,6 +26,7 @@ class SpeciesSimple : public Species {
     SpeciesSimple(int numAtoms, double mass);
     virtual ~SpeciesSimple() {}
     virtual void init(AtomInfo& atomInfo);
+    void setAtomPosition(int iAtom, double* iPosition);
 };
 
 class SpeciesList {
