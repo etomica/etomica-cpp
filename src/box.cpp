@@ -45,8 +45,8 @@ Box::~Box() {
 
 void Box::initCoordinates() {
   int dimLeft = 3;
-  int numAtoms = getNumAtoms();
-  int nCellsLeft = (numAtoms+3)/4;
+  int numMolecules = getTotalNumMolecules();
+  int nCellsLeft = (numMolecules+3)/4;
   int numCells[3] = {0,0,0};
   while (dimLeft > 0) {
     double smin = 1e100;
@@ -77,7 +77,6 @@ void Box::initCoordinates() {
 
   double cellSize[3];
   for (int i=0; i<3; i++) cellSize[i] = boxSize[i] / numCells[i];
-  int iAtom = 0;
   double basisFCC[4][3];
   for (int i=0; i<4; i++) {
     for (int j=0; j<3; j++) {
@@ -86,16 +85,26 @@ void Box::initCoordinates() {
     if (i>0) basisFCC[i][i-1] = 0.0;
   }
   int ixyz[3];
+  int iMolecule = 0;
   for (ixyz[0]=0; ixyz[0]<numCells[0]; ixyz[0]++) {
     for (ixyz[1]=0; ixyz[1]<numCells[1]; ixyz[1]++) {
       for (ixyz[2]=0; ixyz[2]<numCells[2]; ixyz[2]++) {
         for (int i=0; i<4; i++) {
-          if (iAtom == numAtoms) break;
-          double* ri = getAtomPosition(iAtom);
+          if (iMolecule == numMolecules) break;
+          double ri[3];
           for (int j=0; j<3; j++) {
             ri[j] = (basisFCC[i][j] + ixyz[j] - 0.5*numCells[j]) * cellSize[j];
           }
-          iAtom++;
+          int iSpecies, firstAtom, lastAtom;
+          getMoleculeInfo(iMolecule, iSpecies, firstAtom, lastAtom);
+          Species* s = speciesList.get(iSpecies);
+          for (int jAtom=firstAtom; jAtom<=lastAtom; jAtom++) {
+            double* jPos = s->getAtomPosition(jAtom-firstAtom);
+            double* rj = getAtomPosition(jAtom);
+            for (int k=0; k<3; k++) rj[k] = ri[k] + jPos[k];
+            nearestImage(rj);
+          }
+          iMolecule++;
         }
       }
     }
