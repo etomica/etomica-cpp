@@ -84,12 +84,15 @@ class PotentialMaster {
 
   public:
     PotentialMaster(const SpeciesList &speciesList, Box& box);
-    virtual ~PotentialMaster() {}
+    virtual ~PotentialMaster();
     Box& getBox();
     void setPairPotential(int iType, int jType, Potential* pij);
     void setBondPotential(int iSpecies, vector<int*> &bondedPairs, Potential *pBond);
+    // compute for the whole box
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
+    // energy of one atom with the whole box
     virtual void computeOne(const int iAtom, const double *ri, double &energy, const bool isTrial);
+    // energy of one molecule with the whole box (including itself)
     virtual void computeOneMolecule(int iMolecule, double &energy, bool isTrial);
     virtual void updateAtom(int iAtom) {}
     virtual void newAtom();

@@ -21,6 +21,14 @@ PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl
   bondedAtoms = new vector<int>*[sl.size()];
 }
 
+PotentialMaster::~PotentialMaster() {
+  free2D((void**)pairPotentials);
+  free2D((void**)pairCutoffs);
+  delete[] bondedPairs;
+  delete[] bondedPotentials;
+  delete[] bondedAtoms;
+}
+
 void PotentialMaster::setPairPotential(int iType, int jType, Potential* p) {
   for (int i=0; i<numAtomTypes; i++) {
     for (int j=0; j<numAtomTypes; j++) {
