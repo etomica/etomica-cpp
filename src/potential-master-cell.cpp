@@ -224,33 +224,6 @@ void PotentialMasterCell::updateAtom(int iAtom) {
   cellLastAtom[cellNum] = iAtom;
 }
 
-void PotentialMasterCell::handleComputeAll(int iAtom, int jAtom, const double *ri, const double *rj, const double *jbo, Potential* pij, double &ui, double &uj, double* fi, double* fj, double& uTot, double& virialTot, double rc2, bool doForces) {
-  double r2 = 0;
-  double dr[3];
-  for (int k=0; k<3; k++) {
-    dr[k] = (rj[k]+jbo[k])-ri[k];
-    r2 += dr[k]*dr[k];
-  }
-  if (r2 > rc2) return;
-  double u, du, d2u;
-  pij->u012(r2, u, du, d2u);
-  ui += 0.5*u;
-  uj += 0.5*u;
-  uTot += u;
-  virialTot += du;
-  for (vector<PotentialCallback*>::iterator it = pairCallbacks.begin(); it!=pairCallbacks.end(); it++) {
-    (*it)->pairCompute(iAtom, jAtom, dr, u, du, d2u);
-  }
-
-  // f0 = dr du / r^2
-  if (!doForces) return;
-  du /= r2;
-  for (int k=0; k<3; k++) {
-    fi[k] += dr[k]*du;
-    fj[k] -= dr[k]*du;
-  }
-}
-
 void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   pairCallbacks.resize(0);
   bool doForces = false;
