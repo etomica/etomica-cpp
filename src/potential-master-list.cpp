@@ -41,10 +41,9 @@ void PotentialMasterList::setDoDownNbrs(bool doDown) {
 
 int PotentialMasterList::checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2, double *jbo) {
   double r2 = 0;
-  double dr[3];
   for (int k=0; k<3; k++) {
-    dr[k] = rj[k]-ri[k];
-    r2 += dr[k]*dr[k];
+    double dr = rj[k]-ri[k];
+    r2 += dr*dr;
   }
   if (r2 > rc2) return 0;
   if (numAtomNbrsUp[iAtom] >= maxNab) return 1;
