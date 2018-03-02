@@ -126,18 +126,18 @@ class PotentialMasterCell : public PotentialMaster {
     double** boxOffsets;
     int numAtoms;
 
-void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int jAtom, double& uTot, double rc2) {
-  double dx = ri[0]-(rj[0]+jbo[0]);
-  double dy = ri[1]-(rj[1]+jbo[1]);
-  double dz = ri[2]-(rj[2]+jbo[2]);
-  double r2 = dx*dx + dy*dy + dz*dz;
-  if (r2 > rc2) return;
-  double uij = pij->u(r2);
-  uAtomsChanged.push_back(jAtom);
-  duAtom[0] += 0.5*uij;
-  duAtom.push_back(0.5*uij);
-  uTot += uij;
-}
+    void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int jAtom, double& uTot, double rc2) {
+      double dx = ri[0]-(rj[0]+jbo[0]);
+      double dy = ri[1]-(rj[1]+jbo[1]);
+      double dz = ri[2]-(rj[2]+jbo[2]);
+      double r2 = dx*dx + dy*dy + dz*dz;
+      if (r2 > rc2) return;
+      double uij = pij->u(r2);
+      uAtomsChanged.push_back(jAtom);
+      duAtom[0] += 0.5*uij;
+      duAtom.push_back(0.5*uij);
+      uTot += uij;
+    }
     void handleComputeAll(const int iAtom, const int jAtom, const double *ri, const double *rj, const double *jbo, Potential* pij, double &ui, double &uj, double *fi, double *fj, double& uTot, double& virialTot, const double rc2, const bool doForces);
     int wrappedIndex(int i, int nc);
     void moveAtomIndex(int oldIndex, int newIndex);
