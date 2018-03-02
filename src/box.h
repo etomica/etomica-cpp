@@ -21,6 +21,7 @@ class Box {
     Box(SpeciesList &speciesList);
     virtual ~Box();
 
+    SpeciesList& getSpeciesList() {return speciesList;}
     double* getBoxSize() {return boxSize;}
     void boxSizeUpdated();
     int getTotalNumMolecules() {
