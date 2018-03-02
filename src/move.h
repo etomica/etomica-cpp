@@ -77,3 +77,23 @@ class MCMoveInsertDelete : public MCMove {
     virtual double energyChange();
     bool didInsert() {return doInsert;}
 };
+
+class MCMoveMoleculeDisplacement : public MCMove {
+  private:
+    double deltaR[3];
+    double uOld, uNew;
+    int iMolecule;
+    int iAtomFirst, iAtomLast;
+
+  public:
+
+    MCMoveMoleculeDisplacement(Box& box, PotentialMaster& potentialMaster, Random& random, double stepSize);
+    ~MCMoveMoleculeDisplacement();
+
+    virtual bool doTrial();
+    virtual double getChi(double temperature);
+    virtual void acceptNotify();
+    virtual void rejectNotify();
+    virtual double energyChange();
+};
+
