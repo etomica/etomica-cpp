@@ -154,8 +154,8 @@ void Box::setNumMolecules(int iSpecies, int n) {
       }
     }
     firstAtom[iSpecies] = (int*)realloc(firstAtom[iSpecies], n*sizeof(int));
-    moleculeIdx[iSpecies] = (int*)realloc(moleculeIdx[iSpecies], n*sizeof(int));
-    atomTypes[iSpecies] = (int*)realloc(atomTypes[iSpecies], n*sizeof(int));
+    moleculeIdx[iSpecies] = (int*)realloc(moleculeIdx[iSpecies], na*sizeof(int));
+    atomTypes[iSpecies] = (int*)realloc(atomTypes[iSpecies], na*sizeof(int));
     int* speciesAtomTypes = s->getAtomTypes();
     for (int i=numMoleculesBySpecies[iSpecies]; i<n; i++) {
       firstAtom[iSpecies][i] = i*sna;
@@ -195,7 +195,7 @@ int Box::getMolecule(int iAtom) {
     abort();
   }
 #endif
-  return firstAtom[iSpecies][idx];
+  return moleculeIdx[iSpecies][idx];
 }
 
 void Box::getMoleculeInfo(int iMolecule, int &iSpecies, int &fa, int &la) {
