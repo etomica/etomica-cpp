@@ -139,12 +139,11 @@ class PotentialMasterCell : public PotentialMaster {
       uTot += uij;
     }
     void handleComputeAll(int iAtom, int jAtom, const double *ri, const double *rj, const double *jbo, Potential* pij, double &ui, double &uj, double* fi, double* fj, double& uTot, double& virialTot, double rc2, bool doForces) {
-      double r2 = 0;
       double dr[3];
-      for (int k=0; k<3; k++) {
-        dr[k] = (rj[k]+jbo[k])-ri[k];
-        r2 += dr[k]*dr[k];
-      }
+      dr[0] = (rj[0]+jbo[0])-ri[0];
+      dr[1] = (rj[1]+jbo[1])-ri[1];
+      dr[2] = (rj[2]+jbo[2])-ri[2];
+      double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
       if (r2 > rc2) return;
       double u, du, d2u;
       pij->u012(r2, u, du, d2u);
