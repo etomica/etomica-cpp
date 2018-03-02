@@ -258,7 +258,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     const double *ri = box.getAtomPosition(iAtom);
     double *fi = doForces ? force[iAtom] : nullptr;
     int jAtom=iAtom;
-    double *jbo = boxOffsets[cellNextAtom[jAtom]];
+    double *jbo = boxOffsets[atomCell[iAtom]];
     while ((jAtom = cellNextAtom[jAtom]) > -1) {
       if (checkSkip(jAtom, iMolecule, iBondedAtoms)) continue;
       const double *rj = box.getAtomPosition(jAtom);
