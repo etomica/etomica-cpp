@@ -127,7 +127,7 @@ class PotentialMasterCell : public PotentialMaster {
     int numAtoms;
 
     void handleComputeAll(const int iAtom, const int jAtom, const double *ri, const double *rj, Potential* pij, double &ui, double &uj, double *fi, double *fj, double& uTot, double& virialTot, const double rc2, const bool doForces);
-    void handleComputeOne(Potential* pij, const double *ri, const double *rj, const int jAtom, double& uTot, double rc2);
+    void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double *jbo, const int jAtom, double& uTot, double rc2);
     int wrappedIndex(int i, int nc);
     void moveAtomIndex(int oldIndex, int newIndex);
   public:
