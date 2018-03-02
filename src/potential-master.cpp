@@ -213,6 +213,17 @@ double PotentialMaster::oldEnergy(int iAtom) {
   return 2*uAtom[iAtom];
 }
 
+double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
+  // only works for rigid molecules
+  int iSpecies, iFirstAtom, iLastAtom;
+  box.getMoleculeInfo(iMolecule, iSpecies, iFirstAtom, iLastAtom);
+  double u = 0;
+  for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+    u += 2*uAtom[iAtom];
+  }
+  return u;
+}
+
 void PotentialMaster::resetAtomDU() {
   uAtomsChanged.resize(0);
 }

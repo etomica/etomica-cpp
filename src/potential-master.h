@@ -98,6 +98,7 @@ class PotentialMaster {
     virtual void newAtom();
     virtual void removeAtom(int iAtom);
     double oldEnergy(int iAtom);
+    double oldMoleculeEnergy(int iAtom);
     void resetAtomDU();
     void processAtomU(int coeff);
     void addCallback(PotentialCallback* pcb);
