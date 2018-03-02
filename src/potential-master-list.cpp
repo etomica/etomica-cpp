@@ -192,7 +192,6 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
   }
   int numAtoms = box.getNumAtoms();
   double uTot=0, virialTot=0;
-  double rjp[3];
   for (int i=0; i<numAtoms; i++) {
     uAtom[i] = 0;
     if (doForces) for (int k=0; k<3; k++) force[i][k] = 0;
@@ -213,8 +212,7 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
       Potential* pij = iPotentials[jType];
       double *rj = box.getAtomPosition(jAtom);
       double *jbo = iNbrBoxOffsets[j];
-      for (int k=0; k<3; k++) rjp[k] = rj[k] + jbo[k];
-      handleComputeAll(iAtom, jAtom, ri, rjp, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, doForces);
+      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, doForces);
     }
   }
   if (!pureAtoms && !rigidMolecules) {
