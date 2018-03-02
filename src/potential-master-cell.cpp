@@ -15,10 +15,6 @@ PotentialMasterCell::~PotentialMasterCell() {
                         + (ay % numCells[1]) * numCells[2] \
                         + (ax % numCells[0]) * numCells[1] * numCells[2])
 
-#define dx (o[ix])
-#define dy (o[iy])
-#define dz (oz[iz])
-
 int PotentialMasterCell::wrappedIndex(int i, int nc) {
   int rv = i;
   if (i < cellRange) {
@@ -256,11 +252,10 @@ void PotentialMasterCell::handleComputeAll(int iAtom, int jAtom, const double *r
 }
 
 void PotentialMasterCell::handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int jAtom, double& uTot, double rc2) {
-  double r2 = 0;
-  for (int k=0; k<3; k++) {
-    double dr = ri[k]-(rj[k]+jbo[k]);
-    r2 += dr*dr;
-  }
+  double dx = ri[0]-(rj[0]+jbo[0]);
+  double dy = ri[1]-(rj[1]+jbo[1]);
+  double dz = ri[2]-(rj[2]+jbo[2]);
+  double r2 = dx*dx + dy*dy + dz*dz;
   if (r2 > rc2) return;
   double uij = pij->u(r2);
   uAtomsChanged.push_back(jAtom);
