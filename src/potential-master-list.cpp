@@ -42,7 +42,7 @@ void PotentialMasterList::setDoDownNbrs(bool doDown) {
 int PotentialMasterList::checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2, double *jbo) {
   double r2 = 0;
   for (int k=0; k<3; k++) {
-    double dr = rj[k]-ri[k];
+    double dr = rj[k]+jbo[k]-ri[k];
     r2 += dr*dr;
   }
   if (r2 > rc2) return 0;
@@ -117,7 +117,6 @@ resetStart:
   for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) numAtomNbrsUp[iAtom] = 0;
 
   double rc2 = nbrRange*nbrRange;
-  double rjp[3];
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
     int iMolecule = iAtom;
     vector<int> *iBondedAtoms = nullptr;
@@ -146,8 +145,7 @@ resetStart:
       for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
         if (checkSkip(jAtom, iMolecule, iBondedAtoms)) continue;
         double *rj = box.getAtomPosition(jAtom);
-        for (int k=0; k<3; k++) rjp[k] = rj[k] + jbo[k];
-        tooMuch += checkNbrPair(iAtom, jAtom, ri, rjp, rc2, jbo);
+        tooMuch += checkNbrPair(iAtom, jAtom, ri, rj, rc2, jbo);
       }
     }
     if (tooMuch > 0) {
