@@ -56,7 +56,8 @@ void IntegratorMC::doStep() {
   if (stepCount%100==0) {
     double oldEnergy = energy;
     reset();
-    if (fabs(oldEnergy-energy) > 1e-7) printf("%d: %e %e %e\n", stepCount, oldEnergy, energy, oldEnergy-energy);
+    if (fabs(oldEnergy-energy) > 1e-6) printf("%d: %e %e %e\n", stepCount, oldEnergy, energy, oldEnergy-energy);
+    if (fabs(oldEnergy-energy) > 1e-6) abort();
   }
 #endif
   for (vector<IntegratorListener*>::iterator it = listeners.begin(); it!=listeners.end(); it++) {
