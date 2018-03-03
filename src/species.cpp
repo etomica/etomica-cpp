@@ -5,6 +5,9 @@
 Species::Species(int na, int nat) : numAtoms(na), numAtomTypes(nat) {
   atomTypes = (int*)malloc(na*sizeof(int));
   positions = (double**)malloc2D(na, 3, sizeof(double));
+  for (int i=0; i<na; i++) {
+    for (int j=0; j<3; j++) positions[i][j] = 0;
+  }
 }
 
 Species::~Species() {
