@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
   printf("cells: %d %d %d\n", numCells[0], numCells[1], numCells[2]);
   //PotentialMaster potentialMaster(plj, box);
   IntegratorMC integrator(potentialMaster, rand);
-  MCMoveDisplacement move(box, potentialMaster, rand, 0.2);
+  MCMoveMoleculeDisplacement move(box, potentialMaster, rand, 0.2);
   integrator.addMove(&move, 1);
   MCMoveInsertDelete moveID(box, potentialMaster, rand, mu, 0);
   if (doGC) {
