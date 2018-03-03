@@ -3,6 +3,7 @@
 #include "potential-master.h"
 #include "box.h"
 #include "random.h"
+#include "rotation-matrix.h"
 
 class MCMove {
   protected:
@@ -90,6 +91,27 @@ class MCMoveMoleculeDisplacement : public MCMove {
 
     MCMoveMoleculeDisplacement(Box& box, PotentialMaster& potentialMaster, Random& random, double stepSize);
     ~MCMoveMoleculeDisplacement();
+
+    virtual bool doTrial();
+    virtual double getChi(double temperature);
+    virtual void acceptNotify();
+    virtual void rejectNotify();
+    virtual double energyChange();
+};
+
+class MCMoveMoleculeRotate : public MCMove {
+  private:
+    double numOldPositions;
+    double **oldPositions;
+    RotationMatrix mat;
+    double uOld, uNew;
+    int iMolecule;
+    int iAtomFirst, iAtomLast;
+
+  public:
+
+    MCMoveMoleculeRotate(Box& box, PotentialMaster& potentialMaster, Random& random);
+    ~MCMoveMoleculeRotate();
 
     virtual bool doTrial();
     virtual double getChi(double temperature);

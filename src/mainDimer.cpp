@@ -46,6 +46,8 @@ int main(int argc, char** argv) {
   IntegratorMC integrator(potentialMaster, rand);
   MCMoveMoleculeDisplacement move(box, potentialMaster, rand, 0.2);
   integrator.addMove(&move, 1);
+  MCMoveMoleculeRotate moveRotate(box, potentialMaster, rand);
+  integrator.addMove(&moveRotate, 1);
   MCMoveInsertDelete moveID(box, potentialMaster, rand, mu, 0);
   if (doGC) {
     integrator.addMove(&moveID, 1);
