@@ -8,6 +8,7 @@
 #include "meter.h"
 #include "data-sink.h"
 #include "random.h"
+#include "util.h"
 
 int main(int argc, char** argv) {
   int numMolecules = 500;
@@ -23,7 +24,12 @@ int main(int argc, char** argv) {
 
   PotentialLJ plj(TRUNC_SIMPLE, 3.0);
   SpeciesList speciesList;
-  speciesList.add(new SpeciesSimple(2,1));
+  SpeciesSimple dimer(2,1);
+  double xyz0[] = {-0.25,0.0,0.0};
+  dimer.setAtomPosition(0, xyz0);
+  double xyz1[] = {+0.25,0.0,0.0};
+  dimer.setAtomPosition(1, xyz1);
+  speciesList.add(&dimer);
   Box box(speciesList);
   double L = pow(numMolecules/density, 1.0/3.0);
   printf("box size: %f\n", L);
@@ -60,11 +66,14 @@ int main(int argc, char** argv) {
     integrator.addListener(&pumpPE);
   }
 
+  double t1 = getTime();
   integrator.doSteps(steps);
+  double t2 = getTime();
   if (doData) {
     double* statsPE = ((Average*)pumpPE.getDataSink(0))->getStatistics()[0];
     statsPE[AVG_AVG] /= numMolecules;
     statsPE[AVG_ERR] /= numMolecules;
     printf("u avg: %f  err: %f  cor: %f\n", statsPE[AVG_AVG], statsPE[AVG_ERR], statsPE[AVG_ACOR]);
   }
+  printf("time: %4.3f\n", t2-t1);
 }
