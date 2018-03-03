@@ -286,7 +286,6 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
   u1 = 0;
   double dr[3];
   uAtomsChangedSet.clear();
-  for (int i=0; i<numAtoms; i++) uAtomsChangedSet.insert(i);
   duAtom.resize(numAtoms);
   fill(duAtom.begin(), duAtom.end(), 0.0);
   int iSpecies, firstAtom, lastAtom;
@@ -332,4 +331,13 @@ void PotentialMaster::removeAtom(int iAtom) {
   uAtom[iAtom] = uAtom[n-1];
   uAtom.resize(n);
   duAtom.resize(n);
+}
+
+double PotentialMaster::uTotalFromAtoms() {
+  double uTot = 0;
+  int numAtoms = box.getNumAtoms();
+  for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+    uTot += uAtom[iAtom];
+  }
+  return uTot;
 }

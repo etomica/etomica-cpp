@@ -43,15 +43,22 @@ void IntegratorMC::doStep() {
     m->rejectNotify();
   }
   else {
-    //printf("chi %e 1\n", chi);
     m->acceptNotify();
-    energy += m->energyChange();
+    double du = m->energyChange();
+    energy += du;
+    //printf("chi %e 1 %f\n", chi, du);
   }
-  if (false && stepCount%100==0) {
+#ifdef DEBUG
+  if (fabs(energy-potentialMaster.uTotalFromAtoms()) > 1e-6) {
+    printf("uAtoms! %d: %e %e %e\n", stepCount, energy, potentialMaster.uTotalFromAtoms(), energy-potentialMaster.uTotalFromAtoms());
+    exit(0);
+  }
+  if (stepCount%100==0) {
     double oldEnergy = energy;
     reset();
     if (fabs(oldEnergy-energy) > 1e-7) printf("%d: %e %e %e\n", stepCount, oldEnergy, energy, oldEnergy-energy);
   }
+#endif
   for (vector<IntegratorListener*>::iterator it = listeners.begin(); it!=listeners.end(); it++) {
     (*it)->stepFinished();
   }

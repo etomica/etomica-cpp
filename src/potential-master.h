@@ -102,6 +102,7 @@ class PotentialMaster {
     void resetAtomDU();
     void processAtomU(int coeff);
     void addCallback(PotentialCallback* pcb);
+    double uTotalFromAtoms();
 };
 
 class PotentialMasterVirial : public PotentialMaster {
