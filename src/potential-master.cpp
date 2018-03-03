@@ -287,12 +287,11 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
   double dr[3];
   uAtomsChangedSet.clear();
   duAtom.resize(numAtoms);
-  fill(duAtom.begin(), duAtom.end(), 0.0);
   int iSpecies, firstAtom, lastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, firstAtom, lastAtom);
   for (int iAtom=firstAtom; iAtom<=lastAtom; iAtom++) {
     pair<set<int>::iterator,bool> rv = uAtomsChangedSet.insert(iAtom);
-    if (rv.second==false) duAtom[iAtom] = 0;
+    if (rv.second) duAtom[iAtom] = 0;
     int iType = box.getAtomType(iAtom);
     double *ri = box.getAtomPosition(iAtom);
     double* iCutoffs = pairCutoffs[iType];
@@ -307,7 +306,8 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
       double r2 = 0;
       for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
       if (r2 > iCutoffs[jType]) continue;
-      uAtomsChangedSet.insert(jAtom);
+      rv = uAtomsChangedSet.insert(jAtom);
+      if (rv.second) duAtom[jAtom] = 0;
       double uij = iPotentials[jType]->u(r2);
       duAtom[jAtom] += 0.5*uij;
       duAtom[iAtom] += 0.5*uij;
