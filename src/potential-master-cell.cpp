@@ -236,7 +236,13 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   }
   const int numAtoms = box.getNumAtoms();
   double uTot=0, virialTot=0;
+#ifdef DEBUG
+  double uCheck[1000];
+#endif
   for (int i=0; i<numAtoms; i++) {
+#ifdef DEBUG
+    uCheck[i] = uAtom[i];
+#endif
     uAtom[i] = 0;
     if (doForces) for (int k=0; k<3; k++) force[i][k] = 0;
   }
@@ -281,6 +287,15 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   if (!pureAtoms && !rigidMolecules) {
     computeAllBonds(doForces, uTot, virialTot);
   }
+#ifdef DEBUG
+  if (uCheck[0]!=0) {
+    for (int i=0; i<numAtoms; i++) {
+      if (fabs(uCheck[i]-uAtom[i]) > 1e-7) {
+        printf("oops %d %f %f %f\n", i, uCheck[i], uAtom[i], uCheck[i]-uAtom[i]);
+      }
+    }
+  }
+#endif
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);
   }
