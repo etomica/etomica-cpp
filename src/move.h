@@ -3,7 +3,6 @@
 #include "potential-master.h"
 #include "box.h"
 #include "random.h"
-#include "SFMT.h"
 
 class MCMove {
   protected:
@@ -81,6 +80,8 @@ class MCMoveInsertDelete : public MCMove {
 class MCMoveMoleculeDisplacement : public MCMove {
   private:
     double deltaR[3];
+    double numOldPositions;
+    double **oldPositions;
     double uOld, uNew;
     int iMolecule;
     int iAtomFirst, iAtomLast;
