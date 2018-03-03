@@ -191,7 +191,7 @@ int Box::getMolecule(int iAtom) {
   }
 #ifdef DEBUG
   if (idx>=numAtomsBySpecies[iSpecies]) {
-    printf("gAT oops i %d is more atoms than I have\n", i);
+    printf("gAT oops i %d is more atoms than I have\n", iAtom);
     abort();
   }
 #endif
@@ -206,7 +206,7 @@ void Box::getMoleculeInfo(int iMolecule, int &iSpecies, int &fa, int &la) {
   }
 #ifdef DEBUG
   if (idx>=numMoleculesBySpecies[iSpecies]) {
-    printf("gFA oops i %d is more molecules than I have\n", i);
+    printf("gFA oops i %d is more molecules than I have\n", iMolecule);
     abort();
   }
 #endif

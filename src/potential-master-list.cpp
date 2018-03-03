@@ -69,7 +69,7 @@ void PotentialMasterList::checkUpdateNbrs() {
     if (r2 > maxR2[iType]) {
 #ifdef DEBUG
       if (safetyFac>0 && r2 > maxR2Unsafe[iType]) {
-        fprintf(stderr, "atom %d drifted into unsafe zone before nbr update\n");
+        fprintf(stderr, "atom %d drifted into unsafe zone before nbr update\n", iAtom);
       }
       needsUpdate = true;
 #else
