@@ -300,7 +300,7 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
     Potential** iPotentials = pairPotentials[iType];
     for (int jAtom=0; jAtom<numAtoms; jAtom++) {
       if (jAtom==iAtom) continue;
-      if (box.getMolecule(jAtom) == iMolecule && jAtom<iAtom) continue;
+      if (box.getMolecule(jAtom) == iMolecule && (rigidMolecules || jAtom<iAtom)) continue;
       int jType = box.getAtomType(jAtom);
       double *rj = box.getAtomPosition(jAtom);
       for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
