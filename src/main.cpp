@@ -8,6 +8,7 @@
 #include "meter.h"
 #include "data-sink.h"
 #include "random.h"
+#include "util.h"
 
 int main(int argc, char** argv) {
   int numAtoms = 500;
@@ -15,7 +16,7 @@ int main(int argc, char** argv) {
   double density = 1.0;
   long steps = 1000000;
   double mu = -3.5;
-  bool doData = false;
+  bool doData = true;
   bool doHMA = false;
   bool doGC = false;
 
@@ -65,7 +66,9 @@ int main(int argc, char** argv) {
     if (doGC) integrator.addListener(&pumpNA);
   }
 
+  double t1 = getTime();
   integrator.doSteps(steps);
+  double t2 = getTime();
   if (doData) {
     double* statsPE = ((Average*)pumpPE.getDataSink(0))->getStatistics()[0];
     if (!doGC) {
@@ -87,4 +90,5 @@ int main(int argc, char** argv) {
       printf("N avg: %f  err: %f  cor: %f\n", statsNA[AVG_AVG], statsNA[AVG_ERR], statsNA[AVG_ACOR]);
     }
   }
+  printf("time: %4.3f\n", t2-t1);
 }
