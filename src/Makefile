@@ -1,5 +1,11 @@
 
-FLAGS = -O3 -std=c++11 -Wall -msse2 -DHAVE_SSE2
+CFLAGS = -DSFMT_MEXP=19937 -DHAVE_SSE2 -msse2
+FLAGS = -std=c++11 -Wall
+ifdef DEBUG
+FLAGS += -O0 -g -DDEBUG
+else
+FLAGS += -O3
+endif
 
 OBJDIR = build
 
@@ -28,4 +34,4 @@ $(OBJDIR)/mcDimer: $(OBJECTS) $(MAINDIMEROBJ)
 	g++ $(FLAGS) -o $@ $(OBJECTS) $(MAINDIMEROBJ) -lm
 
 $(OBJECTS) $(MAINOBJ) $(MAINMDOBJ) $(MAINDIMEROBJ): $(OBJDIR)/%.o: %.cpp *.h
-	g++ -fPIC -c $(FLAGS) -DSFMT_MEXP=19937 -o $@ $<
+	g++ -fPIC -c $(FLAGS) $(CFLAGS) -o $@ $<
