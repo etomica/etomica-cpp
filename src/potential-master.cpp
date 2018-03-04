@@ -274,7 +274,7 @@ void PotentialMaster::computeOne(const int iAtom, const double *ri, double &u1, 
   computeOneInternal(iAtom, ri, u1, isTrial, iSpecies, iMolecule, iFirstAtom);
 }
 
-void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, int iFirstAtom) {
+void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom) {
   vector<int> *iBondedAtoms = nullptr;
   if (!pureAtoms && !rigidMolecules) {
     int iChildIndex = iAtom-iFirstAtom;
@@ -295,10 +295,17 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
     double r2 = 0;
     for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
     if (r2 > iCutoffs[jType]) continue;
-    uAtomsChanged.push_back(jAtom);
     double uij = iPotentials[jType]->u(r2);
-    duAtom[0] += 0.5*uij;
-    duAtom.push_back(0.5*uij);
+    if (duAtomSingle) {
+      uAtomsChanged.push_back(jAtom);
+      duAtom[0] += 0.5*uij;
+      duAtom.push_back(0.5*uij);
+    }
+    else {
+      if (duAtom[jAtom] == 0) uAtomsChanged.push_back(jAtom);
+      duAtom[iAtom] += 0.5*uij;
+      duAtom[jAtom] += 0.5*uij;
+    }
     u1 += uij;
   }
 }
