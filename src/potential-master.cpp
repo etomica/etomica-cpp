@@ -314,7 +314,6 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
   duAtomMulti = true;
   int numAtoms = box.getNumAtoms();
   u1 = 0;
-  double dr[3];
   uAtomsChanged.resize(0);
   if (duAtomDirty) {
     duAtom.resize(numAtoms);
@@ -332,28 +331,8 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
     if (duAtom[iAtom] == 0) {
       uAtomsChanged.push_back(iAtom);
     }
-    int iType = box.getAtomType(iAtom);
     double *ri = box.getAtomPosition(iAtom);
-    double* iCutoffs = pairCutoffs[iType];
-    Potential** iPotentials = pairPotentials[iType];
-    for (int jAtom=0; jAtom<numAtoms; jAtom++) {
-      if (jAtom==iAtom) continue;
-      if (box.getMolecule(jAtom) == iMolecule && (rigidMolecules || jAtom<iAtom)) continue;
-      int jType = box.getAtomType(jAtom);
-      double *rj = box.getAtomPosition(jAtom);
-      for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
-      box.nearestImage(dr);
-      double r2 = 0;
-      for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
-      if (r2 > iCutoffs[jType]) continue;
-      if (duAtom[jAtom] == 0) {
-        uAtomsChanged.push_back(jAtom);
-      }
-      double uij = iPotentials[jType]->u(r2);
-      duAtom[jAtom] += 0.5*uij;
-      duAtom[iAtom] += 0.5*uij;
-      u1 += uij;
-    }
+    computeOneInternal(iAtom, ri, u1, isTrial, iSpecies, iMolecule, firstAtom);
   }
   if (!pureAtoms && !rigidMolecules) {
     computeOneMoleculeBonds(iSpecies, iMolecule, u1, isTrial);
