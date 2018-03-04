@@ -81,6 +81,7 @@ class PotentialMaster {
       box.getMoleculeInfo(jMolecule, jSpecies, jFirstAtom, jLastAtom);
       return binary_search(iBondedAtoms->begin(), iBondedAtoms->end(), jAtom-jFirstAtom);
     }
+    void computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom);
 
   public:
     PotentialMaster(const SpeciesList &speciesList, Box& box);

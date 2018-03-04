@@ -243,31 +243,36 @@ void PotentialMaster::processAtomU(int coeff) {
 }
 
 void PotentialMaster::computeOne(const int iAtom, const double *ri, double &u1, const bool isTrial) {
-  int numAtoms = box.getNumAtoms();
   u1 = 0;
-  double dr[3];
   uAtomsChanged.resize(1);
   duAtom.resize(1);
   uAtomsChanged[0] = iAtom;
   duAtom[0] = 0;
-  int iMolecule = iAtom, iFirstAtom = iAtom, iChildIndex = 0, iLastAtom = iAtom, iSpecies = 0;
-  vector<int> *iBondedAtoms = nullptr;
-  if (!pureAtoms) {
+  int iMolecule = 0, iFirstAtom = 0, iSpecies = 0;
+  if (!pureAtoms && !rigidMolecules) {
     iMolecule = box.getMolecule(iAtom);
-    if (!rigidMolecules) {
-      box.getMoleculeInfo(iMolecule, iSpecies, iFirstAtom, iLastAtom);
-      iChildIndex = iAtom-iFirstAtom;
-      iBondedAtoms = &bondedAtoms[iSpecies][iChildIndex];
-    }
+    int iLastAtom;
+    box.getMoleculeInfo(iMolecule, iSpecies, iFirstAtom, iLastAtom);
+  }
+  computeOneInternal(iAtom, ri, u1, isTrial, iSpecies, iMolecule, iFirstAtom);
+}
+
+void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, int iFirstAtom) {
+  vector<int> *iBondedAtoms = nullptr;
+  if (!pureAtoms && !rigidMolecules) {
+    int iChildIndex = iAtom-iFirstAtom;
+    iBondedAtoms = &bondedAtoms[iSpecies][iChildIndex];
   }
   int iType = box.getAtomType(iAtom);
   double* iCutoffs = pairCutoffs[iType];
   Potential** iPotentials = pairPotentials[iType];
+  int numAtoms = box.getNumAtoms();
   for (int jAtom=0; jAtom<numAtoms; jAtom++) {
     if (jAtom==iAtom) continue;
     if (checkSkip(jAtom, iMolecule, iBondedAtoms)) continue;
     int jType = box.getAtomType(jAtom);
     double *rj = box.getAtomPosition(jAtom);
+    double dr[3];
     for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
     box.nearestImage(dr);
     double r2 = 0;
@@ -323,14 +328,12 @@ void PotentialMaster::newAtom() {
   int n = box.getNumAtoms();
   uAtom.resize(n);
   uAtom[n-1] = 0;
-  duAtom.resize(n);
 }
 
 void PotentialMaster::removeAtom(int iAtom) {
   int n = box.getNumAtoms();
   uAtom[iAtom] = uAtom[n-1];
   uAtom.resize(n);
-  duAtom.resize(n);
 }
 
 double PotentialMaster::uTotalFromAtoms() {
