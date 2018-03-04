@@ -301,29 +301,16 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   }
 }
 
-void PotentialMasterCell::computeOne(const int iAtom, const double *ri, double &u1, const bool isTrial) {
-  duAtomSingle = true;
-  u1 = 0;
+void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom) {
   const int iType = box.getAtomType(iAtom);
   const double *iCutoffs = pairCutoffs[iType];
   Potential** iPotentials = pairPotentials[iType];
 
   const int iCell = isTrial ? cellForCoord(ri) : atomCell[iAtom];
 
-  uAtomsChanged.resize(1);
-  duAtom.resize(1);
-  uAtomsChanged[0] = iAtom;
-  duAtom[0] = 0;
-  int iMolecule = iAtom;
   vector<int> *iBondedAtoms = nullptr;
-  if (!pureAtoms) {
-    iMolecule = box.getMolecule(iAtom);
-    if (!rigidMolecules) {
-      int iSpecies, iLastAtom, iFirstAtom;
-      box.getMoleculeInfo(iMolecule, iSpecies, iFirstAtom, iLastAtom);
-      int iChildIndex = iAtom-iFirstAtom;
-      iBondedAtoms = &bondedAtoms[iSpecies][iChildIndex];
-    }
+  if (!pureAtoms && !rigidMolecules) {
+    iBondedAtoms = &bondedAtoms[iSpecies][iAtom-iFirstAtom];
   }
   double *jbo = boxOffsets[iCell];
   for (int jAtom = cellLastAtom[iCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
@@ -331,7 +318,7 @@ void PotentialMasterCell::computeOne(const int iAtom, const double *ri, double &
       if (checkSkip(jAtom, iMolecule, iBondedAtoms)) continue;
       const int jType = box.getAtomType(jAtom);
       const double *rj = box.getAtomPosition(jAtom);
-      handleComputeOne(iPotentials[jType], ri, rj, jbo, jAtom, u1, iCutoffs[jType]);
+      handleComputeOne(iPotentials[jType], ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType]);
     }
   }
 
@@ -343,7 +330,7 @@ void PotentialMasterCell::computeOne(const int iAtom, const double *ri, double &
       if (checkSkip(jAtom, iMolecule, iBondedAtoms)) continue;
       const double *rj = box.getAtomPosition(jAtom);
       const int jType = box.getAtomType(jAtom);
-      handleComputeOne(iPotentials[jType], ri, rj, jbo, jAtom, u1, iCutoffs[jType]);
+      handleComputeOne(iPotentials[jType], ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType]);
     }
     jCell = iCell - *it;
     jbo = boxOffsets[jCell];
@@ -352,7 +339,7 @@ void PotentialMasterCell::computeOne(const int iAtom, const double *ri, double &
       if (checkSkip(jAtom, iMolecule, iBondedAtoms)) continue;
       const double *rj = box.getAtomPosition(jAtom);
       const int jType = box.getAtomType(jAtom);
-      handleComputeOne(iPotentials[jType], ri, rj, jbo, jAtom, u1, iCutoffs[jType]);
+      handleComputeOne(iPotentials[jType], ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType]);
     }
   }
 }

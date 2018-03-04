@@ -265,6 +265,7 @@ void PotentialMaster::computeOne(const int iAtom, const double *ri, double &u1, 
   uAtomsChanged.resize(1);
   duAtom.resize(1);
   uAtomsChanged[0] = iAtom;
+  duAtom[0] = 0;
   int iMolecule = 0, iFirstAtom = 0, iSpecies = 0;
   if (!pureAtoms && !rigidMolecules) {
     iMolecule = box.getMolecule(iAtom);
@@ -277,8 +278,7 @@ void PotentialMaster::computeOne(const int iAtom, const double *ri, double &u1, 
 void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom) {
   vector<int> *iBondedAtoms = nullptr;
   if (!pureAtoms && !rigidMolecules) {
-    int iChildIndex = iAtom-iFirstAtom;
-    iBondedAtoms = &bondedAtoms[iSpecies][iChildIndex];
+    iBondedAtoms = &bondedAtoms[iSpecies][iAtom-iFirstAtom];
   }
   int iType = box.getAtomType(iAtom);
   double* iCutoffs = pairCutoffs[iType];

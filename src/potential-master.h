@@ -81,7 +81,7 @@ class PotentialMaster {
       box.getMoleculeInfo(jMolecule, jSpecies, jFirstAtom, jLastAtom);
       return binary_search(iBondedAtoms->begin(), iBondedAtoms->end(), jAtom-jFirstAtom);
     }
-    void computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom);
+    virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom);
 
   public:
     PotentialMaster(const SpeciesList &speciesList, Box& box);
@@ -129,16 +129,23 @@ class PotentialMasterCell : public PotentialMaster {
     double** boxOffsets;
     int numAtoms;
 
-    void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int jAtom, double& uTot, double rc2) {
+    void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int iAtom, const int jAtom, double& uTot, double rc2) {
       double dx = ri[0]-(rj[0]+jbo[0]);
       double dy = ri[1]-(rj[1]+jbo[1]);
       double dz = ri[2]-(rj[2]+jbo[2]);
       double r2 = dx*dx + dy*dy + dz*dz;
       if (r2 > rc2) return;
       double uij = pij->u(r2);
-      uAtomsChanged.push_back(jAtom);
-      duAtom[0] += 0.5*uij;
-      duAtom.push_back(0.5*uij);
+      if (duAtomSingle) {
+        uAtomsChanged.push_back(jAtom);
+        duAtom[0] += 0.5*uij;
+        duAtom.push_back(0.5*uij);
+      }
+      else {
+        if (duAtom[jAtom] == 0) uAtomsChanged.push_back(jAtom);
+        duAtom[iAtom] += 0.5*uij;
+        duAtom[jAtom] += 0.5*uij;
+      }
       uTot += uij;
     }
     void handleComputeAll(int iAtom, int jAtom, const double *ri, const double *rj, const double *jbo, Potential* pij, double &ui, double &uj, double* fi, double* fj, double& uTot, double& virialTot, double rc2, bool doForces) {
@@ -169,13 +176,13 @@ class PotentialMasterCell : public PotentialMaster {
 
     int wrappedIndex(int i, int nc);
     void moveAtomIndex(int oldIndex, int newIndex);
+    virtual void computeOneInternal(const int iAtom, const double *ri, double &energy, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom);
   public:
     PotentialMasterCell(const SpeciesList &speciesList, Box& box, int cellRange);
     ~PotentialMasterCell();
     virtual double getRange();
     virtual void init();
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
-    virtual void computeOne(const int iAtom, const double *ri, double &energy, const bool isTrial);
     virtual void updateAtom(int iAtom);
     virtual void newAtom();
     virtual void removeAtom(int iAtom);
