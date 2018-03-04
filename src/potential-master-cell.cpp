@@ -302,6 +302,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
 }
 
 void PotentialMasterCell::computeOne(const int iAtom, const double *ri, double &u1, const bool isTrial) {
+  duAtomSingle = true;
   u1 = 0;
   const int iType = box.getAtomType(iAtom);
   const double *iCutoffs = pairCutoffs[iType];

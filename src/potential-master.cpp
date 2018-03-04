@@ -5,7 +5,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), force(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true) {
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), duAtomDirty(false), force(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true) {
 
   pairPotentials = (Potential***)malloc2D(numAtomTypes, numAtomTypes, sizeof(Potential*));
   pairCutoffs = (double**)malloc2D(numAtomTypes, numAtomTypes, sizeof(double));
@@ -225,29 +225,46 @@ double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
 }
 
 void PotentialMaster::resetAtomDU() {
+  if (duAtomMulti) {
+    int numAtomsChanged = uAtomsChanged.size();
+    for (int i=0; i<numAtomsChanged; i++) {
+      int iAtom = uAtomsChanged[i];
+      duAtom[iAtom] = 0;
+    }
+  }
   uAtomsChanged.resize(0);
 }
 
 void PotentialMaster::processAtomU(int coeff) {
+  if (duAtomSingle && duAtomMulti) {
+    fprintf(stderr, "Can't simultaneously do single and multi duAtom!\n");
+    abort();
+  }
   int numAtomsChanged = uAtomsChanged.size();
-  for (int i=0; i<numAtomsChanged; i++) {
-    int iAtom = uAtomsChanged[i];
-    uAtom[iAtom] += coeff*duAtom[i];
+  if (duAtomSingle) {
+    for (int i=0; i<numAtomsChanged; i++) {
+      int iAtom = uAtomsChanged[i];
+      uAtom[iAtom] += coeff*duAtom[i];
+    }
+    duAtomDirty = true;
+  }
+  else if (duAtomMulti) {
+    for (int i=0; i<numAtomsChanged; i++) {
+      int iAtom = uAtomsChanged[i];
+      uAtom[iAtom] += coeff*duAtom[iAtom];
+      duAtom[iAtom] = 0;
+    }
   }
   uAtomsChanged.resize(0);
-  for (set<int>::iterator it = uAtomsChangedSet.begin(); it != uAtomsChangedSet.end(); it++) {
-    int iAtom = *it;
-    uAtom[iAtom] += coeff*duAtom[iAtom];
-  }
-  uAtomsChangedSet.clear();
+  duAtomSingle = duAtomMulti = false;
 }
 
 void PotentialMaster::computeOne(const int iAtom, const double *ri, double &u1, const bool isTrial) {
+  duAtomSingle = true;
   u1 = 0;
   uAtomsChanged.resize(1);
   duAtom.resize(1);
   uAtomsChanged[0] = iAtom;
-  duAtom[0] = 0;
   int iMolecule = 0, iFirstAtom = 0, iSpecies = 0;
   if (!pureAtoms && !rigidMolecules) {
     iMolecule = box.getMolecule(iAtom);
@@ -287,16 +304,27 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
 }
 
 void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial) {
+  duAtomMulti = true;
   int numAtoms = box.getNumAtoms();
   u1 = 0;
   double dr[3];
-  uAtomsChangedSet.clear();
-  duAtom.resize(numAtoms);
+  uAtomsChanged.resize(0);
+  if (duAtomDirty) {
+    duAtom.resize(numAtoms);
+    fill(duAtom.begin(), duAtom.end(), 0);
+    duAtomDirty = false;
+  }
+  else if ((int)duAtom.size() < numAtoms) {
+    int s = duAtom.size();
+    duAtom.resize(numAtoms);
+    fill(duAtom.begin()+s, duAtom.end(), 0);
+  }
   int iSpecies, firstAtom, lastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, firstAtom, lastAtom);
   for (int iAtom=firstAtom; iAtom<=lastAtom; iAtom++) {
-    pair<set<int>::iterator,bool> rv = uAtomsChangedSet.insert(iAtom);
-    if (rv.second) duAtom[iAtom] = 0;
+    if (duAtom[iAtom] == 0) {
+      uAtomsChanged.push_back(iAtom);
+    }
     int iType = box.getAtomType(iAtom);
     double *ri = box.getAtomPosition(iAtom);
     double* iCutoffs = pairCutoffs[iType];
@@ -311,8 +339,9 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
       double r2 = 0;
       for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
       if (r2 > iCutoffs[jType]) continue;
-      rv = uAtomsChangedSet.insert(jAtom);
-      if (rv.second) duAtom[jAtom] = 0;
+      if (duAtom[jAtom] == 0) {
+        uAtomsChanged.push_back(jAtom);
+      }
       double uij = iPotentials[jType]->u(r2);
       duAtom[jAtom] += 0.5*uij;
       duAtom[iAtom] += 0.5*uij;
