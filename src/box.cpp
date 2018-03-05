@@ -166,6 +166,14 @@ void Box::setNumMolecules(int iSpecies, int n) {
     }
     maxNumMoleculesBySpecies[iSpecies] = n;
   }
+  for (int iMolecule=numMoleculesBySpecies[iSpecies]; iMolecule<n; iMolecule++) {
+    // place our new molecules at origin, using nominal conformation
+    for (int j=0; j<sna; j++) {
+      double* jPos = s->getAtomPosition(j);
+      double* rj = positions[iSpecies][sna*iMolecule + j];
+      rj[0] = jPos[0]; rj[1] = jPos[1]; rj[2] = jPos[2];
+    }
+  }
   numMoleculesBySpecies[iSpecies] = n;
   numAtomsBySpecies[iSpecies] = na;
 }
@@ -177,11 +185,25 @@ double* Box::getAtomVelocity(int i) {
     idx -= numAtomsBySpecies[iSpecies];
   }
   if (idx>=numAtomsBySpecies[iSpecies]) {
-    printf("gAP oops i %d is more atoms than I have\n", i);
+    printf("gAV oops i %d is more atoms than I have\n", i);
     abort();
   }
 #endif
   return velocities[0][i];
+}
+
+int Box::getGlobalMoleculeIndex(int iSpecies, int iMoleculeInSpecies) {
+#ifdef DEBUG
+  if (iSpecies>=knownNumSpecies) {
+    printf("getGlobalMoleculeIndex oops i %d is more species than I have\n", iSpecies);
+    abort();
+  }
+#endif
+  int t = 0;
+  for (int jSpecies=0; jSpecies<iSpecies; jSpecies++) {
+    t += numMoleculesBySpecies[jSpecies];
+  }
+  return t + iMoleculeInSpecies;
 }
 
 int Box::getMolecule(int iAtom) {

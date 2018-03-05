@@ -39,12 +39,8 @@ class Box {
     }
     double* getAtomPosition(int i) {
 #ifdef DEBUG
-      int idx = i, iSpecies = 0;
-      for ( ; iSpecies<knownNumSpecies-1 && idx > numAtomsBySpecies[iSpecies]; iSpecies++) {
-        idx -= numAtomsBySpecies[iSpecies];
-      }
-      if (idx>=numAtomsBySpecies[iSpecies]) {
-        printf("gAP oops i %d is more atoms than I have\n", i);
+      if (i>getNumAtoms()) {
+        fprintf(stderr, "gAP oops i %d is more atoms than I have (%d)\n", i, getNumAtoms());
         abort();
       }
 #endif
@@ -64,6 +60,7 @@ class Box {
       return atomTypes[iSpecies][idx];
     }
     int getFirstAtom(int iSpecies, int iMoleculeInSpecies) { return firstAtom[iSpecies][iMoleculeInSpecies]; }
+    int getGlobalMoleculeIndex(int iSpecies, int iMoleculeInSpecies);
     void nearestImage(double *dr);
     void initCoordinates();
     void setBoxSize(double x, double y, double z);
@@ -71,6 +68,7 @@ class Box {
     double* getAtomVelocity(int iAtom);
     void enableVelocities();
     void getAtomInfo(int iMolecule, int iSpecies);
+    // gives species index, first and last atom indicies for molecule with global index iMolecule
     void getMoleculeInfo(int iMolecule, int &iSpecies, int &firstAtom, int &lastAtom);
     int getMolecule(int iAtom);
 };
