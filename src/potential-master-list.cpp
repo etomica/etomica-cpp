@@ -117,7 +117,7 @@ resetStart:
   for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) numAtomNbrsUp[iAtom] = 0;
 
   double rc2 = nbrRange*nbrRange;
-  for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+  for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) {
     int iMolecule = iAtom;
     vector<int> *iBondedAtoms = nullptr;
     if (!pureAtoms) {

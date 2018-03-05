@@ -163,7 +163,7 @@ void PotentialMasterCell::assignCells() {
     return;
   }
 
-  numAtoms = box.getNumAtoms();
+  const int numAtoms = box.getNumAtoms();
   cellNextAtom.resize(numAtoms);
   atomCell.resize(numAtoms);
   for (int i=0; i<3; i++) boxHalf[i] = 0.5*bs[i];
@@ -191,15 +191,6 @@ void PotentialMasterCell::updateAtom(int iAtom) {
   for (int i=0; i<3; i++) {
     double x = (r[i] + boxHalf[i])/bs[i];
     cellNum += ((int)(cellRange + x*(numCells[i]-2*cellRange)))*jump[i];
-  }
-  if (iAtom >= numAtoms) {
-    int oldNumAtoms = numAtoms;
-    numAtoms = box.getNumAtoms();
-    //printf("numAtoms => %d\n", numAtoms);
-    cellNextAtom.resize(numAtoms);
-    atomCell.resize(numAtoms);
-    fill(atomCell.begin()+oldNumAtoms, atomCell.end(), -1);
-    fill(cellNextAtom.begin()+oldNumAtoms, cellNextAtom.end(), -1);
   }
 
   int oldCell = atomCell[iAtom];
@@ -289,11 +280,14 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   }
 #ifdef DEBUG
   if (uCheck[0]!=0) {
+    bool oops = false;
     for (int i=0; i<numAtoms; i++) {
       if (fabs(uCheck[i]-uAtom[i]) > 1e-7) {
-        printf("oops %d %f %f %f\n", i, uCheck[i], uAtom[i], uCheck[i]-uAtom[i]);
+        fprintf(stderr, "oops %d %f %f %f\n", i, uCheck[i], uAtom[i], uCheck[i]-uAtom[i]);
+        oops=true;
       }
     }
+    if (oops) abort();
   }
 #endif
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
@@ -345,7 +339,6 @@ void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, 
 }
 
 void PotentialMasterCell::removeAtom(int iAtom) {
-  PotentialMaster::removeAtom(iAtom);
   int oldCell = atomCell[iAtom];
   if (oldCell>-1) {
     // delete from old cell
@@ -360,8 +353,31 @@ void PotentialMasterCell::removeAtom(int iAtom) {
       cellNextAtom[j] = cellNextAtom[iAtom];
     }
   }
-  moveAtomIndex(box.getNumAtoms()-1, iAtom);
-  numAtoms--;
+}
+
+void PotentialMasterCell::removeMolecule(int iSpecies, int iMolecule) {
+  // our base class fixs up uAtom by filling in the hole left by iMolecule with 
+  // the data from the last molecule of iSpecies, and then shifts all other
+  // species down
+  PotentialMaster::removeMolecule(iSpecies, iMolecule);
+  // we need to do the same with cell data
+  int firstAtom = box.getFirstAtom(iSpecies, iMolecule);
+  int speciesAtoms = speciesList.get(iSpecies)->getNumAtoms();
+  int jMolecule = box.getNumMolecules(iSpecies)-1;
+  int jFirstAtom = box.getFirstAtom(iSpecies, jMolecule);
+  // we have a hole where our deleted atoms used to be.  fill it in with the
+  // last atom from this species
+  for (int j=0; j<speciesAtoms; j++) {
+    // delete from cell lists
+    removeAtom(firstAtom+j);
+    // and replace
+    moveAtomIndex(jFirstAtom+j, firstAtom+j);
+  }
+  // now shift for all species>iSpecies
+  int numAtoms = box.getNumAtoms();
+  for (int jAtom=jFirstAtom+speciesAtoms; jAtom<numAtoms; jAtom++) {
+    moveAtomIndex(jAtom, jAtom-speciesAtoms);
+  }
 }
 
 void PotentialMasterCell::moveAtomIndex(int oldIndex, int newIndex) {
@@ -381,13 +397,32 @@ void PotentialMasterCell::moveAtomIndex(int oldIndex, int newIndex) {
   cellNextAtom[j] = newIndex;
 }
 
-void PotentialMasterCell::newAtom() {
-  // don't actually increment numAtoms... updateAtom will do that
-  PotentialMaster::newAtom();
-  updateAtom(numAtoms);
-  for (int i=0; i<numAtoms; i++) {
+void PotentialMasterCell::newMolecule(int iSpecies) {
+  // our base class makes room for our atoms in uAtoms and then shifts
+  // later species to make room.
+  PotentialMaster::newMolecule(iSpecies);
+  // we need to repeat that for cell stuff
+  int iMolecule = box.getNumMolecules(iSpecies)-1;
+  int firstAtom = box.getFirstAtom(iSpecies, iMolecule);
+  int speciesAtoms = speciesList.get(iSpecies)->getNumAtoms();
+  int lastAtom = firstAtom + speciesAtoms - 1;
+  int numAtoms = box.getNumAtoms();
+  cellNextAtom.resize(numAtoms);
+  atomCell.resize(numAtoms);
+  // first we have to shift uAtoms for all species>iSpecies
+  for (int jAtom=numAtoms-1; jAtom>=firstAtom+speciesAtoms; jAtom--) {
+    moveAtomIndex(jAtom, jAtom-speciesAtoms);
+  }
+  for (int jAtom=lastAtom; jAtom>=firstAtom; jAtom--) {
+    cellNextAtom[jAtom] = -1;
+    atomCell[jAtom] = -1;
+    updateAtom(jAtom);
+  }
+#ifdef DEBUG
+  for (int i=0; i<box.getNumAtoms(); i++) {
     if (atomCell[i] < 0) {
       printf("oops %d in %d after newAtom\n", i, atomCell[i]);
     }
   }
+#endif
 }

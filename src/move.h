@@ -58,12 +58,12 @@ class MCMoveDisplacement : public MCMove {
 
 class MCMoveInsertDelete : public MCMove {
   private:
-    double rNew[3];
     double uOld, uNew;
-    int iAtom;
+    int iMolecule, xMolecule;
     bool doInsert;
     double mu;
     int iSpecies;
+    int numAtoms;
 
   public:
 

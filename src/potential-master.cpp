@@ -232,7 +232,11 @@ void PotentialMaster::resetAtomDU() {
       duAtom[iAtom] = 0;
     }
   }
+  else {
+    duAtomDirty = true;
+  }
   uAtomsChanged.resize(0);
+  duAtomSingle = duAtomMulti = false;
 }
 
 void PotentialMaster::processAtomU(int coeff) {
@@ -245,6 +249,7 @@ void PotentialMaster::processAtomU(int coeff) {
     for (int i=0; i<numAtomsChanged; i++) {
       int iAtom = uAtomsChanged[i];
       uAtom[iAtom] += coeff*duAtom[i];
+      // if (!pureAtoms) duAtom[i] = 0;
     }
     duAtomDirty = true;
   }
@@ -339,16 +344,36 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
   }
 }
 
-void PotentialMaster::newAtom() {
-  int n = box.getNumAtoms();
-  uAtom.resize(n);
-  uAtom[n-1] = 0;
+void PotentialMaster::newMolecule(int iSpecies) {
+  int iMolecule = box.getNumMolecules(iSpecies)-1;
+  int firstAtom = box.getFirstAtom(iSpecies, iMolecule);
+  int speciesAtoms = speciesList.get(iSpecies)->getNumAtoms();
+  int lastAtom = firstAtom + speciesAtoms - 1;
+  int numAtoms = box.getNumAtoms();
+  uAtom.resize(numAtoms);
+  // first we have to shift uAtoms for all species>iSpecies
+  for (int jAtom=numAtoms-1; jAtom>lastAtom; jAtom--) {
+    uAtom[jAtom] = uAtom[jAtom-speciesAtoms];
+  }
+  for (int jAtom=lastAtom; jAtom>=firstAtom; jAtom--) {
+    uAtom[jAtom] = 0;
+  }
 }
 
-void PotentialMaster::removeAtom(int iAtom) {
-  int n = box.getNumAtoms();
-  uAtom[iAtom] = uAtom[n-1];
-  uAtom.resize(n);
+void PotentialMaster::removeMolecule(int iSpecies, int iMolecule) {
+  int firstAtom = box.getFirstAtom(iSpecies, iMolecule);
+  int speciesAtoms = speciesList.get(iSpecies)->getNumAtoms();
+  int jMolecule = box.getNumMolecules(iSpecies)-1;
+  int jFirstAtom = box.getFirstAtom(iSpecies, jMolecule);
+  for (int i=0; i<speciesAtoms; i++) {
+    uAtom[firstAtom+i] = uAtom[jFirstAtom+i];
+  }
+  int numAtoms = box.getNumAtoms();
+  // now shift uAtoms for all species>iSpecies
+  for (int jAtom=jFirstAtom+speciesAtoms; jAtom<numAtoms; jAtom++) {
+    uAtom[jAtom-speciesAtoms] = uAtom[jAtom];
+  }
+  uAtom.resize(numAtoms-speciesAtoms);
 }
 
 double PotentialMaster::uTotalFromAtoms() {

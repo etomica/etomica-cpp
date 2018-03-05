@@ -96,8 +96,8 @@ class PotentialMaster {
     // energy of one molecule with the whole box (including itself)
     virtual void computeOneMolecule(int iMolecule, double &energy, bool isTrial);
     virtual void updateAtom(int iAtom) {}
-    virtual void newAtom();
-    virtual void removeAtom(int iAtom);
+    virtual void newMolecule(int iSpecies);
+    virtual void removeMolecule(int iSpecies, int iMolecule);
     double oldEnergy(int iAtom);
     double oldMoleculeEnergy(int iAtom);
     void resetAtomDU();
@@ -127,7 +127,6 @@ class PotentialMasterCell : public PotentialMaster {
     vector<int> wrapMap;
     double** rawBoxOffsets;
     double** boxOffsets;
-    int numAtoms;
 
     void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int iAtom, const int jAtom, double& uTot, double rc2) {
       double dx = ri[0]-(rj[0]+jbo[0]);
@@ -142,7 +141,9 @@ class PotentialMasterCell : public PotentialMaster {
         duAtom.push_back(0.5*uij);
       }
       else {
-        if (duAtom[jAtom] == 0) uAtomsChanged.push_back(jAtom);
+        if (duAtom[jAtom] == 0) {
+          uAtomsChanged.push_back(jAtom);
+        }
         duAtom[iAtom] += 0.5*uij;
         duAtom[jAtom] += 0.5*uij;
       }
@@ -184,8 +185,9 @@ class PotentialMasterCell : public PotentialMaster {
     virtual void init();
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
     virtual void updateAtom(int iAtom);
-    virtual void newAtom();
+    virtual void newMolecule(int iSpecies);
     virtual void removeAtom(int iAtom);
+    virtual void removeMolecule(int iSpecies, int iMolecule);
     void assignCells();
     int cellForCoord(const double *r);
     int* getNumCells();
