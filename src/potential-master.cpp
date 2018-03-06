@@ -5,7 +5,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), duAtomDirty(false), force(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true) {
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true) {
 
   pairPotentials = (Potential***)malloc2D(numAtomTypes, numAtomTypes, sizeof(Potential*));
   pairCutoffs = (double**)malloc2D(numAtomTypes, numAtomTypes, sizeof(double));
@@ -225,15 +225,15 @@ double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
 }
 
 void PotentialMaster::resetAtomDU() {
+  int numAtomsChanged = uAtomsChanged.size();
   if (duAtomMulti) {
-    int numAtomsChanged = uAtomsChanged.size();
     for (int i=0; i<numAtomsChanged; i++) {
       int iAtom = uAtomsChanged[i];
       duAtom[iAtom] = 0;
     }
   }
   else {
-    duAtomDirty = true;
+    for (int i=0; i<numAtomsChanged; i++) duAtom[i] = 0;
   }
   uAtomsChanged.resize(0);
   duAtomSingle = duAtomMulti = false;
@@ -249,9 +249,8 @@ void PotentialMaster::processAtomU(int coeff) {
     for (int i=0; i<numAtomsChanged; i++) {
       int iAtom = uAtomsChanged[i];
       uAtom[iAtom] += coeff*duAtom[i];
-      // if (!pureAtoms) duAtom[i] = 0;
+      duAtom[i] = 0;
     }
-    duAtomDirty = true;
   }
   else if (duAtomMulti) {
     for (int i=0; i<numAtomsChanged; i++) {
@@ -320,12 +319,7 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
   int numAtoms = box.getNumAtoms();
   u1 = 0;
   uAtomsChanged.resize(0);
-  if (duAtomDirty) {
-    duAtom.resize(numAtoms);
-    fill(duAtom.begin(), duAtom.end(), 0);
-    duAtomDirty = false;
-  }
-  else if ((int)duAtom.size() < numAtoms) {
+  if ((int)duAtom.size() < numAtoms) {
     int s = duAtom.size();
     duAtom.resize(numAtoms);
     fill(duAtom.begin()+s, duAtom.end(), 0);
