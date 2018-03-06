@@ -13,11 +13,12 @@ int SpeciesList::size() const {
   return nSpecies;
 }
 
-void SpeciesList::add(Species* s) {
+int SpeciesList::add(Species* s) {
   allSpecies = (Species**)realloc(allSpecies, (nSpecies+1)*sizeof(Species*));
   allSpecies[nSpecies] = s;
   nSpecies++;
   s->init(atomInfo);
+  return nSpecies-1;
 }
 
 Species* SpeciesList::get(int i) const {

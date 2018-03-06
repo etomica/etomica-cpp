@@ -39,7 +39,7 @@ class SpeciesList {
     SpeciesList();
     ~SpeciesList();
     int size() const;
-    void add(Species* species);
+    int add(Species* species);
     Species* get(int iSpecies) const;
     AtomInfo& getAtomInfo();
     int getNumAtomTypes() const;
