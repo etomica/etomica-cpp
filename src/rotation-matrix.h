@@ -1,6 +1,7 @@
 #pragma once
 
 #include "box.h"
+#include "random.h"
 
 class RotationMatrix {
   private:
@@ -13,4 +14,5 @@ class RotationMatrix {
     void invert();
     void transform(double* vec);
     void transformAbout(double* vec, double *center, Box& box);
+    void randomize(Random &random);
 };

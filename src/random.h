@@ -18,4 +18,5 @@ class Random {
     double nextDouble();
     double nextDouble32();
     double nextGaussian();
+    void onSphere(double *v);
 };

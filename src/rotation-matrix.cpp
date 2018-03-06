@@ -1,5 +1,6 @@
 #include <math.h>
 #include "rotation-matrix.h"
+#include "vector.h"
 
 void RotationMatrix::setSimpleAxisAngle(int iAxis, double theta) {
   double st = sin(theta);
@@ -47,4 +48,22 @@ void RotationMatrix::invert() {
       matrix[j][i] = t;
     }
   }
+}
+
+void RotationMatrix::randomize(Random &random) {
+  double *u = matrix[0], *v = matrix[1], *w = matrix[2];
+  random.onSphere(u);
+  double udotv;
+  do {
+    random.onSphere(v);
+    udotv = Vector::dot(u,v);
+  } while (fabs(udotv) < 0.99);
+  v[0] -= udotv*u[0];
+  v[1] -= udotv*u[1];
+  v[2] -= udotv*u[2];
+  double vNorm = sqrt(Vector::dot(v,v));
+  v[0] /= vNorm;
+  v[1] /= vNorm;
+  v[2] /= vNorm;
+  Vector::cross(u, v, w);
 }

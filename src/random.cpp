@@ -88,3 +88,18 @@ double Random::nextGaussian() {
   hasNextGaussian = true;
   return x1 * w;
 }
+
+void Random::onSphere(double *v) {
+  //Based on M.P. Allen and D.J. Tildesley, Computer Simulation of Liquids, p 349.
+  double z1, z2, zsq;
+  do  {
+    z1 = 2.0 * nextDouble32() - 1.0;
+    z2 = 2.0 * nextDouble32() - 1.0;
+    zsq = z1 * z1 + z2 * z2;
+  } while (zsq > 1.0);
+
+  double ranh = 2.0 * sqrt(1.0 - zsq);
+  v[0] = z1 * ranh;
+  v[1] = z2 * ranh;
+  v[2] = 1.0 - 2.0 * zsq;
+}
