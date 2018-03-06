@@ -1,8 +1,7 @@
 #include "move.h"
 
-MCMoveInsertDelete::MCMoveInsertDelete(Box& b, PotentialMaster& p, Random& r, double m, int s) : MCMove(b,p,r,0), mu(m), iSpecies(s) {
+MCMoveInsertDelete::MCMoveInsertDelete(Box& b, PotentialMaster& p, Random& r, double m, int s) : MCMove(b,p,r,0), mu(m), iSpecies(s), numAtoms(box.getSpeciesList().get(iSpecies)->getNumAtoms()) {
   tunable = false;
-  numAtoms = box.getSpeciesList().get(iSpecies)->getNumAtoms();
 }
 
 MCMoveInsertDelete::~MCMoveInsertDelete() {}
@@ -19,16 +18,25 @@ bool MCMoveInsertDelete::doTrial() {
     for (int k=0; k<3; k++) {
       mPos[k] = bs[k]*(random.nextDouble32()-0.5);
     }
-    int firstAtom = box.getFirstAtom(iSpecies, n);
-    for (int j=0; j<numAtoms; j++) {
-      int jAtom = firstAtom+j;
-      double *rj = box.getAtomPosition(jAtom);
+    firstAtom = box.getFirstAtom(iSpecies, n);
+    if (numAtoms==1) {
+      double *rj = box.getAtomPosition(firstAtom);
       for  (int k=0; k<3; k++) rj[k] += mPos[k];
-      box.nearestImage(rj);
+      iMolecule = box.getGlobalMoleculeIndex(iSpecies, n);
+      potentialMaster.newMolecule(iSpecies);
+      potentialMaster.computeOne(firstAtom, rj, uNew, true);
     }
-    iMolecule = box.getGlobalMoleculeIndex(iSpecies, n);
-    potentialMaster.newMolecule(iSpecies);
-    potentialMaster.computeOneMolecule(iMolecule, uNew, true);
+    else {
+      for (int j=0; j<numAtoms; j++) {
+        int jAtom = firstAtom+j;
+        double *rj = box.getAtomPosition(jAtom);
+        for  (int k=0; k<3; k++) rj[k] += mPos[k];
+        box.nearestImage(rj);
+      }
+      iMolecule = box.getGlobalMoleculeIndex(iSpecies, n);
+      potentialMaster.newMolecule(iSpecies);
+      potentialMaster.computeOneMolecule(iMolecule, uNew, true);
+    }
   }
   else {
     // delete
@@ -77,9 +85,17 @@ void MCMoveInsertDelete::acceptNotify() {
   }
   else {
     //printf("accept delete %d\n", iMolecule);
-    double uTmp;
-    potentialMaster.computeOneMolecule(iMolecule, uTmp, false);
-    potentialMaster.processAtomU(-1);
+    if (numAtoms==1) {
+      double uTmp;
+      double *rj = box.getAtomPosition(firstAtom);
+      potentialMaster.computeOne(firstAtom, rj, uTmp, false);
+      potentialMaster.processAtomU(-1);
+    }
+    else {
+      double uTmp;
+      potentialMaster.computeOneMolecule(iMolecule, uTmp, false);
+      potentialMaster.processAtomU(-1);
+    }
     // this removes iMolecule (updates cell lists) and then
     // moves the last atom into its position
     potentialMaster.removeMolecule(iSpecies, iMolecule);

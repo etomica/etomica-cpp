@@ -60,10 +60,11 @@ class MCMoveInsertDelete : public MCMove {
   private:
     double uOld, uNew;
     int iMolecule, xMolecule;
+    int firstAtom;
     bool doInsert;
     double mu;
     int iSpecies;
-    int numAtoms;
+    const int numAtoms;
 
   public:
 
