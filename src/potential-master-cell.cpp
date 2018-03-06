@@ -228,7 +228,8 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   const int numAtoms = box.getNumAtoms();
   double uTot=0, virialTot=0;
 #ifdef DEBUG
-  double uCheck[1000];
+  vector<double> uCheck;
+  uCheck.resize(box.getNumAtoms());
 #endif
   for (int i=0; i<numAtoms; i++) {
 #ifdef DEBUG
@@ -283,7 +284,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     bool oops = false;
     for (int i=0; i<numAtoms; i++) {
       if (fabs(uCheck[i]-uAtom[i]) > 1e-7) {
-        fprintf(stderr, "oops %d %f %f %f\n", i, uCheck[i], uAtom[i], uCheck[i]-uAtom[i]);
+        fprintf(stderr, "PMC uAtomCheck oops %d %f %f %f\n", i, uCheck[i], uAtom[i], uCheck[i]-uAtom[i]);
         oops=true;
       }
     }

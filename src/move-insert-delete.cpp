@@ -72,11 +72,11 @@ double MCMoveInsertDelete::getChi(double T) {
 
 void MCMoveInsertDelete::acceptNotify() {
   if (doInsert) {
-    //printf("accept insert %d\n", box.getNumMolecules(iSpecies));
+    //printf("accept insert %d\n", iMolecule);
     potentialMaster.processAtomU(1);
   }
   else {
-    //printf("accept delete %d\n", box.getNumMolecules(iSpecies)-1);
+    //printf("accept delete %d\n", iMolecule);
     double uTmp;
     potentialMaster.computeOneMolecule(iMolecule, uTmp, false);
     potentialMaster.processAtomU(-1);
