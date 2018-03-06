@@ -10,28 +10,20 @@ endif
 OBJDIR = build
 
 SRC = $(filter-out main%cpp, $(wildcard *.cpp))
-MAINSRC = main.cpp
-MAINMDSRC = mainMD.cpp
-MAINDIMERSRC = mainDimer.cpp
+MAINS := mc md dimer
+MAINSRC = $(patsubst %,main-%.cpp,$(MAINS))
 INC = $(wildcard *.h)
 OBJECTS := $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC))
 MAINOBJ := $(patsubst %.cpp,$(OBJDIR)/%.o,$(MAINSRC))
-MAINMDOBJ := $(patsubst %.cpp,$(OBJDIR)/%.o,$(MAINMDSRC))
-MAINDIMEROBJ := $(patsubst %.cpp,$(OBJDIR)/%.o,$(MAINDIMERSRC))
+MAINEXE := $(patsubst main-%.cpp,$(OBJDIR)/%,$(MAINSRC))
 
-default: directories $(OBJDIR)/mc $(OBJDIR)/md $(OBJDIR)/mcDimer
+default: directories $(MAINEXE)
 
 directories:
 	@mkdir -p $(OBJDIR)
 
-$(OBJDIR)/mc: $(OBJECTS) $(MAINOBJ)
-	g++ $(FLAGS) -o $@ $(OBJECTS) $(MAINOBJ) -lm
+$(MAINEXE): $(OBJDIR)/% : $(OBJDIR)/main-%.o $(OBJECTS) 
+	g++ $(FLAGS) -o $@ $(OBJECTS) $< -lm
 
-$(OBJDIR)/md: $(OBJECTS) $(MAINMDOBJ)
-	g++ $(FLAGS) -o $@ $(OBJECTS) $(MAINMDOBJ) -lm
-
-$(OBJDIR)/mcDimer: $(OBJECTS) $(MAINDIMEROBJ)
-	g++ $(FLAGS) -o $@ $(OBJECTS) $(MAINDIMEROBJ) -lm
-
-$(OBJECTS) $(MAINOBJ) $(MAINMDOBJ) $(MAINDIMEROBJ): $(OBJDIR)/%.o: %.cpp *.h
+$(OBJDIR)/%.o: %.cpp *.h
 	g++ -fPIC -c $(FLAGS) $(CFLAGS) -o $@ $<
