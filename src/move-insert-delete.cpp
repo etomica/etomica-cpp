@@ -27,11 +27,16 @@ bool MCMoveInsertDelete::doTrial() {
       potentialMaster.computeOne(firstAtom, rj, uNew, true);
     }
     else {
+      double *r0;
+      rotMat.randomize(random);
       for (int j=0; j<numAtoms; j++) {
         int jAtom = firstAtom+j;
         double *rj = box.getAtomPosition(jAtom);
         for  (int k=0; k<3; k++) rj[k] += mPos[k];
-        box.nearestImage(rj);
+        if (j==0) r0 = rj;
+        else {
+          rotMat.transformAbout(rj, r0, box);
+        }
       }
       iMolecule = box.getGlobalMoleculeIndex(iSpecies, n);
       potentialMaster.newMolecule(iSpecies);

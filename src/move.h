@@ -65,6 +65,7 @@ class MCMoveInsertDelete : public MCMove {
     double mu;
     int iSpecies;
     const int numAtoms;
+    RotationMatrix rotMat;
 
   public:
 
