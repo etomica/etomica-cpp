@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
   Random rand;
   printf("random seed: %d\n", rand.getSeed());
 
-  PotentialLJ plj(TRUNC_SIMPLE, 3.0);
+  PotentialLJ plj(1,1,TRUNC_SIMPLE, 3.0);
   SpeciesList speciesList;
   speciesList.add(new SpeciesSimple(1,1));
   Box box(speciesList);

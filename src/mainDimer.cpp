@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   Random rand;
   printf("random seed: %d\n", rand.getSeed());
 
-  PotentialLJ plj(TRUNC_SIMPLE, 3.0);
+  PotentialLJ plj(1,1,TRUNC_SIMPLE, 3.0);
   SpeciesList speciesList;
   SpeciesSimple dimer(2,1);
   double xyz0[] = {-0.25,0.0,0.0};

@@ -2,25 +2,18 @@
 #include <math.h>
 #include "potential.h"
 
-Potential::Potential(int tt, double rc) {
-  truncType = tt;
-  rCut = rc;
+Potential::Potential(int tt, double rc) : truncType(tt), rCut(rc) {
   init();
 }
 
-Potential::Potential() {
-  truncType = TRUNC_SIMPLE;
-  rCut = 3;
+Potential::Potential() : truncType(TRUNC_SIMPLE), rCut(3) {
   init();
 }
 
 void Potential::init() {
   uShift = 0;
   ufShift = 0;
-  if (truncType == TRUNC_NONE) {
-    rCut = 1.0/0.0;
-  }
-  else if (truncType == TRUNC_SHIFT) {
+  if (truncType == TRUNC_SHIFT) {
     uShift = -ur(rCut);
   }
   else if (truncType == TRUNC_FORCE_SHIFT) {
@@ -55,22 +48,21 @@ void Potential::u012(double r2, double &u, double &du, double &d2u) {
 }
 
 
-PotentialLJ::PotentialLJ(int tt, double rc) : Potential(tt, rc) {
+PotentialLJ::PotentialLJ(double e, double s, int tt, double rc) : Potential(tt, rc), epsilon(e), sigma(s), sigma2(s*s) {
   init();
 }
 
 double PotentialLJ::ur(double r) {
-  if (r>rCut) return 0;
-  double s2 = 1/(r*r);
+  double s2 = sigma2/(r*r);
   double s6 = s2*s2*s2;
-  double ulj = 4*s6*(s6 - 1);
+  double ulj = 4*epsilon*s6*(s6 - 1);
   return ulj + uShift + r*ufShift;
 }
 
 double PotentialLJ::u(double r2) {
-  if (r2>rCut*rCut) return 0;
-  double s6 = 1/(r2*r2*r2);
-  double ulj = 4*s6*(s6 - 1);
+  double s2 = sigma2/r2;
+  double s6 = s2*s2*s2;
+  double ulj = 4*epsilon*s6*(s6 - 1);
   double u = ulj + uShift;
   if (ufShift!=0) u += ufShift*sqrt(r2);
   return u;
@@ -79,33 +71,32 @@ double PotentialLJ::u(double r2) {
 double PotentialLJ::du(double r2) {
   double s2 = 1/r2;
   double s6 = s2*s2*s2;
-  double du = -48*s6*(s6 -0.5);
+  double du = -48*epsilon*s6*(s6 -0.5);
   if (ufShift!=0) du += ufShift*sqrt(r2);
   return du;
 }
 
 double PotentialLJ::d2u(double r2) {
-  double s2 = 1/r2;
+  double s2 = sigma2/r2;
   double s6 = s2*s2*s2;
-  double d2u = 4*12*s6*(13*s6 - 0.5*7);
+  double d2u = 4*12*epsilon*s6*(13*s6 - 0.5*7);
   return d2u;
 }
 
 void PotentialLJ::u012(double r2, double &u, double &du, double &d2u) {
-  double s2 = 1/r2;
+  double s2 = sigma2/r2;
   double s6 = s2*s2*s2;
-  u = 4*s6*(s6 - 1) + uShift;
-  du = -4*12*s6*(s6 - 0.5);
+  u = 4*epsilon*s6*(s6 - 1) + uShift;
+  du = -4*12*epsilon*s6*(s6 - 0.5);
   if (ufShift != 0) {
     double x = sqrt(r2)*ufShift;
     u += x;
     du += x;
   }
-  d2u = 4*12*s6*(13*s6 - 0.5*7);
+  d2u = 4*12*epsilon*s6*(13*s6 - 0.5*7);
 }
 
-PotentialSS::PotentialSS(int p, int tt, double rc) : Potential(tt, rc) {
-  exponent = p;
+PotentialSS::PotentialSS(double e, int p, int tt, double rc) : Potential(tt, rc), epsilon(e), exponent(p) {
   init();
 }
 
@@ -139,32 +130,32 @@ double PotentialSS::rpow(double r2) {
     default:
       uss = pow(s2, exponent*0.5);
   }
-  return uss;
+  return epsilon*uss;
 }
 
 double PotentialSS::ur(double r) {
   double uss = rpow(r*r);
-  return uss + uShift + r*ufShift;
+  return epsilon*uss + uShift + r*ufShift;
 }
 
 double PotentialSS::u(double r2) {
-  double u = rpow(r2) + uShift;
+  double u = epsilon*rpow(r2) + uShift;
   if (ufShift!=0) u += uShift*sqrt(r2);
   return u;
 }
 
 double PotentialSS::du(double r2) {
-  double du = -exponent * rpow(r2);
+  double du = -exponent * epsilon * rpow(r2);
   if (ufShift!=0) du += ufShift*sqrt(r2);
   return du;
 }
 
 double PotentialSS::d2u(double r2) {
-  return exponent*(exponent+1)*rpow(r2);
+  return exponent*(exponent+1)*epsilon*rpow(r2);
 }
 
 void PotentialSS::u012(double r2, double &u, double &du, double &d2u) {
-  u = rpow(r2);
+  u = epsilon*rpow(r2);
   du = -exponent*u;
   d2u = -(exponent+1)*du;
   u += uShift;
@@ -175,18 +166,18 @@ void PotentialSS::u012(double r2, double &u, double &du, double &d2u) {
   }
 }
 
-PotentialWCA::PotentialWCA() : PotentialLJ(TRUNC_SHIFT, 1.122462048309373) {}
+PotentialWCA::PotentialWCA(double e, double s) : PotentialLJ(e, s, TRUNC_SHIFT, 1.122462048309373*s) {}
 
-PotentialHS::PotentialHS() : Potential(TRUNC_NONE, 1) {
+PotentialHS::PotentialHS(double s) : Potential(TRUNC_SIMPLE, 1), sigma(s), sigma2(s*s) {
   init();
 }
 
 double PotentialHS::ur(double r) {
-  return r>1 ? 0 : INFINITY;
+  return r>sigma ? 0 : INFINITY;
 }
 
 double PotentialHS::u(double r2) {
-  return r2>1 ? 0 : INFINITY;
+  return r2>sigma2 ? 0 : INFINITY;
 }
 
 double PotentialHS::du(double r2) {
@@ -198,5 +189,6 @@ double PotentialHS::d2u(double r2) {
 }
 
 void PotentialHS::u012(double r2, double &u, double &du, double &d2u) {
-  u = r2>1 ? 0 : INFINITY;
+  u = r2>sigma2 ? 0 : INFINITY;
+  du = d2u = 0;
 }

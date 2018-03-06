@@ -28,8 +28,10 @@ class Potential {
 };
 
 class PotentialLJ: public Potential {
+  protected:
+    const double epsilon, sigma, sigma2;
   public:
-    PotentialLJ(int tt, double rc);
+    PotentialLJ(double epsilon, double sigma, int tt, double rc);
     ~PotentialLJ() {}
     double ur(double r);
     double u(double r2);
@@ -40,10 +42,11 @@ class PotentialLJ: public Potential {
 
 class PotentialSS: public Potential {
   private:
-    int exponent;
+    const double epsilon;
+    const int exponent;
     double rpow(double r2);
   public:
-    PotentialSS(int p, int tt, double rc);
+    PotentialSS(double epsilon, int p, int tt, double rc);
     ~PotentialSS() {}
     double ur(double r);
     double u(double r2);
@@ -54,13 +57,15 @@ class PotentialSS: public Potential {
 
 class PotentialWCA: public PotentialLJ {
   public:
-    PotentialWCA();
+    PotentialWCA(double epsilon, double sigma);
     ~PotentialWCA() {}
 };
 
 class PotentialHS: public Potential {
+  private:
+    double sigma, sigma2;
   public:
-    PotentialHS();
+    PotentialHS(double sigma);
     ~PotentialHS() {}
     double ur(double r);
     double u(double r2);
