@@ -215,6 +215,7 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
       handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, doForces);
     }
   }
+  computeAllTruncationCorrection(uTot, virialTot);
   if (!pureAtoms && !rigidMolecules) {
     computeAllBonds(doForces, uTot, virialTot);
   }

@@ -145,22 +145,27 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   if (!pureAtoms && !rigidMolecules) {
     computeAllBonds(doForces, uTot, virialTot);
   }
-  if (doTruncationCorrection) {
-    for (int i=0; i<numAtomTypes; i++) {
-      int iNumAtoms = numAtomsByType[i];
-      for (int j=i; j<numAtomTypes; j++) {
-        int jNumAtoms = numAtomsByType[j];
-        Potential *p = pairPotentials[i][j];
-        double u, du, d2u;
-        p->u012TC(u, du, d2u);
-        int numPairs = j==i ? iNumAtoms*(jNumAtoms-1)/2 : iNumAtoms*jNumAtoms;
-        uTot += u * numPairs;
-        virialTot += du * numPairs;
-      }
-    }
-  }
+  computeAllTruncationCorrection(uTot, virialTot);
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);
+  }
+}
+
+void PotentialMaster::computeAllTruncationCorrection(double &uTot, double &virialTot) {
+  if (!doTruncationCorrection) return;
+  double* bs = box.getBoxSize();
+  double vol = bs[0]*bs[1]*bs[2];
+  for (int i=0; i<numAtomTypes; i++) {
+    int iNumAtoms = numAtomsByType[i];
+    for (int j=i; j<numAtomTypes; j++) {
+      int jNumAtoms = numAtomsByType[j];
+      Potential *p = pairPotentials[i][j];
+      double u, du, d2u;
+      p->u012TC(u, du, d2u);
+      int numPairs = j==i ? iNumAtoms*(jNumAtoms-1)/2 : iNumAtoms*jNumAtoms;
+      uTot += u * numPairs/vol;
+      virialTot += du * numPairs/vol;
+    }
   }
 }
 

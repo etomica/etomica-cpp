@@ -291,6 +291,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     if (oops) abort();
   }
 #endif
+  computeAllTruncationCorrection(uTot, virialTot);
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);
   }
