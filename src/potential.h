@@ -21,6 +21,7 @@ class Potential {
     virtual double du(double r2) {return 0;}
     virtual double d2u(double r2) {return 0;}
     virtual void u012(double r2, double &u, double &du, double &d2u);
+    virtual void u012TC(double &u0, double &u1, double &du0, double &du1, double &d2u1) {u0=u1=du0=du1=d2u1=0;}
     void setCutoff(double rc);
     double getCutoff();
     void setTruncationType(int tt);
@@ -38,6 +39,7 @@ class PotentialLJ: public Potential {
     double du(double r2);
     double d2u(double r2);
     void u012(double r2, double &u, double &du, double &d2u);
+    virtual void u012TC(double &u0, double &u1, double &du0, double &du1, double &d2u1);
 };
 
 class PotentialSS: public Potential {
@@ -53,12 +55,14 @@ class PotentialSS: public Potential {
     double du(double r2);
     double d2u(double r2);
     void u012(double r2, double &u, double &du, double &d2u);
+    virtual void u012TC(double &u0, double &u1, double &du0, double &du1, double &d2u1);
 };
 
 class PotentialWCA: public PotentialLJ {
   public:
     PotentialWCA(double epsilon, double sigma);
     ~PotentialWCA() {}
+    virtual void u012TC(double &u0, double &u1, double &du0, double &du1, double &d2u1) {u0=u1=du0=du1=d2u1=0;}
 };
 
 class PotentialHS: public Potential {
