@@ -11,6 +11,7 @@ class Potential {
     int truncType;
     double uShift, ufShift;
     double rCut;
+    bool correctTruncation;
   public:
     Potential();
     Potential(int tt, double rc);
@@ -23,6 +24,7 @@ class Potential {
     virtual void u012(double r2, double &u, double &du, double &d2u);
     virtual void u012TC(double &u0, double &u1, double &du0, double &du1, double &d2u1) {u0=u1=du0=du1=d2u1=0;}
     void setCutoff(double rc);
+    void setCorrectTruncation(bool doCorrection);
     double getCutoff();
     void setTruncationType(int tt);
     int getTruncationType();

@@ -2,7 +2,7 @@
 #include <math.h>
 #include "potential.h"
 
-Potential::Potential(int tt, double rc) : truncType(tt), rCut(rc) {
+Potential::Potential(int tt, double rc) : truncType(tt), rCut(rc), correctTruncation(true) {
   init();
 }
 
@@ -30,6 +30,10 @@ void Potential::setTruncationType(int tt) {
 
 int Potential::getTruncationType() {
   return truncType;
+}
+
+void Potential::setCorrectTruncation(bool doCorrection) {
+  correctTruncation = doCorrection;
 }
 
 void Potential::setCutoff(double rc) {
@@ -97,7 +101,7 @@ void PotentialLJ::u012(double r2, double &u, double &du, double &d2u) {
 }
 
 void PotentialLJ::u012TC(double &u0, double &u1, double &du0, double &du1, double &d2u1) {
-  if (truncType == TRUNC_NONE) {
+  if (truncType == TRUNC_NONE || !correctTruncation) {
     u0=u1=du0=du1=d2u1=0;
     return;
   }
@@ -186,7 +190,7 @@ void PotentialSS::u012(double r2, double &u, double &du, double &d2u) {
 }
 
 void PotentialSS::u012TC(double &u0, double &u1, double &du0, double &du1, double &d2u1) {
-  if (truncType == TRUNC_NONE) {
+  if (truncType == TRUNC_NONE || !correctTruncation) {
     u0=u1=du0=du1=d2u1=0;
     return;
   }
