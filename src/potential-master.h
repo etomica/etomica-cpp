@@ -72,11 +72,12 @@ class PotentialMaster {
     vector<Potential*> *bondedPotentials;
     const bool pureAtoms;
     bool rigidMolecules;
-    bool doTruncationCorrection;
+    bool doTruncationCorrection, doSingleTruncationCorrection;
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1, const bool isTrial);
     void computeAllBonds(bool doForces, double &uTot, double &virialTot);
     void computeAllTruncationCorrection(double &uTot, double &virialTot);
+    double computeOneTruncationCorrection(const int iAtom);
     inline bool checkSkip(int jAtom, int iMolecule, vector<int> *iBondedAtoms) {
       if (pureAtoms) return false;
       int jMolecule = box.getMolecule(jAtom);
@@ -92,6 +93,7 @@ class PotentialMaster {
     virtual ~PotentialMaster();
     Box& getBox();
     void setDoTruncationCorrection(bool doCorrection);
+    void setDoSingleTruncationCorrection(bool doCorrection);
     void setPairPotential(int iType, int jType, Potential* pij);
     void setBondPotential(int iSpecies, vector<int*> &bondedPairs, Potential *pBond);
     // compute for the whole box

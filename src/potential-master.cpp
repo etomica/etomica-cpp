@@ -5,7 +5,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true) {
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false) {
 
   pairPotentials = (Potential***)malloc2D(numAtomTypes, numAtomTypes, sizeof(Potential*));
   pairCutoffs = (double**)malloc2D(numAtomTypes, numAtomTypes, sizeof(double));
@@ -46,6 +46,11 @@ PotentialMaster::~PotentialMaster() {
 
 void PotentialMaster::setDoTruncationCorrection(bool doCorrection) {
   doTruncationCorrection = doCorrection;
+  if (!doCorrection) doSingleTruncationCorrection = false;
+}
+
+void PotentialMaster::setDoSingleTruncationCorrection(bool doCorrection) {
+  doSingleTruncationCorrection = doCorrection;
 }
 
 void PotentialMaster::setPairPotential(int iType, int jType, Potential* p) {
@@ -167,6 +172,21 @@ void PotentialMaster::computeAllTruncationCorrection(double &uTot, double &viria
       virialTot += du * numPairs/vol;
     }
   }
+}
+
+double PotentialMaster::computeOneTruncationCorrection(int iAtom) {
+  double* bs = box.getBoxSize();
+  double vol = bs[0]*bs[1]*bs[2];
+  int iType = box.getAtomType(iAtom);
+  double uTot = 0;
+  for (int j=0; j<numAtomTypes; j++) {
+    int jNumAtoms = numAtomsByType[j];
+    Potential *p = pairPotentials[iType][j];
+    double u, du, d2u;
+    p->u012TC(u, du, d2u);
+    uTot += u * jNumAtoms/vol;
+  }
+  return uTot;
 }
 
 void PotentialMaster::computeAllBonds(bool doForces, double &uTot, double &virialTot) {
@@ -315,6 +335,9 @@ void PotentialMaster::computeOne(const int iAtom, const double *ri, double &u1, 
     box.getMoleculeInfo(iMolecule, iSpecies, iFirstAtom, iLastAtom);
   }
   computeOneInternal(iAtom, ri, u1, isTrial, iSpecies, iMolecule, iFirstAtom);
+  if (doSingleTruncationCorrection) {
+    u1 += computeOneTruncationCorrection(iAtom);
+  }
 }
 
 void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom) {
@@ -370,6 +393,9 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
     }
     double *ri = box.getAtomPosition(iAtom);
     computeOneInternal(iAtom, ri, u1, isTrial, iSpecies, iMolecule, firstAtom);
+    if (doSingleTruncationCorrection) {
+      u1 += computeOneTruncationCorrection(iAtom);
+    }
   }
   if (!pureAtoms && !rigidMolecules) {
     computeOneMoleculeBonds(iSpecies, iMolecule, u1, isTrial);
