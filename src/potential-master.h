@@ -57,6 +57,7 @@ class PotentialMaster {
   protected:
     const SpeciesList& speciesList;
     Potential*** pairPotentials;
+    int* numAtomsByType;
     double** pairCutoffs;
     Box& box;
     vector<double> uAtom;
@@ -71,6 +72,8 @@ class PotentialMaster {
     vector<Potential*> *bondedPotentials;
     const bool pureAtoms;
     bool rigidMolecules;
+    bool doTruncationCorrection;
+
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1, const bool isTrial);
     void computeAllBonds(bool doForces, double &uTot, double &virialTot);
     inline bool checkSkip(int jAtom, int iMolecule, vector<int> *iBondedAtoms) {
@@ -87,6 +90,7 @@ class PotentialMaster {
     PotentialMaster(const SpeciesList &speciesList, Box& box);
     virtual ~PotentialMaster();
     Box& getBox();
+    void setDoTruncationCorrection(bool doCorrection);
     void setPairPotential(int iType, int jType, Potential* pij);
     void setBondPotential(int iSpecies, vector<int*> &bondedPairs, Potential *pBond);
     // compute for the whole box

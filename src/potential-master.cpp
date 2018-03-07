@@ -5,7 +5,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true) {
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true) {
 
   pairPotentials = (Potential***)malloc2D(numAtomTypes, numAtomTypes, sizeof(Potential*));
   pairCutoffs = (double**)malloc2D(numAtomTypes, numAtomTypes, sizeof(double));
@@ -19,6 +19,20 @@ PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl
   bondedPairs = new vector<vector<int*> >[sl.size()];
   bondedPotentials = new vector<Potential*>[sl.size()];
   bondedAtoms = new vector<int>*[sl.size()];
+
+  numAtomsByType = new int[numAtomTypes];
+  for (int i=0; i<numAtomTypes; i++) {
+    numAtomsByType[i] = 0;
+  }
+  for (int i=0; i<sl.size(); i++) {
+    Species *s = sl.get(i);
+    int iNumMolecules = box.getNumMolecules(i);
+    int iNumAtoms = s->getNumAtoms();
+    int* atomTypes1 = s->getAtomTypes();
+    for (int j=0; j<iNumAtoms; j++) {
+      numAtomsByType[atomTypes1[j]] += iNumMolecules;
+    }
+  }
 }
 
 PotentialMaster::~PotentialMaster() {
@@ -27,6 +41,11 @@ PotentialMaster::~PotentialMaster() {
   delete[] bondedPairs;
   delete[] bondedPotentials;
   delete[] bondedAtoms;
+  delete[] numAtomsByType;
+}
+
+void PotentialMaster::setDoTruncationCorrection(bool doCorrection) {
+  doTruncationCorrection = doCorrection;
 }
 
 void PotentialMaster::setPairPotential(int iType, int jType, Potential* p) {
@@ -125,6 +144,20 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   }
   if (!pureAtoms && !rigidMolecules) {
     computeAllBonds(doForces, uTot, virialTot);
+  }
+  if (doTruncationCorrection) {
+    for (int i=0; i<numAtomTypes; i++) {
+      int iNumAtoms = numAtomsByType[i];
+      for (int j=i; j<numAtomTypes; j++) {
+        int jNumAtoms = numAtomsByType[j];
+        Potential *p = pairPotentials[i][j];
+        double u, du, d2u;
+        p->u012TC(u, du, d2u);
+        int numPairs = j==i ? iNumAtoms*(jNumAtoms-1)/2 : iNumAtoms*jNumAtoms;
+        uTot += u * numPairs;
+        virialTot += du * numPairs;
+      }
+    }
   }
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);
