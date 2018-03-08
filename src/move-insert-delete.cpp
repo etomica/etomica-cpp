@@ -21,10 +21,10 @@ bool MCMoveInsertDelete::doTrial() {
     firstAtom = box.getFirstAtom(iSpecies, n);
     if (numAtoms==1) {
       double *rj = box.getAtomPosition(firstAtom);
-      for  (int k=0; k<3; k++) rj[k] += mPos[k];
+      for (int k=0; k<3; k++) rj[k] = mPos[k];
       iMolecule = box.getGlobalMoleculeIndex(iSpecies, n);
       potentialMaster.newMolecule(iSpecies);
-      potentialMaster.computeOne(firstAtom, rj, uNew, true);
+      potentialMaster.computeOne(firstAtom, rj, uNew, false);
     }
     else {
       double *r0;
@@ -92,6 +92,7 @@ void MCMoveInsertDelete::acceptNotify() {
     //printf("accept delete %d\n", iMolecule);
     if (numAtoms==1) {
       double uTmp;
+      firstAtom = box.getFirstAtom(iSpecies, xMolecule);
       double *rj = box.getAtomPosition(firstAtom);
       potentialMaster.computeOne(firstAtom, rj, uTmp, false);
       potentialMaster.processAtomU(-1);
@@ -103,7 +104,7 @@ void MCMoveInsertDelete::acceptNotify() {
     }
     // this removes iMolecule (updates cell lists) and then
     // moves the last atom into its position
-    potentialMaster.removeMolecule(iSpecies, iMolecule);
+    potentialMaster.removeMolecule(iSpecies, xMolecule);
 
     int jMolecule = box.getNumMolecules(iSpecies)-1;
     if (jMolecule>xMolecule) {
