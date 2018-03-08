@@ -449,5 +449,7 @@ double PotentialMaster::uTotalFromAtoms() {
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
     uTot += uAtom[iAtom];
   }
+  double virialTot;
+  computeAllTruncationCorrection(uTot, virialTot);
   return uTot;
 }
