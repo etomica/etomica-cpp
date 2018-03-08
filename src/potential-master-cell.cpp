@@ -176,7 +176,9 @@ void PotentialMasterCell::assignCells() {
     double *r = box.getAtomPosition(iAtom);
     for (int i=0; i<3; i++) {
       double x = (r[i] + boxHalf[i])/bs[i];
-      cellNum += ((int)(cellRange + x*(numCells[i]-2*cellRange)))*jump[i];
+      int y = ((int)(cellRange + x*(numCells[i]-2*cellRange)));
+      if (y==numCells[i]+2*cellRange) y--;
+      cellNum += y*jump[i];
     }
     atomCell[iAtom] = cellNum;
     cellNextAtom[iAtom] = cellLastAtom[cellNum];
@@ -190,7 +192,9 @@ void PotentialMasterCell::updateAtom(int iAtom) {
   double *r = box.getAtomPosition(iAtom);
   for (int i=0; i<3; i++) {
     double x = (r[i] + boxHalf[i])/bs[i];
-    cellNum += ((int)(cellRange + x*(numCells[i]-2*cellRange)))*jump[i];
+    int y = ((int)(cellRange + x*(numCells[i]-2*cellRange)));
+    if (y==numCells[i]+2*cellRange) y--;
+    cellNum += y*jump[i];
   }
 
   int oldCell = atomCell[iAtom];
