@@ -12,7 +12,7 @@ class Box {
     double ***positions, ***velocities;
 
     const int knownNumSpecies;
-    int *numAtomsBySpecies;
+    int *numAtomsBySpecies, *maxNumAtomsBySpecies;
     int *numMoleculesBySpecies, *maxNumMoleculesBySpecies;
     int **firstAtom, **moleculeIdx;
     int **atomTypes;
@@ -38,18 +38,22 @@ class Box {
       return s;
     }
     double* getAtomPosition(int i) {
+      int idx = i, iSpecies = 0;
+      for ( ; iSpecies<knownNumSpecies-1 && idx >= maxNumAtomsBySpecies[iSpecies]; iSpecies++) {
+        idx -= maxNumAtomsBySpecies[iSpecies];
+      }
 #ifdef DEBUG
-      if (i>getNumAtoms()) {
-        fprintf(stderr, "gAP oops i %d is more atoms than I have (%d)\n", i, getNumAtoms());
+      if (idx>=numAtomsBySpecies[iSpecies]) {
+        printf("getAtomPosition oops i %d is more atoms than I have\n", i);
         abort();
       }
 #endif
-      return positions[0][i];
+      return positions[iSpecies][idx];
     }
     int getAtomType(int i) {
       int idx = i, iSpecies = 0;
-      for ( ; iSpecies<knownNumSpecies-1 && idx > numAtomsBySpecies[iSpecies]; iSpecies++) {
-        idx -= numAtomsBySpecies[iSpecies];
+      for ( ; iSpecies<knownNumSpecies-1 && idx >= maxNumAtomsBySpecies[iSpecies]; iSpecies++) {
+        idx -= maxNumAtomsBySpecies[iSpecies];
       }
 #ifdef DEBUG
       if (idx>=numAtomsBySpecies[iSpecies]) {
