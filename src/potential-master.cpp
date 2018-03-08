@@ -268,7 +268,11 @@ void PotentialMaster::computeOneMoleculeBonds(const int iSpecies, const int iMol
 }
 
 double PotentialMaster::oldEnergy(int iAtom) {
-  return 2*uAtom[iAtom];
+  double u = 2*uAtom[iAtom];
+  if (doSingleTruncationCorrection) {
+    u += computeOneTruncationCorrection(iAtom);
+  }
+  return u;
 }
 
 double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
@@ -278,6 +282,9 @@ double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
   double u = 0;
   for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
     u += 2*uAtom[iAtom];
+    if (doSingleTruncationCorrection) {
+      u += computeOneTruncationCorrection(iAtom);
+    }
   }
   return u;
 }
@@ -415,6 +422,7 @@ void PotentialMaster::newMolecule(int iSpecies) {
   }
   for (int jAtom=lastAtom; jAtom>=firstAtom; jAtom--) {
     uAtom[jAtom] = 0;
+    numAtomsByType[box.getAtomType(jAtom)]++;
   }
 }
 
@@ -425,6 +433,7 @@ void PotentialMaster::removeMolecule(int iSpecies, int iMolecule) {
   int jFirstAtom = box.getFirstAtom(iSpecies, jMolecule);
   for (int i=0; i<speciesAtoms; i++) {
     uAtom[firstAtom+i] = uAtom[jFirstAtom+i];
+    numAtomsByType[box.getAtomType(firstAtom+i)]--;
   }
   int numAtoms = box.getNumAtoms();
   // now shift uAtoms for all species>iSpecies
