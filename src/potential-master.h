@@ -78,12 +78,11 @@ class PotentialMaster {
     void computeAllBonds(bool doForces, double &uTot, double &virialTot);
     void computeAllTruncationCorrection(double &uTot, double &virialTot);
     double computeOneTruncationCorrection(const int iAtom);
-    inline bool checkSkip(int jAtom, int iMolecule, vector<int> *iBondedAtoms) {
+    inline bool checkSkip(int jAtom, int iSpecies, int iMolecule, vector<int> *iBondedAtoms) {
       if (pureAtoms) return false;
-      int jMolecule = box.getMolecule(jAtom);
-      if (rigidMolecules) return iMolecule == jMolecule;
-      int jFirstAtom = jAtom, jLastAtom = jAtom, jSpecies = 0;
-      box.getMoleculeInfo(jMolecule, jSpecies, jFirstAtom, jLastAtom);
+      int jMolecule, jFirstAtom, jSpecies;
+      box.getMoleculeInfoAtom(jAtom, jMolecule, jSpecies, jFirstAtom);
+      if (rigidMolecules) return iSpecies==jSpecies && iMolecule == jMolecule;
       return binary_search(iBondedAtoms->begin(), iBondedAtoms->end(), jAtom-jFirstAtom);
     }
     virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom);
@@ -165,8 +164,14 @@ class PotentialMasterCell : public PotentialMaster {
       if (r2 > rc2) return;
       double u, du, d2u;
       pij->u012(r2, u, du, d2u);
+      if (u>20) {
+        printf("%d  %f %f %f\n", iAtom, ri[0], ri[1], ri[2]);
+        printf("%d  %f %f %f\n", jAtom, rj[0], rj[1], rj[2]);
+        printf("%d %d %f %f\n", iAtom, jAtom, sqrt(r2), u); abort();
+      }
       ui += 0.5*u;
       uj += 0.5*u;
+
       uTot += u;
       virialTot += du;
       for (vector<PotentialCallback*>::iterator it = pairCallbacks.begin(); it!=pairCallbacks.end(); it++) {

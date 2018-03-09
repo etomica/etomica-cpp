@@ -12,7 +12,7 @@ class Box {
     double ***positions, ***velocities;
 
     const int knownNumSpecies;
-    int *numAtomsBySpecies, *maxNumAtomsBySpecies;
+    int *numAtomsBySpecies, *maxNumAtomsBySpecies, *speciesNumAtoms;
     int *numMoleculesBySpecies, *maxNumMoleculesBySpecies;
     int **firstAtom, **moleculeIdx;
     int **atomTypes;
@@ -74,5 +74,5 @@ class Box {
     void getAtomInfo(int iMolecule, int iSpecies);
     // gives species index, first and last atom indicies for molecule with global index iMolecule
     void getMoleculeInfo(int iMolecule, int &iSpecies, int &firstAtom, int &lastAtom);
-    int getMolecule(int iAtom);
+    void getMoleculeInfoAtom(int iAtom, int &iMolecule, int &iSpecies, int &firstAtom);
 };

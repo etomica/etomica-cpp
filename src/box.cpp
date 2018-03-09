@@ -5,24 +5,25 @@
 #include "alloc2d.h"
 #include "box.h"
 
-Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpecies(sl.size()), numAtomsBySpecies(nullptr), maxNumAtomsBySpecies(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), moleculeIdx(nullptr), atomTypes(nullptr), speciesList(sl) {
+Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpecies(sl.size()), numAtomsBySpecies(nullptr), maxNumAtomsBySpecies(nullptr), speciesNumAtoms(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), atomTypes(nullptr), speciesList(sl) {
   for (int i=0; i<3; i++) boxSize[i] = 0;
 
   int ss = knownNumSpecies;
   numAtomsBySpecies = new int[ss];
   maxNumAtomsBySpecies = new int[ss];
+  speciesNumAtoms = new int[ss];
   numMoleculesBySpecies = new int[ss];
   maxNumMoleculesBySpecies = new int[ss];
   positions = (double***)malloc(ss*sizeof(double**));
   velocities = nullptr;
   firstAtom = (int**)malloc(ss*sizeof(int*));
-  moleculeIdx = (int**)malloc(ss*sizeof(int*));
   atomTypes = (int**)malloc(ss*sizeof(int*));
   for (int i=0; i<ss; i++) {
     positions[i] = nullptr;
     if (velocities) velocities[i] = nullptr;
     numMoleculesBySpecies[i] = numAtomsBySpecies[i] = maxNumMoleculesBySpecies[i] = 0;
-    atomTypes[i] = firstAtom[i] = moleculeIdx[i] = nullptr;
+    atomTypes[i] = firstAtom[i] = nullptr;
+    speciesNumAtoms[i] = speciesList.get(i)->getNumAtoms();
   }
 }
 
@@ -36,12 +37,10 @@ Box::~Box() {
     free2D((void**)positions[i]);
     if (velocities)free2D((void**)velocities[i]);
     free(firstAtom[i]);
-    free(moleculeIdx[i]);
   }
   free(positions);
   free(velocities);
   free(firstAtom);
-  free(moleculeIdx);
   free(atomTypes);
 }
 
@@ -125,13 +124,11 @@ void Box::setNumMolecules(int iSpecies, int n) {
     if (velocities) velocities[iSpecies] = (double**)realloc2D((void**)velocities[iSpecies], na, 3, sizeof(double));
     positions[iSpecies] = (double**)realloc2D((void**)positions[iSpecies], na, 3, sizeof(double));
     firstAtom[iSpecies] = (int*)realloc(firstAtom[iSpecies], n*sizeof(int));
-    moleculeIdx[iSpecies] = (int*)realloc(moleculeIdx[iSpecies], na*sizeof(int));
     atomTypes[iSpecies] = (int*)realloc(atomTypes[iSpecies], na*sizeof(int));
     int* speciesAtomTypes = s->getAtomTypes();
     for (int i=numMoleculesBySpecies[iSpecies]; i<n; i++) {
       firstAtom[iSpecies][i] = i*sna;
       for (int j=i*sna; j<(i+1)*sna; j++) {
-        moleculeIdx[iSpecies][j] = i;
         atomTypes[iSpecies][j] = speciesAtomTypes[j-(i*sna)];
       }
     }
@@ -178,18 +175,19 @@ int Box::getGlobalMoleculeIndex(int iSpecies, int iMoleculeInSpecies) {
   return t + iMoleculeInSpecies;
 }
 
-int Box::getMolecule(int iAtom) {
-  int idx = iAtom, iSpecies = 0;
-  for ( ; iSpecies<knownNumSpecies-1 && idx >= maxNumAtomsBySpecies[iSpecies]; iSpecies++) {
-    idx -= maxNumAtomsBySpecies[iSpecies];
-  }
+void Box::getMoleculeInfoAtom(int iAtom, int &iMolecule, int &iSpecies, int &iFirstAtom) {
 #ifdef DEBUG
-  if (idx>=maxNumAtomsBySpecies[iSpecies]) {
-    printf("gAT oops i %d is more atoms than I have\n", iAtom);
+  if (iAtom>=getNumAtoms()) {
+    printf("getMoleculeInfoAtom oops i %d is more atoms than I have\n", iAtom);
     abort();
   }
 #endif
-  return moleculeIdx[iSpecies][idx];
+  iSpecies = 0;
+  for ( ; iSpecies<knownNumSpecies-1 && iAtom >= numAtomsBySpecies[iSpecies]; iSpecies++) {
+    iAtom -= numAtomsBySpecies[iSpecies];
+  }
+  iMolecule = iAtom/speciesNumAtoms[iSpecies];
+  iFirstAtom = firstAtom[iSpecies][iMolecule];
 }
 
 void Box::getMoleculeInfo(int iMolecule, int &iSpecies, int &fa, int &la) {

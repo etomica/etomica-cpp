@@ -107,20 +107,18 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
     if (doForces) for (int k=0; k<3; k++) force[i][k] = 0;
   }
   for (int i=0; i<numAtoms; i++) {
-    int iMolecule = i, iFirstAtom = i, iChildIndex = 0, iLastAtom = i, iSpecies = 0;
+    int iMolecule = i, iFirstAtom = i, iSpecies = 0;
     vector<int> *iBondedAtoms = nullptr;
     if (!pureAtoms) {
-      iMolecule = box.getMolecule(i);
+      box.getMoleculeInfoAtom(i, iMolecule, iSpecies, iFirstAtom);
       if (!rigidMolecules) {
-        box.getMoleculeInfo(iMolecule, iSpecies, iFirstAtom, iLastAtom);
-        iChildIndex = i-iFirstAtom;
-        iBondedAtoms = &bondedAtoms[iSpecies][iChildIndex];
+        iBondedAtoms = &bondedAtoms[iSpecies][i-iFirstAtom];
       }
     }
     double *ri = box.getAtomPosition(i);
     int iType = box.getAtomType(i);
     for (int j=i+1; j<numAtoms; j++) {
-      if (checkSkip(j, iMolecule, iBondedAtoms)) continue;
+      if (checkSkip(j, iSpecies, iMolecule, iBondedAtoms)) continue;
       int jType = box.getAtomType(j);
       double *rj = box.getAtomPosition(j);
       for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
@@ -337,9 +335,7 @@ void PotentialMaster::computeOne(const int iAtom, const double *ri, double &u1, 
   duAtom[0] = 0;
   int iMolecule = 0, iFirstAtom = 0, iSpecies = 0;
   if (!pureAtoms && !rigidMolecules) {
-    iMolecule = box.getMolecule(iAtom);
-    int iLastAtom;
-    box.getMoleculeInfo(iMolecule, iSpecies, iFirstAtom, iLastAtom);
+    box.getMoleculeInfoAtom(iAtom, iMolecule, iSpecies, iFirstAtom);
   }
   computeOneInternal(iAtom, ri, u1, isTrial, iSpecies, iMolecule, iFirstAtom);
   if (doSingleTruncationCorrection) {
@@ -358,7 +354,7 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
   int numAtoms = box.getNumAtoms();
   for (int jAtom=0; jAtom<numAtoms; jAtom++) {
     if (jAtom==iAtom) continue;
-    if (checkSkip(jAtom, iMolecule, iBondedAtoms)) continue;
+    if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
     int jType = box.getAtomType(jAtom);
     double *rj = box.getAtomPosition(jAtom);
     double dr[3];
