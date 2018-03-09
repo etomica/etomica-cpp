@@ -62,7 +62,6 @@ int main(int argc, char** argv) {
   DataPump pumpFull(meterFull, 1);
   MeterKineticEnergy meterKE(box);
   meterKE.setIntegrator(&integrator);
-  double* dataKE0 = meterKE.getData();
   DataPump pumpKE(meterKE, 10);
   if (doData) {
     integrator.addListener(&pumpPE);
