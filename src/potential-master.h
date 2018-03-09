@@ -164,11 +164,6 @@ class PotentialMasterCell : public PotentialMaster {
       if (r2 > rc2) return;
       double u, du, d2u;
       pij->u012(r2, u, du, d2u);
-      if (u>20) {
-        printf("%d  %f %f %f\n", iAtom, ri[0], ri[1], ri[2]);
-        printf("%d  %f %f %f\n", jAtom, rj[0], rj[1], rj[2]);
-        printf("%d %d %f %f\n", iAtom, jAtom, sqrt(r2), u); abort();
-      }
       ui += 0.5*u;
       uj += 0.5*u;
 
