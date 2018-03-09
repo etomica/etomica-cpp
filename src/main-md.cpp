@@ -8,6 +8,7 @@
 #include "meter.h"
 #include "data-sink.h"
 #include "random.h"
+#include "util.h"
 
 int main(int argc, char** argv) {
   int numAtoms = 32000;
@@ -46,7 +47,7 @@ int main(int argc, char** argv) {
   integrator.reset();
   PotentialCallbackHMA pcHMA(box, temperature, 9.550752245164025e+00);
   printf("u: %f\n", integrator.getPotentialEnergy());
-  //if (doData) integrator.doSteps(steps/10);
+  if (doData) integrator.doSteps(steps/10);
   MeterPotentialEnergy meterPE(integrator);
   DataPump pumpPE(meterPE, 1);
   MeterFullCompute meterFull(potentialMaster);
@@ -62,7 +63,6 @@ int main(int argc, char** argv) {
   MeterKineticEnergy meterKE(box);
   meterKE.setIntegrator(&integrator);
   double* dataKE0 = meterKE.getData();
-  printf("T0: %f\n", dataKE0[0]/(1.5*(numAtoms-1)));
   DataPump pumpKE(meterKE, 10);
   if (doData) {
     integrator.addListener(&pumpPE);
@@ -70,7 +70,9 @@ int main(int argc, char** argv) {
     integrator.addListener(&pumpKE);
   }
 
+  double t1 = getTime();
   integrator.doSteps(steps);
+  double t2 = getTime();
   if (doData) {
     double* statsPE = ((Average*)pumpPE.getDataSink(0))->getStatistics()[0];
     statsPE[AVG_AVG] /= numAtoms;
@@ -95,5 +97,6 @@ int main(int argc, char** argv) {
       printf("pHMA avg: %f  err: %f  cor: %f\n", statsPHMA[AVG_AVG], statsPHMA[AVG_ERR], statsPHMA[AVG_ACOR]);
     }
   }
+  printf("time: %4.3f\n", t2-t1);
 }
 
