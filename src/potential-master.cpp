@@ -54,13 +54,9 @@ void PotentialMaster::setDoSingleTruncationCorrection(bool doCorrection) {
 }
 
 void PotentialMaster::setPairPotential(int iType, int jType, Potential* p) {
-  for (int i=0; i<numAtomTypes; i++) {
-    for (int j=0; j<numAtomTypes; j++) {
-      pairPotentials[i][j] = p;
-      double rc = p->getCutoff();
-      pairCutoffs[i][j] = rc*rc;
-    }
-  }
+  pairPotentials[iType][jType] = pairPotentials[jType][iType] = p;
+  double rc = p->getCutoff();
+  pairCutoffs[iType][jType] = pairCutoffs[jType][iType] = rc*rc;
 }
 
 void PotentialMaster::setBondPotential(int iSpecies, vector<int*> &bp, Potential *p) {
