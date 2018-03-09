@@ -127,13 +127,24 @@ void Box::setNumMolecules(int iSpecies, int n) {
     atomTypes[iSpecies] = (int*)realloc(atomTypes[iSpecies], na*sizeof(int));
     int* speciesAtomTypes = s->getAtomTypes();
     for (int i=numMoleculesBySpecies[iSpecies]; i<n; i++) {
-      firstAtom[iSpecies][i] = i*sna;
       for (int j=i*sna; j<(i+1)*sna; j++) {
         atomTypes[iSpecies][j] = speciesAtomTypes[j-(i*sna)];
       }
     }
     maxNumMoleculesBySpecies[iSpecies] = n;
     maxNumAtomsBySpecies[iSpecies] = na;
+  }
+  int fa = 0;
+  for (int jSpecies=0; jSpecies<knownNumSpecies; jSpecies++) {
+    if (jSpecies<iSpecies) {
+      fa += numAtomsBySpecies[jSpecies];
+      continue;
+    }
+    int iStart = jSpecies==iSpecies ? numMoleculesBySpecies[iSpecies] : 0;
+    fa += iStart;
+    for (int i=iStart; i<n; i++) {
+      firstAtom[iSpecies][i] = fa + i*sna;
+    }
   }
   for (int iMolecule=numMoleculesBySpecies[iSpecies]; iMolecule<n; iMolecule++) {
     // place our new molecules at origin, using nominal conformation
@@ -203,7 +214,7 @@ void Box::getMoleculeInfo(int iMolecule, int &iSpecies, int &fa, int &la) {
   }
 #endif
   fa = firstAtom[iSpecies][idx];
-  la = fa + speciesList.get(iSpecies)->getNumAtoms() - 1;
+  la = fa + speciesNumAtoms[iSpecies] - 1;
 }
 
 void Box::boxSizeUpdated() {
