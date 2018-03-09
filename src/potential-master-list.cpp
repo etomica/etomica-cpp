@@ -96,7 +96,7 @@ void PotentialMasterList::reset() {
     for (int j=0; j<3; j++) oldAtomPositions[iAtom][j] = ri[j];
   }
 
-  assignCells();
+  cellManager.assignCells();
 
 // if an atom has more neighbors than we've allocated space for, then
 // maxNab will be increased and execution will return to this point
@@ -137,7 +137,7 @@ resetStart:
       double *rj = box.getAtomPosition(jAtom);
       tooMuch += checkNbrPair(iAtom, jAtom, ri, rj, rc2, jbo);
     }
-    for (vector<int>::iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
+    for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
       int jCell = iCell + *it;
       jbo = boxOffsets[jCell];
       jCell = wrapMap[jCell];

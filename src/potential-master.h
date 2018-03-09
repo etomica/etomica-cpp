@@ -53,6 +53,38 @@ class PotentialCallbackHMA : public PotentialCallback {
     virtual double* getData();
 };
 
+class CellManager {
+  public:
+    Box &box;
+    const SpeciesList& speciesList;
+    int cellRange;
+    double range;
+    double boxHalf[3];
+    int numCells[3];
+    vector<int> cellNextAtom;
+    vector<int> atomCell;
+    vector<int> cellLastAtom;
+    int jump[3];
+    vector<int> cellOffsets;
+    vector<int> wrapMap;
+    double** rawBoxOffsets;
+    double** boxOffsets;
+    int wrappedIndex(int i, int nc);
+    void moveAtomIndex(int oldIndex, int newIndex);
+
+    CellManager(const SpeciesList &sl, Box& box, int cRange);
+    ~CellManager();
+    void setRange(double newRange);
+    void init();
+    void updateAtom(int iAtom);
+    void newMolecule(int iSpecies);
+    void removeAtom(int iAtom);
+    void removeMolecule(int iSpecies, int iMolecule);
+    void assignCells();
+    int cellForCoord(const double *r);
+    int* getNumCells();
+};
+
 class PotentialMaster {
   protected:
     const SpeciesList& speciesList;
@@ -93,7 +125,7 @@ class PotentialMaster {
     Box& getBox();
     void setDoTruncationCorrection(bool doCorrection);
     void setDoSingleTruncationCorrection(bool doCorrection);
-    void setPairPotential(int iType, int jType, Potential* pij);
+    virtual void setPairPotential(int iType, int jType, Potential* pij);
     void setBondPotential(int iSpecies, vector<int*> &bondedPairs, Potential *pBond);
     // compute for the whole box
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
@@ -122,17 +154,14 @@ class PotentialMasterVirial : public PotentialMaster {
 
 class PotentialMasterCell : public PotentialMaster {
   protected:
-    int cellRange;
-    double boxHalf[3];
-    int numCells[3];
-    vector<int> cellNextAtom;
-    vector<int> atomCell;
-    vector<int> cellLastAtom;
-    int jump[3];
-    vector<int> cellOffsets;
-    vector<int> wrapMap;
-    double** rawBoxOffsets;
-    double** boxOffsets;
+    CellManager cellManager;
+    const int cellRange;
+    const vector<int> &cellNextAtom;
+    const vector<int> &atomCell;
+    const vector<int> &cellLastAtom;
+    const vector<int> &cellOffsets;
+    const vector<int> &wrapMap;
+    double** &boxOffsets;
 
     void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int iAtom, const int jAtom, double& uTot, double rc2) {
       double dx = ri[0]-(rj[0]+jbo[0]);
@@ -189,14 +218,13 @@ class PotentialMasterCell : public PotentialMaster {
     PotentialMasterCell(const SpeciesList &speciesList, Box& box, int cellRange);
     ~PotentialMasterCell();
     virtual double getRange();
+    virtual void setPairPotential(int iType, int jType, Potential* pij);
     virtual void init();
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
     virtual void updateAtom(int iAtom);
     virtual void newMolecule(int iSpecies);
     virtual void removeAtom(int iAtom);
     virtual void removeMolecule(int iSpecies, int iMolecule);
-    void assignCells();
-    int cellForCoord(const double *r);
     int* getNumCells();
 };
 
@@ -224,5 +252,4 @@ class PotentialMasterList : public PotentialMasterCell {
     void setDoDownNbrs(bool doDown);
     void checkUpdateNbrs();
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
-
 };
