@@ -211,8 +211,6 @@ class PotentialMasterCell : public PotentialMaster {
       }
     }
 
-    int wrappedIndex(int i, int nc);
-    void moveAtomIndex(int oldIndex, int newIndex);
     virtual void computeOneInternal(const int iAtom, const double *ri, double &energy, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom);
   public:
     PotentialMasterCell(const SpeciesList &speciesList, Box& box, int cellRange);

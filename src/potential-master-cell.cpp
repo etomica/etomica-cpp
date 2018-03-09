@@ -174,10 +174,6 @@ void PotentialMasterCell::removeMolecule(int iSpecies, int iMolecule) {
   cellManager.removeMolecule(iSpecies, iMolecule);
 }
 
-void PotentialMasterCell::moveAtomIndex(int oldIndex, int newIndex) {
-  cellManager.moveAtomIndex(oldIndex, newIndex);
-}
-
 void PotentialMasterCell::newMolecule(int iSpecies) {
   // our base class makes room for our atoms in uAtoms and then shifts
   // later species to make room.
