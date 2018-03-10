@@ -121,7 +121,6 @@ void CellManager::init() {
         rawBoxOffsets[idx][0] = ix*bs[0];
         rawBoxOffsets[idx][1] = iy*bs[1];
         rawBoxOffsets[idx][2] = iz*bs[2];
-        printf("%d %d %d  %d  %f %f %f\n", ix, iy, iz, idx, rawBoxOffsets[idx][0], rawBoxOffsets[idx][1], rawBoxOffsets[idx][2]);
       }
     }
   }
