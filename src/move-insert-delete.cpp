@@ -24,7 +24,7 @@ bool MCMoveInsertDelete::doTrial() {
       for (int k=0; k<3; k++) rj[k] = mPos[k];
       iMolecule = box.getGlobalMoleculeIndex(iSpecies, n);
       potentialMaster.newMolecule(iSpecies);
-      potentialMaster.computeOne(firstAtom, rj, uNew, false);
+      potentialMaster.computeOne(firstAtom, uNew);
     }
     else {
       double *r0;
@@ -40,7 +40,7 @@ bool MCMoveInsertDelete::doTrial() {
       }
       iMolecule = box.getGlobalMoleculeIndex(iSpecies, n);
       potentialMaster.newMolecule(iSpecies);
-      potentialMaster.computeOneMolecule(iMolecule, uNew, true);
+      potentialMaster.computeOneMolecule(iMolecule, uNew);
     }
   }
   else {
@@ -93,13 +93,12 @@ void MCMoveInsertDelete::acceptNotify() {
     if (numAtoms==1) {
       double uTmp;
       firstAtom = box.getFirstAtom(iSpecies, xMolecule);
-      double *rj = box.getAtomPosition(firstAtom);
-      potentialMaster.computeOne(firstAtom, rj, uTmp, false);
+      potentialMaster.computeOne(firstAtom, uTmp);
       potentialMaster.processAtomU(-1);
     }
     else {
       double uTmp;
-      potentialMaster.computeOneMolecule(iMolecule, uTmp, false);
+      potentialMaster.computeOneMolecule(iMolecule, uTmp);
       potentialMaster.processAtomU(-1);
     }
     // this removes iMolecule (updates cell lists) and then

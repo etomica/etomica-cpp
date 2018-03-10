@@ -105,8 +105,9 @@ class PotentialMaster {
     const bool pureAtoms;
     bool rigidMolecules;
     bool doTruncationCorrection, doSingleTruncationCorrection;
+    double *uSelfByType;
 
-    void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1, const bool isTrial);
+    void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);
     void computeAllBonds(bool doForces, double &uTot, double &virialTot);
     void computeAllTruncationCorrection(double &uTot, double &virialTot);
     double computeOneTruncationCorrection(const int iAtom);
@@ -117,7 +118,7 @@ class PotentialMaster {
       if (rigidMolecules) return iSpecies==jSpecies && iMolecule == jMolecule;
       return binary_search(iBondedAtoms->begin(), iBondedAtoms->end(), jAtom-jFirstAtom);
     }
-    virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom);
+    virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom);
 
   public:
     PotentialMaster(const SpeciesList &speciesList, Box& box);
@@ -130,9 +131,9 @@ class PotentialMaster {
     // compute for the whole box
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
     // energy of one atom with the whole box
-    virtual void computeOne(const int iAtom, const double *ri, double &energy, const bool isTrial);
+    virtual void computeOne(const int iAtom, double &energy);
     // energy of one molecule with the whole box (including itself)
-    virtual void computeOneMolecule(int iMolecule, double &energy, bool isTrial);
+    virtual void computeOneMolecule(int iMolecule, double &energy);
     virtual void updateAtom(int iAtom) {}
     virtual void newMolecule(int iSpecies);
     virtual void removeMolecule(int iSpecies, int iMolecule);
@@ -162,6 +163,7 @@ class PotentialMasterCell : public PotentialMaster {
     const vector<int> &cellOffsets;
     const vector<int> &wrapMap;
     const vector<double*> &boxOffsets;
+    bool lsNeeded;
 
     void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int iAtom, const int jAtom, double& uTot, double rc2) {
       double dx = ri[0]-(rj[0]+jbo[0]);
@@ -211,12 +213,13 @@ class PotentialMasterCell : public PotentialMaster {
       }
     }
 
-    virtual void computeOneInternal(const int iAtom, const double *ri, double &energy, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom);
+    virtual void computeOneInternal(const int iAtom, const double *ri, double &energy, const int iSpecies, const int iMolecule, const int iFirstAtom);
   public:
     PotentialMasterCell(const SpeciesList &speciesList, Box& box, int cellRange);
     ~PotentialMasterCell();
     virtual double getRange();
     virtual void setPairPotential(int iType, int jType, Potential* pij);
+    // needs to be called at startup and any time the box size changes
     virtual void init();
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
     virtual void updateAtom(int iAtom);

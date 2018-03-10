@@ -22,13 +22,14 @@ bool MCMoveDisplacement::doTrial() {
   r[1] += 2*stepSize*(random.nextDouble32()-0.5);
   r[2] += 2*stepSize*(random.nextDouble32()-0.5);
   box.nearestImage(r);
+  potentialMaster.updateAtom(iAtom);
   numTrials++;
   return true;
 }
 
 double MCMoveDisplacement::getChi(double T) {
   uNew = 0;
-  potentialMaster.computeOne(iAtom, box.getAtomPosition(iAtom), uNew, true);
+  potentialMaster.computeOne(iAtom, uNew);
   double chi = uNew<uOld ? 1 : exp(-(uNew-uOld)/T);
   chiSum += chi;
   return chi;
@@ -38,9 +39,18 @@ void MCMoveDisplacement::acceptNotify() {
   //printf("accepted\n");
   potentialMaster.processAtomU(1);
   double uTmp = 0;
-  potentialMaster.computeOne(iAtom, rOld, uTmp, false);
-  potentialMaster.processAtomU(-1);
+  double* r = box.getAtomPosition(iAtom);
+  double rSave[3];
+  for (int k=0; k<3; k++) {
+    rSave[k] = r[k]; r[k] = rOld[k];
+  }
   potentialMaster.updateAtom(iAtom);
+  potentialMaster.computeOne(iAtom, uTmp);
+  for (int k=0; k<3; k++) {
+    r[k] = rSave[k];
+  }
+  potentialMaster.updateAtom(iAtom);
+  potentialMaster.processAtomU(-1);
   numAccepted++;
 }
 
@@ -49,6 +59,7 @@ void MCMoveDisplacement::rejectNotify() {
   if (iAtom < 0) return;
   double* r = box.getAtomPosition(iAtom);
   std::copy(rOld, rOld+3, r);
+  potentialMaster.updateAtom(iAtom);
   uNew = uOld;
   potentialMaster.resetAtomDU();
 }

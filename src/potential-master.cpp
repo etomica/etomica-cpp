@@ -21,8 +21,10 @@ PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl
   bondedAtoms = new vector<int>*[sl.size()];
 
   numAtomsByType = new int[numAtomTypes];
+  uSelfByType = new double[numAtomTypes];
   for (int i=0; i<numAtomTypes; i++) {
     numAtomsByType[i] = 0;
+    uSelfByType[i] = 0;
   }
   for (int i=0; i<sl.size(); i++) {
     Species *s = sl.get(i);
@@ -231,7 +233,7 @@ void PotentialMaster::computeAllBonds(bool doForces, double &uTot, double &viria
   }
 }
 
-void PotentialMaster::computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1, const bool isTrial) {
+void PotentialMaster::computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1) {
   vector<Potential*> &iBondedPotentials = bondedPotentials[iSpecies];
   if (iBondedPotentials.size() == 0) return;
   int sna = speciesList.get(iSpecies)->getNumAtoms();
@@ -322,7 +324,7 @@ void PotentialMaster::processAtomU(int coeff) {
   duAtomSingle = duAtomMulti = false;
 }
 
-void PotentialMaster::computeOne(const int iAtom, const double *ri, double &u1, const bool isTrial) {
+void PotentialMaster::computeOne(const int iAtom, double &u1) {
   duAtomSingle = true;
   u1 = 0;
   uAtomsChanged.resize(1);
@@ -333,13 +335,14 @@ void PotentialMaster::computeOne(const int iAtom, const double *ri, double &u1, 
   if (!pureAtoms && !rigidMolecules) {
     box.getMoleculeInfoAtom(iAtom, iMolecule, iSpecies, iFirstAtom);
   }
-  computeOneInternal(iAtom, ri, u1, isTrial, iSpecies, iMolecule, iFirstAtom);
+  const double *ri = box.getAtomPosition(iAtom);
+  computeOneInternal(iAtom, ri, u1, iSpecies, iMolecule, iFirstAtom);
   if (doSingleTruncationCorrection) {
     u1 += computeOneTruncationCorrection(iAtom);
   }
 }
 
-void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom) {
+void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom) {
   vector<int> *iBondedAtoms = nullptr;
   if (!pureAtoms && !rigidMolecules) {
     iBondedAtoms = &bondedAtoms[iSpecies][iAtom-iFirstAtom];
@@ -374,7 +377,7 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
   }
 }
 
-void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial) {
+void PotentialMaster::computeOneMolecule(int iMolecule, double &u1) {
   duAtomMulti = true;
   int numAtoms = box.getNumAtoms();
   u1 = 0;
@@ -391,13 +394,13 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1, bool isTrial
       uAtomsChanged.push_back(iAtom);
     }
     double *ri = box.getAtomPosition(iAtom);
-    computeOneInternal(iAtom, ri, u1, isTrial, iSpecies, iMolecule, firstAtom);
+    computeOneInternal(iAtom, ri, u1, iSpecies, iMolecule, firstAtom);
     if (doSingleTruncationCorrection) {
       u1 += computeOneTruncationCorrection(iAtom);
     }
   }
   if (!pureAtoms && !rigidMolecules) {
-    computeOneMoleculeBonds(iSpecies, iMolecule, u1, isTrial);
+    computeOneMoleculeBonds(iSpecies, iMolecule, u1);
   }
 }
 

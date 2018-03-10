@@ -3,7 +3,7 @@
 #include "alloc2d.h"
 #include "potential-master.h"
 
-PotentialMasterCell::PotentialMasterCell(const SpeciesList& sl, Box& box, int cRange) : PotentialMaster(sl, box), cellManager(sl, box, cRange), cellRange(cRange), cellNextAtom(cellManager.cellNextAtom), atomCell(cellManager.atomCell), cellLastAtom(cellManager.cellLastAtom), cellOffsets(cellManager.cellOffsets), wrapMap(cellManager.wrapMap), boxOffsets(cellManager.boxOffsets) {
+PotentialMasterCell::PotentialMasterCell(const SpeciesList& sl, Box& box, int cRange) : PotentialMaster(sl, box), cellManager(sl, box, cRange), cellRange(cRange), cellNextAtom(cellManager.cellNextAtom), atomCell(cellManager.atomCell), cellLastAtom(cellManager.cellLastAtom), cellOffsets(cellManager.cellOffsets), wrapMap(cellManager.wrapMap), boxOffsets(cellManager.boxOffsets), lsNeeded(false) {
 }
 
 PotentialMasterCell::~PotentialMasterCell() {
@@ -118,12 +118,12 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   }
 }
 
-void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, double &u1, const bool isTrial, const int iSpecies, const int iMolecule, const int iFirstAtom) {
+void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom) {
   const int iType = box.getAtomType(iAtom);
   const double *iCutoffs = pairCutoffs[iType];
   Potential** iPotentials = pairPotentials[iType];
 
-  const int iCell = isTrial ? cellManager.cellForCoord(ri) : atomCell[iAtom];
+  const int iCell = atomCell[iAtom];
 
   vector<int> *iBondedAtoms = nullptr;
   if (!pureAtoms && !rigidMolecules) {

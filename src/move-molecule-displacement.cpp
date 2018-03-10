@@ -43,7 +43,7 @@ bool MCMoveMoleculeDisplacement::doTrial() {
 
 double MCMoveMoleculeDisplacement::getChi(double T) {
   uNew = 0;
-  potentialMaster.computeOneMolecule(iMolecule, uNew, true);
+  potentialMaster.computeOneMolecule(iMolecule, uNew);
   double chi = uNew<uOld ? 1 : exp(-(uNew-uOld)/T);
   chiSum += chi;
   return chi;
@@ -59,7 +59,7 @@ void MCMoveMoleculeDisplacement::acceptNotify() {
     for (int j=0; j<3; j++) ri[j] = oldPositions[i][j];
   }
   double uTmp = 0;
-  potentialMaster.computeOneMolecule(iMolecule, uTmp, false);
+  potentialMaster.computeOneMolecule(iMolecule, uTmp);
   potentialMaster.processAtomU(-1);
   for (int i=0; i<na; i++) {
     int iAtom = iAtomFirst + i;

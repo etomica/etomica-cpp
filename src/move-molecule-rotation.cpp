@@ -46,7 +46,7 @@ bool MCMoveMoleculeRotate::doTrial() {
 
 double MCMoveMoleculeRotate::getChi(double T) {
   uNew = 0;
-  potentialMaster.computeOneMolecule(iMolecule, uNew, true);
+  potentialMaster.computeOneMolecule(iMolecule, uNew);
   double chi = uNew<uOld ? 1 : exp(-(uNew-uOld)/T);
   chi = 0;
   chiSum += chi;
@@ -65,7 +65,7 @@ void MCMoveMoleculeRotate::acceptNotify() {
     }
   }
   double uTmp = 0;
-  potentialMaster.computeOneMolecule(iMolecule, uTmp, false);
+  potentialMaster.computeOneMolecule(iMolecule, uTmp);
   potentialMaster.processAtomU(-1);
   double *r0 = box.getAtomPosition(iAtomFirst);
   for (int i=0; i<na; i++) {
