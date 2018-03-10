@@ -9,6 +9,7 @@ class Cluster {
     const double beta;
     const int nDer;
     double* values;
+    double* oldValues;
     int** binomial;
     int moleculePair[2];
 
@@ -17,4 +18,7 @@ class Cluster {
     ~Cluster();
 
     double* value();
+    double* oldValue();
+    void acceptNewValue();
+    void rejectNewValue();
 };

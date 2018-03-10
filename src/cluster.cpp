@@ -2,6 +2,7 @@
 
 Cluster::Cluster(PotentialMasterVirial &pm, double t, int nd) : potentialMaster(pm), numMolecules(pm.getBox().getTotalNumMolecules()), beta(1/t), nDer(nd) {
   values = new double[nDer];
+  oldValues = new double[nDer];
   binomial = new int*[nDer];
   int factorial[nDer+1];
   factorial[0] = factorial[1] = 1;
@@ -16,10 +17,23 @@ Cluster::Cluster(PotentialMasterVirial &pm, double t, int nd) : potentialMaster(
 
 Cluster::~Cluster() {
   delete[] values;
+  delete[] oldValues;
   for (int i=0; i<nDer; i++) {
     delete[] binomial[i];
   }
   delete[] binomial;
+}
+
+double* Cluster::oldValue() {
+  return oldValues;
+}
+
+void Cluster::acceptNewValue() {
+  for (int m=0; m<=nDer; m++) oldValues[m] = values[m];
+}
+
+void Cluster::rejectNewValue() {
+  for (int m=0; m<=nDer; m++) values[m] = oldValues[m];
 }
 
 #define NF  (1 << numMolecules)
@@ -202,8 +216,11 @@ double* Cluster::value() {
       for (int m=0; m<=nDer; m++) fB[i][m] -= fA[i][m];
     }
   }
-  values[0] = fB[NF-1][0];
+  for (int m=0; m<=nDer; m++) {
+    oldValues[m] = values[m];
+  }
 
+  values[0] = fB[NF-1][0];
   if ( fabs(values[0]) < 1.E-12 ){
     for (int m=1; m<=nDer; m++) {
       values[m] = 0;
