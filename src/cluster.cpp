@@ -14,6 +14,14 @@ Cluster::Cluster(PotentialMasterVirial &pm, double t, int nd) : potentialMaster(
   }
 }
 
+Cluster::~Cluster() {
+  delete[] values;
+  for (int i=0; i<nDer; i++) {
+    delete[] binomial[i];
+  }
+  delete[] binomial;
+}
+
 #define NF  (1 << numMolecules)
 double* Cluster::value() {
   double fQ[NF][nDer+1], fC[NF][nDer+1];

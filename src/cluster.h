@@ -14,7 +14,7 @@ class Cluster {
 
   public:
     Cluster(PotentialMasterVirial& potnetialMaster, double temperature, int nDer);
-    ~Cluster() {}
+    ~Cluster();
 
     double* value();
 };
