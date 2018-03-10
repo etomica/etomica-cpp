@@ -17,8 +17,10 @@ int main(int argc, char** argv) {
   long steps = 1000000;
   double mu = -3.5;
   bool doData = true;
-  bool doHMA = false;
+  bool doHMA = false, doP = false;
   bool doGC = false;
+
+  if (doHMA && !doP) fprintf(stderr, "not doing HMA without P\n");
 
   Random rand;
   printf("random seed: %d\n", rand.getSeed());
@@ -48,21 +50,21 @@ int main(int argc, char** argv) {
   }
   integrator.setTemperature(temperature);
   integrator.reset();
-  //PotentialCallbackHMA pcHMA(box, temperature, 9.550752245164025e+00);
+  PotentialCallbackHMA pcHMA(box, temperature, 9.550752245164025e+00);
   printf("u: %f\n", integrator.getPotentialEnergy());
   if (doData) integrator.doSteps(steps/10);
   MeterPotentialEnergy meterPE(integrator);
   DataPump pumpPE(meterPE, 10);
   MeterFullCompute meterFull(potentialMaster);
   PotentialCallbackPressure pcp(box, temperature);
-  meterFull.addCallback(&pcp);
-  //if (doHMA) meterFull.addCallback(&pcHMA);
+  if (doP) meterFull.addCallback(&pcp);
+  if (doHMA) meterFull.addCallback(&pcHMA);
   DataPump pumpFull(meterFull, 4*numAtoms);
   MeterNumAtoms meterNA(box);
   DataPump pumpNA(meterNA, 10);
   if (doData) {
     integrator.addListener(&pumpPE);
-    if (doHMA) integrator.addListener(&pumpFull);
+    if (doP) integrator.addListener(&pumpFull);
     if (doGC) integrator.addListener(&pumpNA);
   }
 
@@ -76,14 +78,18 @@ int main(int argc, char** argv) {
       statsPE[AVG_ERR] /= numAtoms;
     }
     printf("u avg: %f  err: %f  cor: %f\n", statsPE[AVG_AVG], statsPE[AVG_ERR], statsPE[AVG_ACOR]);
-    if (doHMA) {
+    if (doP) {
       double** statsFull = ((Average*)pumpFull.getDataSink(0))->getStatistics();
       double* statsP = statsFull[0];
       printf("p avg: %f  err: %f  cor: %f\n", statsP[AVG_AVG], statsP[AVG_ERR], statsP[AVG_ACOR]);
-      double* statsUHMA = statsFull[1];
-      printf("uHMA avg: %f  err: %f  cor: %f\n", statsUHMA[AVG_AVG]/numAtoms, statsUHMA[AVG_ERR]/numAtoms, statsUHMA[AVG_ACOR]);
-      double* statsPHMA = statsFull[2];
-      printf("pHMA avg: %f  err: %f  cor: %f\n", statsPHMA[AVG_AVG], statsPHMA[AVG_ERR], statsPHMA[AVG_ACOR]);
+      if (doHMA) {
+        double* statsUHMA = statsFull[1];
+        printf("uHMA avg: %f  err: %f  cor: %f\n", statsUHMA[AVG_AVG]/numAtoms, statsUHMA[AVG_ERR]/numAtoms, statsUHMA[AVG_ACOR]);
+        double* statsPHMA = statsFull[2];
+        double** cov = ((Average*)pumpFull.getDataSink(0))->getBlockCovariance();
+        double uCor = cov[1][2]/sqrt(cov[1][1]*cov[2][2]);
+        printf("pHMA avg: %f  err: %f  cor: %f   uCor: %f\n", statsPHMA[AVG_AVG], statsPHMA[AVG_ERR], statsPHMA[AVG_ACOR], uCor);
+      }
     }
     if (doGC) {
       double* statsNA = ((Average*)pumpNA.getDataSink(0))->getStatistics()[0];
