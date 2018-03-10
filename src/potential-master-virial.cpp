@@ -4,10 +4,6 @@ PotentialMasterVirial::PotentialMasterVirial(const SpeciesList &sl, Box &box) : 
 
 void PotentialMasterVirial::computeMolecules(const int* iMoleculeList, const int nMolecules, double &energy) {
   double dr[3];
-  /*uAtomsChangedSet.clear();
-  for (int i=0; i<numAtoms; i++) uAtomsChangedSet.insert(i);
-  duAtom.resize(numAtoms);
-  fill(duAtom.begin(), duAtom.end(), 0.0);*/
   for (int i=0; i<nMolecules-1; i++) {
     int iMolecule = iMoleculeList[i];
     int iSpecies, iFirstAtom, iLastAtom;
