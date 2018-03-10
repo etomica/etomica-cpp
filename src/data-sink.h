@@ -30,14 +30,18 @@ class Average : public DataSink {
     double *currentBlockSum, *blockSum, *blockSum2, *correlationSum;
     double** stats;
     double** blockSums;
+    double** blockCovariance;
+    double** blockCovSum;
+    const bool doCovariance;
 
     void collapseBlocks();
 
   public:
-    Average(int nData, long blockSize, long maxBlockCount);
+    Average(int nData, long blockSize, long maxBlockCount, bool doCovariance);
     ~Average();
     void addData(double* x);
     double** getStatistics();
+    double** getBlockCovariance();
     long getBlockSize() {return blockSize;}
     long getBlockCount() {return blockCount;}
     void setNumData(int newNumData);

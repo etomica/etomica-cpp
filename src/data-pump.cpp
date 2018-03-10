@@ -1,7 +1,7 @@
 #include "meter.h"
 
 DataPump::DataPump(Meter& m, int i) : IntegratorListener(), meter(m), interval(i), intervalCountdown(i) {
-  DataSink *s = new Average(m.getNumData(),10,100);
+  DataSink *s = new Average(m.getNumData(),1,100,true);
   addDataSink(s);
 }
 
