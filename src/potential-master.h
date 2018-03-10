@@ -105,7 +105,6 @@ class PotentialMaster {
     const bool pureAtoms;
     bool rigidMolecules;
     bool doTruncationCorrection, doSingleTruncationCorrection;
-    double *uSelfByType;
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);
     void computeAllBonds(bool doForces, double &uTot, double &virialTot);

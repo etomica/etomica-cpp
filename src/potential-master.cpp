@@ -21,10 +21,8 @@ PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl
   bondedAtoms = new vector<int>*[sl.size()];
 
   numAtomsByType = new int[numAtomTypes];
-  uSelfByType = new double[numAtomTypes];
   for (int i=0; i<numAtomTypes; i++) {
     numAtomsByType[i] = 0;
-    uSelfByType[i] = 0;
   }
   for (int i=0; i<sl.size(); i++) {
     Species *s = sl.get(i);
