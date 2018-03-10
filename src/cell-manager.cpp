@@ -5,6 +5,7 @@ CellManager::CellManager(const SpeciesList &sl, Box& b, int cRange) : box(b), sp
 }
 
 CellManager::~CellManager() {
+  boxOffsets.clear();
   if (rawBoxOffsets) free2D((void**)rawBoxOffsets);
 }
 
@@ -30,14 +31,11 @@ void CellManager::setRange(double newRange) {
   range = newRange;
 }
 
+// returns the index of cell i inside the box, given that we have nc cells in this direction
 int CellManager::wrappedIndex(int i, int nc) {
   int rv = i;
-  if (i < cellRange) {
-    rv += nc - 2*cellRange;
-  }
-  else if (nc - i <= cellRange) {
-    rv -= nc - 2*cellRange;
-  }
+  while (rv < cellRange) rv += nc - 2*cellRange;
+  while (nc - rv <= cellRange) rv -= nc - 2*cellRange;
   return rv;
 }
 
@@ -60,7 +58,6 @@ void CellManager::init() {
   cellLastAtom.resize(totalCells);
   wrapMap.resize(totalCells);
   boxOffsets.resize(totalCells);
-  if (!rawBoxOffsets) rawBoxOffsets = (double**)malloc2D(3*3*3, 3, sizeof(double));
 
   cellOffsets.resize(0);
   int dCell = 0;
@@ -110,13 +107,21 @@ void CellManager::init() {
     lastCellCount = dCell;
   }
 
-  for (int ix=-1; ix<=1; ix++) {
-    for (int iy=-1; iy<=1; iy++) {
-      for (int iz=-1; iz<=1; iz++) {
-        int idx = (ix+1)*9+(iy+1)*3+(iz+1);
+  int xboRange = (numCells[0] - cellRange - 1)/(numCells[0] - 2*cellRange);
+  int yboRange = (numCells[1] - cellRange - 1)/(numCells[1] - 2*cellRange);
+  int zboRange = (numCells[2] - cellRange - 1)/(numCells[2] - 2*cellRange);
+  int nx = (2*xboRange+1);
+  int ny = (2*yboRange+1);
+  int nz = (2*zboRange+1);
+  rawBoxOffsets = (double**)realloc2D((void**)rawBoxOffsets, nx*ny*nz, 3, sizeof(double));
+  for (int ix=-xboRange; ix<=xboRange; ix++) {
+    for (int iy=-yboRange; iy<=yboRange; iy++) {
+      for (int iz=-zboRange; iz<=zboRange; iz++) {
+        int idx = (ix+xboRange)*ny*nz+(iy+yboRange)*nz+(iz+zboRange);
         rawBoxOffsets[idx][0] = ix*bs[0];
         rawBoxOffsets[idx][1] = iy*bs[1];
         rawBoxOffsets[idx][2] = iz*bs[2];
+        printf("%d %d %d  %d  %f %f %f\n", ix, iy, iz, idx, rawBoxOffsets[idx][0], rawBoxOffsets[idx][1], rawBoxOffsets[idx][2]);
       }
     }
   }
@@ -133,7 +138,7 @@ void CellManager::init() {
         int iMap = i_cell(ix, iy, iz);
         int dCell = i_cell(x2, y2, z2);
         wrapMap[iMap] = dCell;
-        boxOffsets[iMap] = rawBoxOffsets[(xbo+1)*9+(ybo+1)*3+(zbo+1)];
+        boxOffsets[iMap] = rawBoxOffsets[(xbo+xboRange)*ny*nz+(ybo+yboRange)*nz+(zbo+zboRange)];
       }
     }
   }
