@@ -1,12 +1,11 @@
 #include "potential-master.h"
 #include "alloc2d.h"
 
-CellManager::CellManager(const SpeciesList &sl, Box& b, int cRange) : box(b), speciesList(sl), cellRange(cRange), range(0), rawBoxOffsets(nullptr), boxOffsets(nullptr) {
+CellManager::CellManager(const SpeciesList &sl, Box& b, int cRange) : box(b), speciesList(sl), cellRange(cRange), range(0), rawBoxOffsets(nullptr) {
 }
 
 CellManager::~CellManager() {
   if (rawBoxOffsets) free2D((void**)rawBoxOffsets);
-  if (boxOffsets) free(boxOffsets);
 }
 
 #define i_cell(ax,ay,az) ((az % numCells[2]) \
@@ -60,8 +59,8 @@ void CellManager::init() {
   }
   cellLastAtom.resize(totalCells);
   wrapMap.resize(totalCells);
-  boxOffsets = (double**)realloc(boxOffsets, totalCells*sizeof(double*));
-  rawBoxOffsets = (double**)realloc2D((void**)rawBoxOffsets, 3*3*3, 3, sizeof(double));
+  boxOffsets.resize(totalCells);
+  if (!rawBoxOffsets) rawBoxOffsets = (double**)malloc2D(3*3*3, 3, sizeof(double));
 
   cellOffsets.resize(0);
   int dCell = 0;

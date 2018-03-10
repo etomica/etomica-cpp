@@ -68,7 +68,7 @@ class CellManager {
     vector<int> cellOffsets;
     vector<int> wrapMap;
     double** rawBoxOffsets;
-    double** boxOffsets;
+    vector<double*> boxOffsets;
     int wrappedIndex(int i, int nc);
     void moveAtomIndex(int oldIndex, int newIndex);
 
@@ -161,7 +161,7 @@ class PotentialMasterCell : public PotentialMaster {
     const vector<int> &cellLastAtom;
     const vector<int> &cellOffsets;
     const vector<int> &wrapMap;
-    double** &boxOffsets;
+    const vector<double*> &boxOffsets;
 
     void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int iAtom, const int jAtom, double& uTot, double rc2) {
       double dx = ri[0]-(rj[0]+jbo[0]);

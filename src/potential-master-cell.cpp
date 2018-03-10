@@ -77,7 +77,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     const double *ri = box.getAtomPosition(iAtom);
     double *fi = doForces ? force[iAtom] : nullptr;
     int jAtom=iAtom;
-    double *jbo = boxOffsets[atomCell[iAtom]];
+    const double *jbo = boxOffsets[atomCell[iAtom]];
     while ((jAtom = cellNextAtom[jAtom]) > -1) {
       if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
       const double *rj = box.getAtomPosition(jAtom);
@@ -129,7 +129,7 @@ void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, 
   if (!pureAtoms && !rigidMolecules) {
     iBondedAtoms = &bondedAtoms[iSpecies][iAtom-iFirstAtom];
   }
-  double *jbo = boxOffsets[iCell];
+  const double *jbo = boxOffsets[iCell];
   for (int jAtom = cellLastAtom[iCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
     if (jAtom!=iAtom) {
       if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
