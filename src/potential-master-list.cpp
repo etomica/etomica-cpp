@@ -108,7 +108,7 @@ resetStart:
   // forceReallocNbrs can be used to force reallocation when max # of nbrs is too small
   if ((!nbrs || moreAtoms || forceReallocNbrs) && boxNumAtoms>0)  {
     if (!maxNab) maxNab = 5;
-    if (boxNumAtoms > nbrsNumAtoms) nbrsNumAtoms = boxNumAtoms;
+    if (moreAtoms) nbrsNumAtoms = boxNumAtoms;
     nbrs = (int**)realloc2D((void**)nbrs, nbrsNumAtoms, maxNab, sizeof(int));
     nbrBoxOffsets = (double***)realloc2D((void**)nbrBoxOffsets, nbrsNumAtoms, maxNab, sizeof(double*));
     forceReallocNbrs = false;
