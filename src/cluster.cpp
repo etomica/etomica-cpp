@@ -1,6 +1,6 @@
 #include "cluster.h"
 
-Cluster::Cluster(PotentialMasterVirial &pm, double t, int nd) : potentialMaster(pm), numMolecules(pm.getBox().getTotalNumMolecules()), beta(1/t), nDer(nd) {
+Cluster::Cluster(PotentialMasterVirial &pm, double t, int nd, bool cached) : potentialMaster(pm), numMolecules(pm.getBox().getTotalNumMolecules()), beta(1/t), nDer(nd), useCache(cached), cacheDirty(true) {
   values = new double[nDer];
   oldValues = new double[nDer];
   binomial = new int*[nDer];
@@ -24,20 +24,29 @@ Cluster::~Cluster() {
   delete[] binomial;
 }
 
-double* Cluster::oldValue() {
-  return oldValues;
+void Cluster::setCachingEnabled(bool enabled) {
+  useCache = enabled;
 }
 
-void Cluster::acceptNewValue() {
+int Cluster::numValues() {
+  return nDer;
+}
+
+void Cluster::trialNotify() {
   for (int m=0; m<=nDer; m++) oldValues[m] = values[m];
+  cacheDirty = true;
 }
 
-void Cluster::rejectNewValue() {
+void Cluster::trialRejected() {
   for (int m=0; m<=nDer; m++) values[m] = oldValues[m];
+  cacheDirty = false;
 }
 
 #define NF  (1 << numMolecules)
-double* Cluster::value() {
+const double* Cluster::getValues() {
+  if (useCache && !cacheDirty) return values;
+  cacheDirty = false;
+
   double fQ[NF][nDer+1], fC[NF][nDer+1];
   double fA[NF][nDer+1], fB[NF][nDer+1];
 
