@@ -6,25 +6,25 @@ interface Potential {
 };
 
 interface PotentialLJ : Potential {
-  void PotentialLJ(long tt, double rc);
+  void PotentialLJ(double epsilon, double sigma, long tt, double rc);
 };
 
 PotentialLJ implements Potential;
 
 interface PotentialSS : Potential {
-  void PotentialSS(long p, long tt, double rc);
+  void PotentialSS(double epsilon, long p, long tt, double rc);
 };
 
 PotentialSS implements Potential;
 
 interface PotentialWCA : PotentialLJ {
-  void PotentialWCA();
+  void PotentialWCA(double epsilon, double sigma);
 };
 
 PotentialWCA implements PotentialLJ;
 
 interface PotentialHS : Potential {
-  void PotentialHS();
+  void PotentialHS(double sigma);
 };
 
 PotentialHS implements Potential;
@@ -117,9 +117,10 @@ interface IntegratorListener { };
 interface DataSink { };
 
 interface Average : DataSink {
-  void Average(long nData, long blockSize, long maxBlockCount);
+  void Average(long nData, long blockSize, long maxBlockCount, boolean doCovariance);
   void setNumData(long newNumData);
   VoidPtr getStatistics();
+  VoidPtr getBlockCovariance();
   void reset();
 };
 

@@ -183,16 +183,16 @@ function getInputInt(id) {
     switch (potType) {
       case 0:
         var ssPow = getInputInt("ssPow");
-        potential = new Module.PotentialSS(ssPow, truncType, rc);
+        potential = new Module.PotentialSS(1,ssPow, truncType, rc);
         break;
       case 1:
-        potential = new Module.PotentialLJ(truncType, rc);
+        potential = new Module.PotentialLJ(1,1,truncType, rc);
         break;
       case 2:
-        potential = new Module.PotentialWCA();
+        potential = new Module.PotentialWCA(1,1);
         break;
       case 3:
-        potential = new Module.PotentialHS();
+        potential = new Module.PotentialHS(1);
         break;
       case 4:
         potential = new PotentialJS();
@@ -468,7 +468,7 @@ function makeDataDiv(name, av) {
 document.getElementById("btnDataEnergy").addEventListener("click", function() {
     document.getElementById("btnDataEnergy").style.display = "none";
     var meter = new Module.MeterPotentialEnergy(integrator);
-    var av = new Module.Average(1, 10, 100);
+    var av = new Module.Average(1, 10, 100, false);
     var pump = new Module.DataPump(meter, doMD?1:10, av);
     integrator.addListener(pump);
     makeDataDiv("energy", av);
@@ -478,7 +478,7 @@ document.getElementById("btnDataTemperature").addEventListener("click", function
     document.getElementById("btnDataTemperature").style.display = "none";
     var meter = new Module.MeterKineticEnergy(box);
     meter.setIntegrator(integrator);
-    var av = new Module.Average(2, 1, 100);
+    var av = new Module.Average(2, 1, 100, false);
     var pump = new Module.DataPump(meter, 4, av);
     integrator.addListener(pump);
     makeDataDiv("T", av);
@@ -497,7 +497,7 @@ document.getElementById("btnDataPressure").addEventListener("click", function() 
     var nData0 = meterFull.getNumData();
     meterFull.addCallback(pcp);
     if (!avgFull) {
-      avgFull = new Module.Average(1, 1, 100);
+      avgFull = new Module.Average(1, 1, 100, false);
       var pump = new Module.DataPump(meterFull, doMD ? 4 : 4*box.getNumAtoms(), avgFull);
       integrator.addListener(pump);
     }
