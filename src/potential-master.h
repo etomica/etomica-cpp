@@ -150,6 +150,7 @@ class PotentialMasterVirial : public PotentialMaster {
     virtual ~PotentialMasterVirial() {}
     // inter-molecular energy of a group of molecules
     virtual void computeMolecules(const int* iMolecules, const int nMolecules, double &energy);
+    virtual void computeAll(vector<PotentialCallback*> &callbacks) {return;}
 };
 
 class PotentialMasterCell : public PotentialMaster {

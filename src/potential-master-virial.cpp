@@ -4,6 +4,7 @@ PotentialMasterVirial::PotentialMasterVirial(const SpeciesList &sl, Box &box) : 
 
 void PotentialMasterVirial::computeMolecules(const int* iMoleculeList, const int nMolecules, double &energy) {
   double dr[3];
+  energy = 0;
   for (int i=0; i<nMolecules-1; i++) {
     int iMolecule = iMoleculeList[i];
     int iSpecies, iFirstAtom, iLastAtom;
@@ -23,7 +24,6 @@ void PotentialMasterVirial::computeMolecules(const int* iMoleculeList, const int
           int jType = box.getAtomType(jAtom);
           double *rj = box.getAtomPosition(jAtom);
           for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
-          box.nearestImage(dr);
           double r2 = 0;
           for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
           if (r2 > iCutoffs[jType]) continue;
