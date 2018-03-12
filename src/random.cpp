@@ -103,3 +103,20 @@ void Random::onSphere(double *v) {
   v[1] = z2 * ranh;
   v[2] = 1.0 - 2.0 * zsq;
 }
+
+//generate point on surface of sphere according to method (4) here:
+//http://www.math.niu.edu/~rusin/known-math/96/sph.rand
+//and scale into the interior according to r^2
+void Random::inSphere(double *v) {
+  double r = cbrt(nextDouble32());
+  double u, w, s;
+  do {
+    u = 1.0 - 2.0*nextDouble32();
+    w = 1.0 - 2.0*nextDouble32();
+    s = u*u + w*w;
+  } while(s > 1);
+  double ra = 2.*r * sqrt(1.-s);
+  v[0] = ra * u;
+  v[1] = ra * w;
+  v[2] = r * (2*s- 1.);
+}

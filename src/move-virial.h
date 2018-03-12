@@ -22,3 +22,18 @@ class MCMoveDisplacementVirial : public MCMove {
     virtual double energyChange();
 };
 
+class MCMoveChainVirial : public MCMove {
+  private:
+    const double sigma;
+
+  public:
+    MCMoveChainVirial(Box& box, PotentialMaster& potentialMaster, Random& random, double sigma);
+    ~MCMoveChainVirial();
+
+    virtual bool doTrial();
+    virtual double getChi(double temperature) {return 1.0;}
+    virtual void acceptNotify(){}
+    virtual void rejectNotify() {fprintf(stderr, "no rejection for chain"); abort();}
+    virtual double energyChange() {return 0;}
+};
+
