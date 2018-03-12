@@ -31,8 +31,8 @@ int main(int argc, char** argv) {
   PotentialMasterVirial potentialMasterHS(speciesList, box);
   potentialMasterHS.setPairPotential(0, 0, &pHS);
   IntegratorMC integrator(potentialMaster, rand);
-  Cluster clusterLJ(potentialMaster, temperature, 0, true);
-  Cluster clusterHS(potentialMasterHS, temperature, 0, false);
+  ClusterVirial clusterLJ(potentialMaster, temperature, 0, true);
+  ClusterVirial clusterHS(potentialMasterHS, temperature, 0, false);
   MCMoveDisplacementVirial move(box, potentialMaster, rand, 0.2, clusterLJ);
   integrator.addMove(&move, 1);
   integrator.setTemperature(temperature);
