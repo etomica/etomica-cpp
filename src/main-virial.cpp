@@ -12,7 +12,7 @@
 #include "cluster.h"
 
 int main(int argc, char** argv) {
-  int order = 2;
+  int order = 4;
   double temperature = 1.0;
   long steps = 10000000;
 
