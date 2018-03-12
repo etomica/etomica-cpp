@@ -42,7 +42,7 @@ int CellManager::wrappedIndex(int i, int nc) {
 void CellManager::init() {
   double minCellSize = range/cellRange;
   int totalCells = 1;
-  double* bs = box.getBoxSize();
+  const double* bs = box.getBoxSize();
   for (int i=0; i<3; i++) {
     // with cell lists, we can accommodate rc>L/2
     // we need the box to be at least the size of a cell.
@@ -146,7 +146,7 @@ void CellManager::init() {
 }
 
 void CellManager::assignCells() {
-  double *bs = box.getBoxSize();
+  const double *bs = box.getBoxSize();
   if (bs[0]*bs[1]*bs[2] == 0) {
     fprintf(stderr, "box has 0 volume, can't assign cells\n");
     return;
@@ -197,7 +197,7 @@ void CellManager::removeAtom(int iAtom) {
 }
 void CellManager::updateAtom(int iAtom) {
   int cellNum = 0;
-  double *bs = box.getBoxSize();
+  const double *bs = box.getBoxSize();
   double *r = box.getAtomPosition(iAtom);
   for (int i=0; i<3; i++) {
     double x = (r[i] + boxHalf[i])/bs[i];

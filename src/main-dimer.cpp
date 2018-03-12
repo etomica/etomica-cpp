@@ -34,7 +34,6 @@ int main(int argc, char** argv) {
   double L = pow(numMolecules/density, 1.0/3.0);
   printf("box size: %f\n", L);
   box.setBoxSize(L,L,L);
-  box.boxSizeUpdated();
   box.setNumMolecules(0, numMolecules);
   box.initCoordinates();
   PotentialMasterCell potentialMaster(speciesList, box, 2);

@@ -12,7 +12,7 @@ ConfigurationLattice::~ConfigurationLattice() {
 }
 
 void ConfigurationLattice::go() {
-  double* boxSize = box.getBoxSize();
+  const double* boxSize = box.getBoxSize();
   int numMolecules = box.getTotalNumMolecules();
   int nCellsLeft = (numMolecules+(numBasisAtoms-1))/numBasisAtoms;
   int numCells[3] = {0,0,0};

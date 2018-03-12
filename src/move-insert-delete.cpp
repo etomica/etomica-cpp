@@ -13,7 +13,7 @@ bool MCMoveInsertDelete::doTrial() {
     xMolecule = n;
     box.setNumMolecules(iSpecies, n+1);
     uOld = 0;
-    double *bs = box.getBoxSize();
+    const double *bs = box.getBoxSize();
     double mPos[3];
     for (int k=0; k<3; k++) {
       mPos[k] = bs[k]*(random.nextDouble32()-0.5);
@@ -63,7 +63,7 @@ bool MCMoveInsertDelete::doTrial() {
 double MCMoveInsertDelete::getChi(double T) {
   int n = box.getNumMolecules(iSpecies);
 
-  double* bs = box.getBoxSize();
+  const double* bs = box.getBoxSize();
   double vol = bs[0]*bs[1]*bs[2];
 
   double x = -(uNew-uOld);

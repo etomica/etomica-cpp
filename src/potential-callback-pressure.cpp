@@ -9,7 +9,7 @@ PotentialCallbackPressure::PotentialCallbackPressure(Box& b, double T) : box(b),
 int PotentialCallbackPressure::getNumData() {return 1;}
 
 void PotentialCallbackPressure::allComputeFinished(double uTot, double virialTot, double** f) {
-  double* bs = box.getBoxSize();
+  const double* bs = box.getBoxSize();
   double vol = bs[0]*bs[1]*bs[2];
   int numAtoms = box.getNumAtoms();
   

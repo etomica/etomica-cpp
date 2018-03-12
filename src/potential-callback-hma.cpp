@@ -18,7 +18,7 @@ PotentialCallbackHMA::PotentialCallbackHMA(Box& b, double T, double Ph) : box(b)
 int PotentialCallbackHMA::getNumData() {return 2;}
 
 void PotentialCallbackHMA::allComputeFinished(double uTot, double virialTot, double** f) {
-  double* bs = box.getBoxSize();
+  const double* bs = box.getBoxSize();
   double vol = bs[0]*bs[1]*bs[2];
   int N = box.getNumAtoms();
   

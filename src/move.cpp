@@ -15,7 +15,7 @@ void MCMove::init() {
   verboseAdjust = false;
   tunable = true;
   maxStepSize = 0;
-  double* bs = box.getBoxSize();
+  const double* bs = box.getBoxSize();
   for (int i=0; i<3; i++) if (maxStepSize<bs[i]) maxStepSize = bs[i];
   maxStepSize /= 2;
 }

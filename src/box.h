@@ -16,6 +16,7 @@ class Box {
     int *numMoleculesBySpecies, *maxNumMoleculesBySpecies;
     int **firstAtom, **moleculeIdx;
     int **atomTypes;
+    void boxSizeUpdated();
 
     SpeciesList &speciesList;
 
@@ -24,8 +25,7 @@ class Box {
     virtual ~Box();
 
     SpeciesList& getSpeciesList() {return speciesList;}
-    double* getBoxSize() {return boxSize;}
-    void boxSizeUpdated();
+    const double* getBoxSize() {return boxSize;}
     int getTotalNumMolecules() {
       int s = 0;
       for (int i=0; i<knownNumSpecies; i++) s += numMoleculesBySpecies[i];

@@ -152,7 +152,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
 
 void PotentialMaster::computeAllTruncationCorrection(double &uTot, double &virialTot) {
   if (!doTruncationCorrection) return;
-  double* bs = box.getBoxSize();
+  const double* bs = box.getBoxSize();
   double vol = bs[0]*bs[1]*bs[2];
   for (int i=0; i<numAtomTypes; i++) {
     int iNumAtoms = numAtomsByType[i];
@@ -169,7 +169,7 @@ void PotentialMaster::computeAllTruncationCorrection(double &uTot, double &viria
 }
 
 double PotentialMaster::computeOneTruncationCorrection(int iAtom) {
-  double* bs = box.getBoxSize();
+  const double* bs = box.getBoxSize();
   double vol = bs[0]*bs[1]*bs[2];
   int iType = box.getAtomType(iAtom);
   double uTot = 0;

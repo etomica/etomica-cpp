@@ -34,7 +34,6 @@ int main(int argc, char** argv) {
   double L = pow(numAtoms/density, 1.0/3.0);
   printf("box size: %f\n", L);
   box.setBoxSize(L,L,L);
-  box.boxSizeUpdated();
   box.setNumMolecules(species1, numAtoms1);
   box.setNumMolecules(species2, numAtoms2);
   box.initCoordinates();
