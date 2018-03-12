@@ -1,9 +1,9 @@
 #include "cluster.h"
 
 Cluster::Cluster(PotentialMasterVirial &pm, double t, int nd, bool cached) : potentialMaster(pm), numMolecules(pm.getBox().getTotalNumMolecules()), beta(1/t), nDer(nd), useCache(cached), cacheDirty(true) {
-  values = new double[nDer];
-  oldValues = new double[nDer];
-  binomial = new int*[nDer];
+  values = new double[nDer+1];
+  oldValues = new double[nDer+1];
+  binomial = new int*[nDer+1];
   int factorial[nDer+1];
   factorial[0] = factorial[1] = 1;
   for (int m=2; m<=nDer; m++) factorial[m] = m*factorial[m-1];
@@ -13,6 +13,7 @@ Cluster::Cluster(PotentialMasterVirial &pm, double t, int nd, bool cached) : pot
       binomial[m][l] = factorial[m]/(factorial[l]*factorial[m-l]);
     }
   }
+  prefac = -(numMolecules-1.0)/factorial[numMolecules];
 }
 
 Cluster::~Cluster() {
@@ -29,7 +30,7 @@ void Cluster::setCachingEnabled(bool enabled) {
 }
 
 int Cluster::numValues() {
-  return nDer;
+  return nDer+1;
 }
 
 void Cluster::trialNotify() {
@@ -229,15 +230,15 @@ const double* Cluster::getValues() {
     oldValues[m] = values[m];
   }
 
-  values[0] = fB[NF-1][0];
-  if ( fabs(values[0]) < 1.E-12 ){
+  values[0] = prefac*fB[NF-1][0];
+  if (values[0] != 0 && fabs(values[0]) < 1.E-12 ){
     for (int m=1; m<=nDer; m++) {
       values[m] = 0;
     }
-    return 0;
+    return values;
   }
   for (int m=1; m<=nDer; m++) {
-    values[m] = fB[NF-1][m];
+    values[m] = prefac*fB[NF-1][m];
   }
   return values;
 }

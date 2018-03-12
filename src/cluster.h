@@ -13,6 +13,7 @@ class Cluster {
     double* oldValues;
     int** binomial;
     int moleculePair[2];
+    double prefac;
 
   public:
     Cluster(PotentialMasterVirial& potnetialMaster, double temperature, int nDer, bool cached);
