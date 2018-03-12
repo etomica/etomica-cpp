@@ -210,7 +210,7 @@ void PotentialSS::u012TC(double &u, double &du, double &d2u) {
 
 PotentialWCA::PotentialWCA(double e, double s) : PotentialLJ(e, s, TRUNC_SHIFT, 1.122462048309373*s) {}
 
-PotentialHS::PotentialHS(double s) : Potential(TRUNC_SIMPLE, 1), sigma(s), sigma2(s*s) {
+PotentialHS::PotentialHS(double s) : Potential(TRUNC_SIMPLE, s), sigma(s), sigma2(s*s) {
   init();
 }
 
