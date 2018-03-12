@@ -31,8 +31,22 @@ class ClusterVirial : public Cluster {
     double prefac;
 
   public:
-    ClusterVirial(PotentialMasterVirial& potnetialMaster, double temperature, int nDer, bool cached);
+    ClusterVirial(PotentialMasterVirial& potentialMaster, double temperature, int nDer, bool cached);
     virtual ~ClusterVirial();
+
+    const double* getValues();
+};
+
+class ClusterChain : public Cluster {
+  protected:
+    PotentialMasterVirial &potentialMaster;
+    const double beta;
+    int moleculePair[2];
+    double chainFac, ringFac;
+
+  public:
+    ClusterChain(PotentialMasterVirial& potentialMaster, double temperature, double chainFac, double ringFac);
+    virtual ~ClusterChain();
 
     const double* getValues();
 };
