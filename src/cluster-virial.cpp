@@ -1,12 +1,10 @@
 #include "cluster.h"
 
-ClusterVirial::ClusterVirial(PotentialMasterVirial &pm, double t, int nd, bool cached) : Cluster(pm.getBox().getTotalNumMolecules(),nd-1,cached), potentialMaster(pm), beta(1/t), nDer(nd) {
-  values = new double[nDer+1];
-  oldValues = new double[nDer+1];
+ClusterVirial::ClusterVirial(PotentialMasterVirial &pm, double t, int nd, bool cached) : Cluster(pm.getBox().getTotalNumMolecules(),nd+1,cached), potentialMaster(pm), beta(1/t), nDer(nd) {
   binomial = new int*[nDer+1];
   int factorial[nDer+1];
   factorial[0] = factorial[1] = 1;
-  for (int m=2; m<=nDer; m++) factorial[m] = m*factorial[m-1];
+  for (int m=2; m<=nDer || m<=numMolecules; m++) factorial[m] = m*factorial[m-1];
   for (int m=0; m<=nDer; m++) {
     binomial[m] = new int[m+1];
     for (int l=0; l<=m; l++) {

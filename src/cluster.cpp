@@ -24,7 +24,7 @@ void Cluster::trialNotify() {
 }
 
 void Cluster::trialRejected() {
-  for (int m=0; m<=nValues; m++) values[m] = oldValues[m];
+  for (int m=0; m<nValues; m++) values[m] = oldValues[m];
   cacheDirty = false;
 }
 
