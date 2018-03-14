@@ -15,6 +15,8 @@ Average::Average(int n, long bs, long mBC, bool doCov) : nData(n), defaultBlockS
   stats = nullptr;
   blockCovariance = nullptr;
   blockCovSum = nullptr;
+  prevBlockSum = nullptr;
+  firstBlockSum = nullptr;
   reset();
 }
 
@@ -25,6 +27,10 @@ Average::~Average() {
   free(blockSum2);
   free(correlationSum);
   if (maxBlockCount>0) free2D((void**)blockSums);
+  else {
+    free(prevBlockSum);
+    free(firstBlockSum);
+  }
   free2D((void**)stats);
   if (doCovariance) {
     free2D((void**)blockCovariance);
@@ -61,6 +67,10 @@ void Average::reset() {
     }
     blockSums = (double**)realloc2D((void**)blockSums, nData, maxBlockCount, sizeof(double));
   }
+  else {
+    prevBlockSum = (double*)realloc(prevBlockSum, nData*sizeof(double));
+    firstBlockSum = (double*)realloc(firstBlockSum, nData*sizeof(double));
+  }
   stats = (double**)realloc2D((void**)stats, nData, 4, sizeof(double));
   if (doCovariance) {
     blockCovSum = (double**)realloc2D((void**)blockCovSum, nData, nData, sizeof(double));
@@ -91,8 +101,15 @@ void Average::addData(double *x) {
     for (int i=0; i<nData; i++) {
       blockSum[i] += currentBlockSum[i];
       currentBlockSum[i] /= blockSize;
-      if (blockCount>0) correlationSum[i] += blockSums[i][blockCount-1] * currentBlockSum[i];
-      blockSums[i][blockCount] = currentBlockSum[i];
+      if (maxBlockCount > 0) {
+        if (blockCount>0) correlationSum[i] += blockSums[i][blockCount-1] * currentBlockSum[i];
+        blockSums[i][blockCount] = currentBlockSum[i];
+      }
+      else {
+        if (blockCount>0) correlationSum[i] += prevBlockSum[i] * currentBlockSum[i];
+        else firstBlockSum[i] = currentBlockSum[i];
+        prevBlockSum[i] = currentBlockSum[i];
+      }
       blockSum2[i] += currentBlockSum[i] * currentBlockSum[i];
       currentBlockSum[i] = 0;
     }
@@ -160,7 +177,13 @@ double** Average::getStatistics() {
       stats[i][AVG_ACOR] = 0;
     }
     else {
-      double bc = (((2 * blockSum[i] / blockSize - blockSums[i][0] - blockSums[i][blockCount-1]) * stats[i][AVG_AVG] - correlationSum[i]) / (1-blockCount) + stats[i][AVG_AVG]*stats[i][AVG_AVG]) / stats[i][AVG_ERR];
+      double bc;
+      if (maxBlockCount>0) {
+        bc = (((2 * blockSum[i] / blockSize - blockSums[i][0] - blockSums[i][blockCount-1]) * stats[i][AVG_AVG] - correlationSum[i]) / (1-blockCount) + stats[i][AVG_AVG]*stats[i][AVG_AVG]) / stats[i][AVG_ERR];
+      }
+      else {
+        bc = (((2 * blockSum[i] / blockSize - firstBlockSum[i] - prevBlockSum[i]) * stats[i][AVG_AVG] - correlationSum[i]) / (1-blockCount) + stats[i][AVG_AVG]*stats[i][AVG_AVG]) / stats[i][AVG_ERR];
+      }
       stats[i][AVG_ACOR] = (isnan(bc) || bc <= -1 || bc >= 1) ? 0 : bc;
     }
     stats[i][AVG_ERR] = sqrt(stats[i][AVG_ERR]/(blockCount-1));
