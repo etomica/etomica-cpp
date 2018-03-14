@@ -10,14 +10,15 @@
 #include "random.h"
 #include "util.h"
 #include "cluster.h"
+#include "virial.h"
 
 int main(int argc, char** argv) {
   int order = 4;
   double temperature = 1.0;
   long steps = 1000000;
-  int numAlpha = 4;
-  double alphaSpan = 1;
-  double alpha0 = .03;
+  int numAlpha = 10;
+  double alphaSpan = 4;
+  double alpha0 = 1;
 
   Random rand;
   printf("random seed: %d\n", rand.getSeed());
@@ -43,7 +44,7 @@ int main(int argc, char** argv) {
   refIntegrator.reset();
   MeterVirialOverlap refMeter(refClusterHS, refClusterLJ, alpha0, alphaSpan, numAlpha);
   Average refAverage(numAlpha, 1, 0, false);
-  DataPump refPumpVirial(refMeter, 1);
+  DataPump refPumpVirial(refMeter, 1, &refAverage);
   refIntegrator.addListener(&refPumpVirial);
 
   Box targetBox(speciesList);
@@ -61,26 +62,25 @@ int main(int argc, char** argv) {
   targetIntegrator.setTemperature(temperature);
   targetIntegrator.reset();
   MeterVirialOverlap targetMeter(targetClusterLJ, targetClusterHS, 1/alpha0, -alphaSpan, numAlpha);
-  DataPump targetPumpVirial(targetMeter, 1);
+  Average targetAverage(numAlpha, 1, 1000, false);
+  DataPump targetPumpVirial(targetMeter, 1, &targetAverage);
   targetIntegrator.addListener(&targetPumpVirial);
 
-  targetIntegrator.doSteps(steps/10);
+  //targetIntegrator.doSteps(steps/10);
+
   double t1 = getTime();
-  printf("reference\n");
+  VirialAlpha virialAlpha(refIntegrator, targetIntegrator, refMeter, targetMeter, refAverage, targetAverage);
+  virialAlpha.run();
+
+  /*printf("reference\n");
   refIntegrator.doSteps(steps);
   printf("target\n");
-  targetIntegrator.doSteps(steps);
+  targetIntegrator.doSteps(steps);*/
   double t2 = getTime();
 
-  double** refStats = ((Average*)refPumpVirial.getDataSink(0))->getStatistics();
-  double** targetStats = ((Average*)targetPumpVirial.getDataSink(0))->getStatistics();
-  const double* alpha = refMeter.getAlpha();
-  for (int i=0; i<numAlpha; i++) {
-    printf("alpha: %e\n", alpha[i]);
-    printf("  ref    avg: %f   err: %f\n", refStats[i][AVG_AVG], refStats[i][AVG_ERR]);
-    printf("  target avg: %f   err: %f   cor: %f\n", targetStats[i][AVG_AVG], targetStats[i][AVG_ERR], targetStats[i][AVG_ACOR]);
-    printf("  ratio  avg: %f\n", refStats[i][AVG_AVG]/targetStats[i][AVG_AVG]);
-  }
+  double alpha, alphaErr, alphaCor;
+  virialAlpha.getNewAlpha(alpha, alphaErr, alphaCor);
+  printf("alpha  avg: %f   err: %f   cor: % 6.4f\n", alpha, alphaErr, alphaCor);
   printf("time: %4.3f\n", t2-t1);
 }
 
