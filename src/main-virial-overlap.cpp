@@ -66,8 +66,6 @@ int main(int argc, char** argv) {
   DataPump targetPumpVirial(targetMeter, 1, &targetAverage);
   targetIntegrator.addListener(&targetPumpVirial);
 
-  //targetIntegrator.doSteps(steps/10);
-
   double t1 = getTime();
   VirialAlpha virialAlpha(refIntegrator, targetIntegrator, refMeter, targetMeter, refAverage, targetAverage);
   virialAlpha.run();
