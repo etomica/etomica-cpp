@@ -17,11 +17,9 @@ bool MCMoveChainVirial::doTrial() {
     double* r = box.getAtomPosition(iAtom);
     random.inSphere(r);
     r[0] = r[0]*sigma + rPrev[0];
-    rPrev[0] = r[0];
     r[1] = r[1]*sigma + rPrev[1];
-    rPrev[1] = r[1];
     r[2] = r[2]*sigma + rPrev[2];
-    rPrev[2] = r[2];
+    rPrev = r;
   }
   numTrials++;
   numAccepted++;
