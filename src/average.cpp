@@ -24,7 +24,7 @@ Average::~Average() {
   free(blockSum);
   free(blockSum2);
   free(correlationSum);
-  free2D((void**)blockSums);
+  if (maxBlockCount>0) free2D((void**)blockSums);
   free2D((void**)stats);
   if (doCovariance) {
     free2D((void**)blockCovariance);
@@ -57,7 +57,7 @@ void Average::reset() {
   if (maxBlockCount>0) {
     if (maxBlockCount%2==1 || maxBlockCount < 4) {
       fprintf(stderr, "Not nice!  Give me a max block count that's even and >= 4!\n");
-      exit(0);
+      abort();
     }
     blockSums = (double**)realloc2D((void**)blockSums, nData, maxBlockCount, sizeof(double));
   }
