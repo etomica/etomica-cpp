@@ -29,6 +29,7 @@ class Average : public DataSink {
     long blockCountdown;
     double *mostRecent;
     double *currentBlockSum, *blockSum, *blockSum2, *correlationSum;
+    double *prevBlockSum, *firstBlockSum;
     double **stats;
     double **blockSums;
     double **blockCovariance;
