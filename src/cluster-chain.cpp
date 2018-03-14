@@ -8,7 +8,6 @@ ClusterChain::~ClusterChain() {
 
 #define NF1  (1 << (numMolecules-1))
 const double* ClusterChain::getValues() {
-
   const int n = numMolecules;
   double fValues[n][n];
   for(int iMol1=0; iMol1<n; iMol1++){
