@@ -46,20 +46,12 @@ class Average : public DataSink {
     long getBlockSize() {return blockSize;}
     long getBlockCount() {return blockCount;}
     void setNumData(int newNumData);
+    int getNumData();
     virtual void reset();
 };
 
 // also computes ratio of each quantity with the last quantity
 class AverageRatio : public Average {
-  private:
-    static double ratioErr(double nAvg, double nErr, double dAvg, double dErr, double cor) {
-      if (nAvg==0 && nErr==0) return 0;
-      double ratio = nAvg/dAvg;
-      if (nAvg==0) {
-        return sqrt((nErr*nErr)/(dAvg*dAvg));
-      }
-      return sqrt((nErr*nErr/(nAvg*nAvg) + dErr*dErr/(dAvg*dAvg) - 2*cor*nErr*dErr/(nAvg*dAvg)) * ratio*ratio);
-    }
 
   protected:
     double **ratioStats;
@@ -70,4 +62,13 @@ class AverageRatio : public Average {
     virtual void reset();
     double** getRatioStatistics();
     double** getRatioCovariance();
+
+    static double ratioErr(double nAvg, double nErr, double dAvg, double dErr, double cor) {
+      if (nAvg==0 && nErr==0) return 0;
+      double ratio = nAvg/dAvg;
+      if (nAvg==0) {
+        return sqrt((nErr*nErr)/(dAvg*dAvg));
+      }
+      return sqrt((nErr*nErr/(nAvg*nAvg) + dErr*dErr/(dAvg*dAvg) - 2*cor*nErr*dErr/(nAvg*dAvg)) * ratio*ratio);
+    }
 };

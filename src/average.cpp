@@ -37,6 +37,10 @@ void Average::setNumData(int newNumData) {
   reset();
 }
 
+int Average::getNumData() {
+  return nData;
+}
+
 void Average::reset() {
   blockCount = 0;
   blockSize = defaultBlockSize;
