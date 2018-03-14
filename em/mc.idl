@@ -61,7 +61,7 @@ interface Box {
   long getNumMolecules(long iSpecies);
   long getTotalNumMolecules();
   void setNumMolecules(long iSpecies, long numMolecules);
-  VoidPtr getBoxSize();
+  [Const] VoidPtr getBoxSize();
   void setBoxSize(double x, double y, double z);
   void initCoordinates();
   VoidPtr getAtomPosition(long iAtom);
@@ -72,6 +72,7 @@ interface Box {
 interface PotentialMaster {
   void PotentialMaster([Ref] SpeciesList sl, [Ref] Box box);
   void setPairPotential(long iType, long jType, Potential pij);
+  void setDoTruncationCorrection(boolean doCorrection);
 };
 
 interface PotentialMasterCell : PotentialMaster {

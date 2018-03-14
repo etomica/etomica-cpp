@@ -77,6 +77,9 @@
 </select></label></div></div>
 <div class='col-sm-12 col-md-4 col-lg-3'>
   <div id='rcDiv'><label>Cutoff: <input class='form-control' id='rc' size='3' value='3' style='width: 5em;'></label></div></div>
+<div class='col-sm-12 col-md-4 col-lg-3'>
+  <div id='rcDiv'><label><input type='checkbox' id='lrc' checked> Include LRC</label></div>
+</div>
 </div>
   <label><input type='checkbox' id='doMD' onchange='updateDoMD()'> Actually run MD</label> <label>timestep: <input class='form-control' style='width: 4rem;' id='tStep'></label><br>
   <div id='cellsDiv'><label><input type='checkbox' id='doCells'> Use cell lists</label></div>
@@ -221,6 +224,8 @@ function getInputInt(id) {
       potentialMaster = new Module.PotentialMaster(potential, box);
     }
     potentialMaster.setPairPotential(0, 0, potential);
+    var lrc = document.getElementById("lrc").checked;
+    potentialMaster.setDoTruncationCorrection(lrc);
     if (doCells || doNbrList) potentialMaster.init();
     var seed = getInputInt("seed");
     if (seed == 0) {
