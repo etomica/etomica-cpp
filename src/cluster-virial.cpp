@@ -2,7 +2,7 @@
 
 ClusterVirial::ClusterVirial(PotentialMasterVirial &pm, double t, int nd, bool cached) : Cluster(pm.getBox().getTotalNumMolecules(),nd+1,cached), potentialMaster(pm), beta(1/t), nDer(nd) {
   binomial = new int*[nDer+1];
-  int factorial[nDer+1];
+  int factorial[(numMolecules>nDer ? numMolecules : nDer)+1];
   factorial[0] = factorial[1] = 1;
   for (int m=2; m<=nDer || m<=numMolecules; m++) factorial[m] = m*factorial[m-1];
   for (int m=0; m<=nDer; m++) {
