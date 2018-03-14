@@ -51,8 +51,16 @@ void MeterVirialOverlap::setAlpha(double aCenter, double aSpan) {
     return;
   }
   for (int i=0; i<numAlpha; i++) {
-    alpha[i] = exp((i-(numAlpha-1)/2) * aSpan);
+    alpha[i] = aCenter * exp((i-(numAlpha-1)/2) * aSpan);
   }
+}
+
+int MeterVirialOverlap::getNumAlpha() {
+  return numAlpha;
+}
+
+const double* MeterVirialOverlap::getAlpha() {
+  return alpha;
 }
 
 double* MeterVirialOverlap::getData() {
@@ -62,7 +70,6 @@ double* MeterVirialOverlap::getData() {
     fprintf(stderr, "pi is %f\n", pi);
     abort();
   }
-  double perturbValue = fabs(perturbCluster.getValues()[0]);
   if (numAlpha == 1) {
     for (int i=0; i<primaryCluster.numValues(); i++) {
       data[i] = primaryValues[i] / pi;
@@ -70,12 +77,16 @@ double* MeterVirialOverlap::getData() {
     data[nData-1] = perturbCluster.getValues()[0] / pi;
   }
   else {
+    double perturbValue = fabs(perturbCluster.getValues()[0]);
     for (int i=0; i<numAlpha; i++) {
       // gamma_OS = pi1 pi0 / (pi1 + alpha pi0)
-      // 1: gamma_OS/pi1 = pi0 / (pi1 + alpha pi0)
       // 0: gamma_OS/pi0 = pi1 / (pi1 + alpha pi0)
-      //                 = (1/alpha) pi1 / (pi0 + (1/alpha) pi1)
-      // for 0 case, we use negative alphaSpan (alpha => 1/alpha) and compute: alpha gammaOS/pi0
+      // 1: gamma_OS/pi1 = pi0 / (pi1 + alpha pi0)
+      //                 = (1/alpha) pi0 / (pi1 + (1/alpha) pi0)
+      // for 1 case, we use negative alphaSpan (alpha => 1/alpha)
+      //    and effectively compute: alpha gammaOS/pi1
+      // <0>/<1> = (1/alpha) <gammaOS/pi0>0 / <gammaOS/pi1>1
+      //         ~= 1 (when alpha is optimal)
       data[i] = perturbValue / (pi + alpha[i]*perturbValue);
     }
   }

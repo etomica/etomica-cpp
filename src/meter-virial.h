@@ -26,5 +26,7 @@ class MeterVirialOverlap : public Meter {
     MeterVirialOverlap(Cluster &clusterPrimary, Cluster &clusterPerturb, double alphaCenter, double alphaSpan, int numAlpha);
     ~MeterVirialOverlap();
     void setAlpha(double alphaCenter, double alphaSpan);
+    int getNumAlpha();
+    const double* getAlpha();
     double* getData();
 };
