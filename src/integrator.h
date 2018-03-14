@@ -30,6 +30,7 @@ class Integrator : public PotentialCallback {
     void reset();
     double getPotentialEnergy();
     void addListener(IntegratorListener* listener);
+    void removeListener(IntegratorListener* listener);
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
 };
 
