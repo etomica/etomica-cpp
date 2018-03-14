@@ -135,7 +135,6 @@ void Average::collapseBlocks() {
   }
   blockSize *= 2;
   blockCountdown = blockSize;
-  getBlockCovariance();
 }
 
 double** Average::getStatistics() {
