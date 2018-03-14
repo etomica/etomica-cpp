@@ -51,7 +51,7 @@ void MeterVirialOverlap::setAlpha(double aCenter, double aSpan) {
     return;
   }
   for (int i=0; i<numAlpha; i++) {
-    alpha[i] = aCenter * exp((i-(numAlpha-1)/2) * aSpan);
+    alpha[i] = aCenter * exp((i-(numAlpha-1.0)/2) * aSpan);
   }
 }
 
