@@ -5,6 +5,7 @@
 #include "alloc2d.h"
 
 AverageRatio::AverageRatio(int n, long bs, long mBC, bool doCov) : Average(n, bs, mBC, doCov), ratioStats(nullptr), ratioCovariance(nullptr) {
+  reset();
 }
 
 AverageRatio::~AverageRatio() {
@@ -15,14 +16,14 @@ AverageRatio::~AverageRatio() {
 void AverageRatio::reset() {
   Average::reset();
   ratioStats = (double**)realloc2D((void**)ratioStats, nData, 3, sizeof(double));
-  if (doCovariance) ratioCovariance = (double**)realloc2D((void**)ratioStats, nData, nData, sizeof(double));
+  if (doCovariance) ratioCovariance = (double**)realloc2D((void**)ratioCovariance, nData, nData, sizeof(double));
 }
 
 double** AverageRatio::getRatioStatistics() {
   if (blockCount==0) {
     for (int i=0; i<nData; i++) {
       ratioStats[i][AVG_CUR] = NAN;
-      ratioStats[i][AVG_AVG] = stats[i][AVG_ERR] = NAN;
+      ratioStats[i][AVG_AVG] = ratioStats[i][AVG_ERR] = NAN;
     }
     return ratioStats;
   }
@@ -37,10 +38,11 @@ double** AverageRatio::getRatioStatistics() {
       }
       continue;
     }
-    double icor = blockCovariance[i][nData-1] / sqrt(blockCovariance[i][i] * blockCovariance[nData-1][nData-1]);
+    double d = blockCovariance[i][i] * blockCovariance[nData-1][nData-1];
+    double icor = d <= 0 ? 0 : blockCovariance[i][nData-1] / sqrt(blockCovariance[i][i] * blockCovariance[nData-1][nData-1]);
     ratioStats[i][AVG_ERR] = ratioErr(stats[i][AVG_AVG], stats[i][AVG_ERR], stats[nData-1][AVG_AVG], stats[nData-1][AVG_ERR], icor);
   }
-  return stats;
+  return ratioStats;
 }
 
 double** AverageRatio::getRatioCovariance() {
