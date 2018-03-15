@@ -88,7 +88,7 @@ void VirialAlpha::runSteps(int numSteps) {
     int numAlpha = refMeter.getNumAlpha();
     const double* alpha = refMeter.getAlpha();
     double span = log(alpha[numAlpha-1]/alpha[0]);
-    int nextCheckFac = 1.4;
+    double nextCheckFac = 1.4;
     if (jBestAlpha<numAlpha*0.1 || jBestAlpha>(numAlpha-1)*0.9) span *= 2;
     else if (alphaCor < 0.3 && span > 0.5 && jBestAlpha>numAlpha*0.2 && jBestAlpha<(numAlpha-1)*0.8) span *= 0.25;
     else if (alphaCor < 0.6 && span > 0.5 && jBestAlpha>numAlpha*0.2 && jBestAlpha<(numAlpha-1)*0.8) span *= 0.6;

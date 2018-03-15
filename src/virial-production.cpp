@@ -1,4 +1,5 @@
 #include "virial.h"
+#include <cmath>
 
 // perhaps just take Clusters and make Meter and Average internally
 
