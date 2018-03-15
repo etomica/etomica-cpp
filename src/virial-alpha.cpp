@@ -2,10 +2,14 @@
 
 // perhaps just take Clusters and make Meter and Average internally
 
-VirialAlpha::VirialAlpha(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, MeterVirialOverlap &rMeter, MeterVirialOverlap &tMeter, Average &rAverage, Average &tAverage) : stepCount(0), nextCheck(1000), refIntegrator(rIntegrator), targetIntegrator(tIntegrator), refMeter(rMeter), targetMeter(tMeter), refAverage(rAverage), targetAverage(tAverage), allDone(false), verbose(false) {
+VirialAlpha::VirialAlpha(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget) : stepCount(0), nextCheck(1000), refIntegrator(rIntegrator), targetIntegrator(tIntegrator), refMeter(MeterVirialOverlap(refClusterRef, refClusterTarget, 1, 5, 10)), targetMeter(MeterVirialOverlap(targetClusterTarget, targetClusterRef, 1, -5, 10)), refAverage(10, 1, 1000, false), targetAverage(10, 1, 100, false), refPump(refMeter,1,&refAverage), targetPump(targetMeter,1,&targetAverage), allDone(false), verbose(false) {
+  refIntegrator.addListener(&refPump);
+  targetIntegrator.addListener(&targetPump);
 }
 
 VirialAlpha::~VirialAlpha() {
+  refIntegrator.removeListener(&refPump);
+  targetIntegrator.removeListener(&targetPump);
 }
 
 void VirialAlpha::setVerbose(bool newVerbose) {
@@ -26,6 +30,7 @@ void VirialAlpha::analyze(double &jBest) {
   double lnRatio[numAlpha];
   const double *alpha = refMeter.getAlpha();
   double **refOverStats = refAverage.getStatistics();
+  long tbc = targetAverage.getBlockCount();
   double **targetOverStats = targetAverage.getStatistics();
   for (int j=0; j<numAlpha; j++) {
     lnRatio[j] = log(refOverStats[j][AVG_AVG]/targetOverStats[j][AVG_AVG]);

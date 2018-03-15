@@ -16,9 +16,6 @@ int main(int argc, char** argv) {
   int order = 4;
   double temperature = 1.0;
   long steps = 10000000;
-  int numAlpha = 10;
-  double alphaSpan = 4;
-  double alpha0 = 1;
   double sigmaRef = 1.5;
 
   double vSphere = 4.0/3.0*M_PI*sigmaRef*sigmaRef*sigmaRef;
@@ -48,10 +45,6 @@ int main(int argc, char** argv) {
   refIntegrator.addMove(&refMove, 1);
   refIntegrator.setTemperature(temperature);
   refIntegrator.reset();
-  MeterVirialOverlap *refMeter = new MeterVirialOverlap(refClusterHS, refClusterLJ, alpha0, alphaSpan, numAlpha);
-  Average *refAverage = new Average(numAlpha, 1, 0, false);
-  DataPump *refPumpVirial = new DataPump(*refMeter, 1, refAverage);
-  refIntegrator.addListener(refPumpVirial);
 
   Box targetBox(speciesList);
   targetBox.setBoxSize(1,1,1);
@@ -67,13 +60,9 @@ int main(int argc, char** argv) {
   targetIntegrator.addMove(&targetMove, 1);
   targetIntegrator.setTemperature(temperature);
   targetIntegrator.reset();
-  MeterVirialOverlap *targetMeter = new MeterVirialOverlap(targetClusterLJ, targetClusterHS, 1/alpha0, -alphaSpan, numAlpha);
-  Average *targetAverage = new Average(numAlpha, 1, 100, false);
-  DataPump *targetPumpVirial = new DataPump(*targetMeter, 1, targetAverage);
-  targetIntegrator.addListener(targetPumpVirial);
 
   double t1 = getTime();
-  VirialAlpha virialAlpha(refIntegrator, targetIntegrator, *refMeter, *targetMeter, *refAverage, *targetAverage);
+  VirialAlpha virialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterLJ, targetClusterHS, targetClusterLJ);
   virialAlpha.run();
   double t2 = getTime();
 
@@ -83,28 +72,28 @@ int main(int argc, char** argv) {
   virialAlpha.getNewAlpha(alpha, alphaErr, alphaCor);
   printf("alpha  avg: %22.15e   err: %12.5e   cor: % 6.4f\n", alpha, alphaErr, alphaCor);
   printf("alpha time: %4.3f\n\n", t2-t1);
-  long blockSize = targetAverage->getBlockSize();
+  long blockSize = virialAlpha.getTargetAverage().getBlockSize();
   if (blockSize > steps/10) {
     fprintf(stderr, "block size for uncorrelated data is large (%ld) compared to number of steps (%ld)\n", blockSize, steps);
   }
 
-  refIntegrator.removeListener(refPumpVirial);
+  /*refIntegrator.removeListener(refPumpVirial);
   targetIntegrator.removeListener(targetPumpVirial);
   delete refMeter;
   delete targetMeter;
   delete refAverage;
   delete targetAverage;
   delete refPumpVirial;
-  delete targetPumpVirial;
+  delete targetPumpVirial;*/
 
-  refMeter = new MeterVirialOverlap(refClusterHS, refClusterLJ, alpha, 0, 1);
+  MeterVirialOverlap *refMeter = new MeterVirialOverlap(refClusterHS, refClusterLJ, alpha, 0, 1);
   AverageRatio *refAverageProd = new AverageRatio(2, 1, 0, true);
-  refPumpVirial = new DataPump(*refMeter, 1, refAverageProd);
+  DataPump *refPumpVirial = new DataPump(*refMeter, 1, refAverageProd);
   refIntegrator.addListener(refPumpVirial);
 
-  targetMeter = new MeterVirialOverlap(targetClusterLJ, targetClusterHS, 1/alpha, 0, 1);
+  MeterVirialOverlap *targetMeter = new MeterVirialOverlap(targetClusterLJ, targetClusterHS, 1/alpha, 0, 1);
   AverageRatio *targetAverageProd = new AverageRatio(targetClusterLJ.numValues()+1, 1, 1000, true);
-  targetPumpVirial = new DataPump(*targetMeter, 1, targetAverageProd);
+  DataPump *targetPumpVirial = new DataPump(*targetMeter, 1, targetAverageProd);
   targetIntegrator.addListener(targetPumpVirial);
 
   VirialProduction virialProduction(refIntegrator, targetIntegrator, *refMeter, *targetMeter, *refAverageProd, *targetAverageProd, refIntegral);

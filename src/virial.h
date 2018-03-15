@@ -8,12 +8,13 @@ class VirialAlpha {
   protected:
     long stepCount, nextCheck;
     IntegratorMC &refIntegrator, &targetIntegrator;
-    MeterVirialOverlap &refMeter, &targetMeter;
-    Average &refAverage, &targetAverage;
+    MeterVirialOverlap refMeter, targetMeter;
+    Average refAverage, targetAverage;
+    DataPump refPump, targetPump;
     double newAlpha, newAlphaErr, alphaCor;
     bool allDone, verbose;
   public:
-    VirialAlpha(IntegratorMC &refIntegrator, IntegratorMC &targetIntegrator, MeterVirialOverlap &refMeter, MeterVirialOverlap &targetMeter, Average &refAverage, Average &targetAverage);
+    VirialAlpha(IntegratorMC &refIntegrator, IntegratorMC &targetIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget);
     ~VirialAlpha();
     void setVerbose(bool newVerbose);
     void getNewAlpha(double &newAlpha, double &newAlphaErr, double &alphaCor);
@@ -21,6 +22,8 @@ class VirialAlpha {
     void analyze(double &jBest);
     void runSteps(int steps);
     void run();
+    Average& getTargetAverage() {return targetAverage;}
+    Average& getRefAverage() {return refAverage;}
 };
 
 class VirialProduction {
