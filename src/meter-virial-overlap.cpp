@@ -70,14 +70,14 @@ double* MeterVirialOverlap::getData() {
     fprintf(stderr, "pi is %f\n", pi);
     abort();
   }
+  double perturbValue = fabs(perturbCluster.getValues()[0]);
   if (numAlpha == 1) {
     for (int i=0; i<primaryCluster.numValues(); i++) {
       data[i] = primaryValues[i] / pi;
     }
-    data[nData-1] = perturbCluster.getValues()[0] / pi;
+    data[nData-1] = perturbValue / (perturbValue + alpha[0]*pi);
   }
   else {
-    double perturbValue = fabs(perturbCluster.getValues()[0]);
     for (int i=0; i<numAlpha; i++) {
       // gamma_OS = pi1 pi0 / (pi1 + alpha pi0)
       // 0: gamma_OS/pi0 = pi1 / (pi1 + alpha pi0)
@@ -87,7 +87,7 @@ double* MeterVirialOverlap::getData() {
       //    and effectively compute: alpha gammaOS/pi1
       // <0>/<1> = (1/alpha) <gammaOS/pi0>0 / <gammaOS/pi1>1
       //         ~= 1 (when alpha is optimal)
-      data[i] = perturbValue / (pi + alpha[i]*perturbValue);
+      data[i] = perturbValue / (perturbValue + alpha[i]*pi);
     }
   }
   return data;
