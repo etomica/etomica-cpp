@@ -76,15 +76,7 @@ int main(int argc, char** argv) {
   if (blockSize > steps/10) {
     fprintf(stderr, "block size for uncorrelated data is large (%ld) compared to number of steps (%ld)\n", blockSize, steps);
   }
-
-  /*refIntegrator.removeListener(refPumpVirial);
-  targetIntegrator.removeListener(targetPumpVirial);
-  delete refMeter;
-  delete targetMeter;
-  delete refAverage;
-  delete targetAverage;
-  delete refPumpVirial;
-  delete targetPumpVirial;*/
+  virialAlpha.dispose();
 
   MeterVirialOverlap *refMeter = new MeterVirialOverlap(refClusterHS, refClusterLJ, alpha, 0, 1);
   AverageRatio *refAverageProd = new AverageRatio(2, 1, 0, true);

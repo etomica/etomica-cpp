@@ -12,7 +12,7 @@ class VirialAlpha {
     Average refAverage, targetAverage;
     DataPump refPump, targetPump;
     double newAlpha, newAlphaErr, alphaCor;
-    bool allDone, verbose;
+    bool allDone, verbose, disposed;
   public:
     VirialAlpha(IntegratorMC &refIntegrator, IntegratorMC &targetIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget);
     ~VirialAlpha();
@@ -22,6 +22,7 @@ class VirialAlpha {
     void analyze(double &jBest);
     void runSteps(int steps);
     void run();
+    void dispose();
     Average& getTargetAverage() {return targetAverage;}
     Average& getRefAverage() {return refAverage;}
 };

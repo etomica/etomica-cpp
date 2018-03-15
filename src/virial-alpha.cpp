@@ -2,14 +2,20 @@
 
 // perhaps just take Clusters and make Meter and Average internally
 
-VirialAlpha::VirialAlpha(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget) : stepCount(0), nextCheck(1000), refIntegrator(rIntegrator), targetIntegrator(tIntegrator), refMeter(MeterVirialOverlap(refClusterRef, refClusterTarget, 1, 5, 10)), targetMeter(MeterVirialOverlap(targetClusterTarget, targetClusterRef, 1, -5, 10)), refAverage(10, 1, 1000, false), targetAverage(10, 1, 100, false), refPump(refMeter,1,&refAverage), targetPump(targetMeter,1,&targetAverage), allDone(false), verbose(false) {
+VirialAlpha::VirialAlpha(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget) : stepCount(0), nextCheck(1000), refIntegrator(rIntegrator), targetIntegrator(tIntegrator), refMeter(MeterVirialOverlap(refClusterRef, refClusterTarget, 1, 5, 10)), targetMeter(MeterVirialOverlap(targetClusterTarget, targetClusterRef, 1, -5, 10)), refAverage(10, 1, 1000, false), targetAverage(10, 1, 100, false), refPump(refMeter,1,&refAverage), targetPump(targetMeter,1,&targetAverage), allDone(false), verbose(false), disposed(false) {
   refIntegrator.addListener(&refPump);
   targetIntegrator.addListener(&targetPump);
 }
 
 VirialAlpha::~VirialAlpha() {
+  dispose();
+}
+
+void VirialAlpha::dispose() {
+  if (disposed) return;
   refIntegrator.removeListener(&refPump);
   targetIntegrator.removeListener(&targetPump);
+  disposed = true;
 }
 
 void VirialAlpha::setVerbose(bool newVerbose) {
