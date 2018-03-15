@@ -44,6 +44,7 @@ class Average : public DataSink {
     virtual void addData(double* x);
     double** getStatistics();
     double** getBlockCovariance();
+    double** getBlockCorrelation();
     long getBlockSize() {return blockSize;}
     long getBlockCount() {return blockCount;}
     void setNumData(int newNumData);
