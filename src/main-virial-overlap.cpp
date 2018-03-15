@@ -78,28 +78,11 @@ int main(int argc, char** argv) {
   }
   delete virialAlpha;
 
-  MeterVirialOverlap *refMeter = new MeterVirialOverlap(refClusterHS, refClusterLJ, alpha, 0, 1);
-  AverageRatio *refAverageProd = new AverageRatio(2, 1, 0, true);
-  DataPump *refPumpVirial = new DataPump(*refMeter, 1, refAverageProd);
-  refIntegrator.addListener(refPumpVirial);
-
-  MeterVirialOverlap *targetMeter = new MeterVirialOverlap(targetClusterLJ, targetClusterHS, 1/alpha, 0, 1);
-  AverageRatio *targetAverageProd = new AverageRatio(targetClusterLJ.numValues()+1, 1, 1000, true);
-  DataPump *targetPumpVirial = new DataPump(*targetMeter, 1, targetAverageProd);
-  targetIntegrator.addListener(targetPumpVirial);
-
-  VirialProduction virialProduction(refIntegrator, targetIntegrator, *refMeter, *targetMeter, *refAverageProd, *targetAverageProd, refIntegral);
+  VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterLJ, targetClusterHS, targetClusterLJ, alpha, refIntegral);
   virialProduction.runSteps(steps, steps/1000);
   double t3 = getTime();
   const char *targetNames[] = {"B"};
   virialProduction.printResults(targetNames);
-
-  delete refMeter;
-  delete targetMeter;
-  delete refAverageProd;
-  delete targetAverageProd;
-  delete refPumpVirial;
-  delete targetPumpVirial;
 
   printf("time: %4.3f\n", t3-t2);
 }

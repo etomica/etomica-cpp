@@ -2,15 +2,25 @@
 
 // perhaps just take Clusters and make Meter and Average internally
 
-VirialProduction::VirialProduction(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, MeterVirialOverlap &rMeter, MeterVirialOverlap &tMeter, AverageRatio &rAverage, AverageRatio &tAverage, double ri) : nextCheck(1000), refIntegrator(rIntegrator), targetIntegrator(tIntegrator), refMeter(rMeter), targetMeter(tMeter), refAverage(rAverage), targetAverage(tAverage), idealTargetFraction(0.5), refIntegral(ri) {
+VirialProduction::VirialProduction(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget, double alpha, double ri) : refIntegrator(rIntegrator), targetIntegrator(tIntegrator), refMeter(MeterVirialOverlap(refClusterRef, refClusterTarget, alpha, 0, 1)), targetMeter(MeterVirialOverlap(targetClusterTarget, targetClusterRef, alpha, 0, 1)), refAverage(2, 1, 1000, true), targetAverage(targetClusterTarget.numValues()+1, 1, 1000, true), refPump(refMeter,1,&refAverage), targetPump(targetMeter,1,&targetAverage), idealTargetFraction(0.5), refIntegral(ri) {
   int numTargets = targetAverage.getNumData();
   fullAvg = new double[numTargets];
   fullErr = new double[numTargets];
+  refIntegrator.addListener(&refPump);
+  targetIntegrator.addListener(&targetPump);
 }
 
 VirialProduction::~VirialProduction() {
+  dispose();
   delete[] fullAvg;
   delete[] fullErr;
+}
+
+void VirialProduction::dispose() {
+  if (disposed) return;
+  refIntegrator.removeListener(&refPump);
+  targetIntegrator.removeListener(&targetPump);
+  disposed = true;
 }
 
 void VirialProduction::analyze() {
