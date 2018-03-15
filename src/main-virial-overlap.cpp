@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
   speciesList.add(new SpeciesSimple(1,1));
 
   Box refBox(speciesList);
-  refBox.setBoxSize(1,1,1);
+  refBox.setBoxSize(5,5,5);
   refBox.setNumMolecules(0, order);
   PotentialMasterVirial refPotentialMasterLJ(speciesList, refBox);
   refPotentialMasterLJ.setPairPotential(0, 0, &plj);
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
   refIntegrator.setTemperature(temperature);
 
   Box targetBox(speciesList);
-  targetBox.setBoxSize(1,1,1);
+  targetBox.setBoxSize(5,5,5);
   targetBox.setNumMolecules(0, order);
   PotentialMasterVirial targetPotentialMasterLJ(speciesList, targetBox);
   targetPotentialMasterLJ.setPairPotential(0, 0, &plj);
@@ -76,9 +76,16 @@ int main(int argc, char** argv) {
   }
   delete virialAlpha;
 
+  targetIntegrator.setTuning(false);
+  refIntegrator.setTuning(false);
+  double targetStepSize = targetMove.getStepSize();
+  printf("target step size: %f\n", targetStepSize);
+
   VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterLJ, targetClusterHS, targetClusterLJ, alpha, refIntegral);
   virialProduction.runSteps(steps, steps/1000);
   double t3 = getTime();
+  double acceptance = targetMove.getAcceptance();
+  printf("target move acceptance: %5.3f\n", acceptance);
   const char *targetNames[] = {"B"};
   virialProduction.printResults(targetNames);
 
