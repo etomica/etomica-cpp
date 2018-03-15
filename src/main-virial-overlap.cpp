@@ -15,13 +15,19 @@
 int main(int argc, char** argv) {
   int order = 4;
   double temperature = 1.0;
-  long steps = 1000000;
+  long steps = 10000000;
   int numAlpha = 10;
   double alphaSpan = 4;
   double alpha0 = 1;
+  double sigmaRef = 1.5;
+
+  double vSphere = 4.0/3.0*M_PI*sigmaRef*sigmaRef*sigmaRef;
+  double refIntegral = pow(vSphere, order-1)/2;
+  for (int i=2; i<=order; i++) refIntegral *= i;
 
   Random rand;
   printf("random seed: %d\n", rand.getSeed());
+  printf("Reference Integral: %22.15e\n", refIntegral);
 
   PotentialLJ plj(1,1,TRUNC_NONE, 1.0/0.0);
   PotentialHS pHS(1.5);
@@ -42,10 +48,10 @@ int main(int argc, char** argv) {
   refIntegrator.addMove(&refMove, 1);
   refIntegrator.setTemperature(temperature);
   refIntegrator.reset();
-  MeterVirialOverlap refMeter(refClusterHS, refClusterLJ, alpha0, alphaSpan, numAlpha);
-  Average refAverage(numAlpha, 1, 0, false);
-  DataPump refPumpVirial(refMeter, 1, &refAverage);
-  refIntegrator.addListener(&refPumpVirial);
+  MeterVirialOverlap *refMeter = new MeterVirialOverlap(refClusterHS, refClusterLJ, alpha0, alphaSpan, numAlpha);
+  Average *refAverage = new Average(numAlpha, 1, 0, false);
+  DataPump *refPumpVirial = new DataPump(*refMeter, 1, refAverage);
+  refIntegrator.addListener(refPumpVirial);
 
   Box targetBox(speciesList);
   targetBox.setBoxSize(1,1,1);
@@ -61,24 +67,59 @@ int main(int argc, char** argv) {
   targetIntegrator.addMove(&targetMove, 1);
   targetIntegrator.setTemperature(temperature);
   targetIntegrator.reset();
-  MeterVirialOverlap targetMeter(targetClusterLJ, targetClusterHS, 1/alpha0, -alphaSpan, numAlpha);
-  Average targetAverage(numAlpha, 1, 1000, false);
-  DataPump targetPumpVirial(targetMeter, 1, &targetAverage);
-  targetIntegrator.addListener(&targetPumpVirial);
+  MeterVirialOverlap *targetMeter = new MeterVirialOverlap(targetClusterLJ, targetClusterHS, 1/alpha0, -alphaSpan, numAlpha);
+  Average *targetAverage = new Average(numAlpha, 1, 100, false);
+  DataPump *targetPumpVirial = new DataPump(*targetMeter, 1, targetAverage);
+  targetIntegrator.addListener(targetPumpVirial);
 
   double t1 = getTime();
-  VirialAlpha virialAlpha(refIntegrator, targetIntegrator, refMeter, targetMeter, refAverage, targetAverage);
+  VirialAlpha virialAlpha(refIntegrator, targetIntegrator, *refMeter, *targetMeter, *refAverage, *targetAverage);
   virialAlpha.run();
-
-  /*printf("reference\n");
-  refIntegrator.doSteps(steps);
-  printf("target\n");
-  targetIntegrator.doSteps(steps);*/
   double t2 = getTime();
 
   double alpha, alphaErr, alphaCor;
+  long alphaSteps = refIntegrator.getStepCount() + targetIntegrator.getStepCount();
+  printf("alpha steps: %ld\n", alphaSteps);
   virialAlpha.getNewAlpha(alpha, alphaErr, alphaCor);
-  printf("alpha  avg: %f   err: %f   cor: % 6.4f\n", alpha, alphaErr, alphaCor);
-  printf("time: %4.3f\n", t2-t1);
+  printf("alpha  avg: %22.15e   err: %12.5e   cor: % 6.4f\n", alpha, alphaErr, alphaCor);
+  printf("alpha time: %4.3f\n\n", t2-t1);
+  long blockSize = targetAverage->getBlockSize();
+  if (blockSize > steps/10) {
+    fprintf(stderr, "block size for uncorrelated data is large (%ld) compared to number of steps (%ld)\n", blockSize, steps);
+  }
+
+  refIntegrator.removeListener(refPumpVirial);
+  targetIntegrator.removeListener(targetPumpVirial);
+  delete refMeter;
+  delete targetMeter;
+  delete refAverage;
+  delete targetAverage;
+  delete refPumpVirial;
+  delete targetPumpVirial;
+
+  refMeter = new MeterVirialOverlap(refClusterHS, refClusterLJ, alpha, 0, 1);
+  AverageRatio *refAverageProd = new AverageRatio(2, 1, 0, true);
+  refPumpVirial = new DataPump(*refMeter, 1, refAverageProd);
+  refIntegrator.addListener(refPumpVirial);
+
+  targetMeter = new MeterVirialOverlap(targetClusterLJ, targetClusterHS, 1/alpha, 0, 1);
+  AverageRatio *targetAverageProd = new AverageRatio(targetClusterLJ.numValues()+1, 1, 1000, true);
+  targetPumpVirial = new DataPump(*targetMeter, 1, targetAverageProd);
+  targetIntegrator.addListener(targetPumpVirial);
+
+  VirialProduction virialProduction(refIntegrator, targetIntegrator, *refMeter, *targetMeter, *refAverageProd, *targetAverageProd, refIntegral);
+  virialProduction.runSteps(steps, steps/1000);
+  double t3 = getTime();
+  const char *targetNames[] = {"B"};
+  virialProduction.printResults(targetNames);
+
+  delete refMeter;
+  delete targetMeter;
+  delete refAverageProd;
+  delete targetAverageProd;
+  delete refPumpVirial;
+  delete targetPumpVirial;
+
+  printf("time: %4.3f\n", t3-t2);
 }
 

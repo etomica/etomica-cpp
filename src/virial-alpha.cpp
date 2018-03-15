@@ -74,7 +74,7 @@ void VirialAlpha::runSteps(int numSteps) {
   if (stepCount >= nextCheck) {
     double jBestAlpha;
     analyze(jBestAlpha);
-    if (verbose) printf("alpha  avg: %f   err: %f   cor: % 6.4f\n", newAlpha, newAlphaErr, alphaCor);
+    if (verbose) printf("alpha  avg: %22.15e   err: %12.5e   cor: % 6.4f\n", newAlpha, newAlphaErr, alphaCor);
     int numAlpha = refMeter.getNumAlpha();
     const double* alpha = refMeter.getAlpha();
     double span = log(alpha[numAlpha-1]/alpha[0]);
