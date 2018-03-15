@@ -44,7 +44,6 @@ int main(int argc, char** argv) {
   MCMoveChainVirial refMove(refBox, refPotentialMasterHS, rand, 1.5);
   refIntegrator.addMove(&refMove, 1);
   refIntegrator.setTemperature(temperature);
-  refIntegrator.reset();
 
   Box targetBox(speciesList);
   targetBox.setBoxSize(1,1,1);
@@ -59,7 +58,6 @@ int main(int argc, char** argv) {
   MCMoveDisplacementVirial targetMove(targetBox, targetPotentialMasterLJ, rand, 0.2, targetClusterLJ);
   targetIntegrator.addMove(&targetMove, 1);
   targetIntegrator.setTemperature(temperature);
-  targetIntegrator.reset();
 
   double t1 = getTime();
   VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterLJ, targetClusterHS, targetClusterLJ);
