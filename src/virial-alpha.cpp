@@ -36,7 +36,6 @@ void VirialAlpha::analyze(double &jBest) {
   double lnRatio[numAlpha];
   const double *alpha = refMeter.getAlpha();
   double **refOverStats = refAverage.getStatistics();
-  long tbc = targetAverage.getBlockCount();
   double **targetOverStats = targetAverage.getStatistics();
   for (int j=0; j<numAlpha; j++) {
     lnRatio[j] = log(refOverStats[j][AVG_AVG]/targetOverStats[j][AVG_AVG]);

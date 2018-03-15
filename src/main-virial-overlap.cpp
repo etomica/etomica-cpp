@@ -62,21 +62,21 @@ int main(int argc, char** argv) {
   targetIntegrator.reset();
 
   double t1 = getTime();
-  VirialAlpha virialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterLJ, targetClusterHS, targetClusterLJ);
-  virialAlpha.run();
+  VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterLJ, targetClusterHS, targetClusterLJ);
+  virialAlpha->run();
   double t2 = getTime();
 
   double alpha, alphaErr, alphaCor;
   long alphaSteps = refIntegrator.getStepCount() + targetIntegrator.getStepCount();
   printf("alpha steps: %ld\n", alphaSteps);
-  virialAlpha.getNewAlpha(alpha, alphaErr, alphaCor);
+  virialAlpha->getNewAlpha(alpha, alphaErr, alphaCor);
   printf("alpha  avg: %22.15e   err: %12.5e   cor: % 6.4f\n", alpha, alphaErr, alphaCor);
   printf("alpha time: %4.3f\n\n", t2-t1);
-  long blockSize = virialAlpha.getTargetAverage().getBlockSize();
+  long blockSize = virialAlpha->getTargetAverage().getBlockSize();
   if (blockSize > steps/10) {
     fprintf(stderr, "block size for uncorrelated data is large (%ld) compared to number of steps (%ld)\n", blockSize, steps);
   }
-  virialAlpha.dispose();
+  delete virialAlpha;
 
   MeterVirialOverlap *refMeter = new MeterVirialOverlap(refClusterHS, refClusterLJ, alpha, 0, 1);
   AverageRatio *refAverageProd = new AverageRatio(2, 1, 0, true);
