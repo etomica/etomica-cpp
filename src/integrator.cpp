@@ -15,6 +15,10 @@ void Integrator::doSteps(int steps) {
   }
 }
 
+long Integrator::getStepCount() {
+  return stepCount;
+}
+
 void Integrator::setTemperature(double T) {
   temperature = T;
 }

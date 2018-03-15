@@ -17,7 +17,7 @@ class Integrator : public PotentialCallback {
     PotentialMaster& potentialMaster;
     double temperature;
     double energy;
-    int stepCount;
+    long stepCount;
     vector<IntegratorListener*> listeners;
     vector<PotentialCallback*> selfPotentialCallbackVec;
   public:
@@ -25,6 +25,7 @@ class Integrator : public PotentialCallback {
     virtual ~Integrator() {}
     virtual void doStep() = 0;
     void doSteps(int steps);
+    long getStepCount();
     void setTemperature(double temperature);
     double getTemperature();
     void reset();
