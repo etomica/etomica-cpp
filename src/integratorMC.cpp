@@ -50,13 +50,13 @@ void IntegratorMC::doStep() {
   }
 #ifdef DEBUG
   if (fabs(energy-potentialMaster.uTotalFromAtoms()) > 1e-6) {
-    printf("uAtoms! %d: %e %e %e\n", stepCount, energy, potentialMaster.uTotalFromAtoms(), energy-potentialMaster.uTotalFromAtoms());
+    printf("uAtoms! %ld: %e %e %e\n", stepCount, energy, potentialMaster.uTotalFromAtoms(), energy-potentialMaster.uTotalFromAtoms());
     abort();
   }
   if (stepCount%100==0) {
     double oldEnergy = energy;
     reset();
-    if (fabs(oldEnergy-energy) > 1e-6) printf("%d: %e %e %e\n", stepCount, oldEnergy, energy, oldEnergy-energy);
+    if (fabs(oldEnergy-energy) > 1e-6) printf("%ld: %e %e %e\n", stepCount, oldEnergy, energy, oldEnergy-energy);
     if (fabs(oldEnergy-energy) > 1e-6) abort();
   }
 #endif
