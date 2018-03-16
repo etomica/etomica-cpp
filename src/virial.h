@@ -11,17 +11,20 @@ class VirialAlpha {
     MeterVirialOverlap refMeter, targetMeter;
     Average refAverage, targetAverage;
     DataPump refPump, targetPump;
-    double newAlpha, newAlphaErr, alphaCor;
+    double newAlpha, newAlphaErr, alphaCor, alphaSpan;
     bool allDone, verbose, disposed;
+    double alphaStats[4];
   public:
     VirialAlpha(IntegratorMC &refIntegrator, IntegratorMC &targetIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget);
     ~VirialAlpha();
     void setVerbose(bool newVerbose);
     void getNewAlpha(double &newAlpha, double &newAlphaErr, double &alphaCor);
+    double* getAlphaStatistics();
     void setAlpha(double alphaCenter, double alphaSpan);
     void analyze(double &jBest);
     void runSteps(int steps);
     void run();
+    bool getAllDone();
     void dispose();
     Average& getTargetAverage() {return targetAverage;}
     Average& getRefAverage() {return refAverage;}

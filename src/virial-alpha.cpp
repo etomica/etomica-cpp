@@ -2,9 +2,12 @@
 
 // perhaps just take Clusters and make Meter and Average internally
 
-VirialAlpha::VirialAlpha(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget) : stepCount(0), nextCheck(1000), refIntegrator(rIntegrator), targetIntegrator(tIntegrator), refMeter(MeterVirialOverlap(refClusterRef, refClusterTarget, 1, 5, 10)), targetMeter(MeterVirialOverlap(targetClusterTarget, targetClusterRef, 1, -5, 10)), refAverage(10, 1, 1000, false), targetAverage(10, 1, 100, false), refPump(refMeter,1,&refAverage), targetPump(targetMeter,1,&targetAverage), allDone(false), verbose(false), disposed(false) {
+VirialAlpha::VirialAlpha(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget) : stepCount(0), nextCheck(1000), refIntegrator(rIntegrator), targetIntegrator(tIntegrator), refMeter(MeterVirialOverlap(refClusterRef, refClusterTarget, 1, 5, 10)), targetMeter(MeterVirialOverlap(targetClusterTarget, targetClusterRef, 1, -5, 10)), refAverage(10, 1, 1000, false), targetAverage(10, 1, 100, false), refPump(refMeter,1,&refAverage), targetPump(targetMeter,1,&targetAverage), newAlpha(0), newAlphaErr(0), alphaCor(0), alphaSpan(0), allDone(false), verbose(false), disposed(false) {
   refIntegrator.addListener(&refPump);
   targetIntegrator.addListener(&targetPump);
+  int numAlpha = refMeter.getNumAlpha();
+  const double *alpha = refMeter.getAlpha();
+  alphaSpan = log(alpha[numAlpha-1]/alpha[0]);
 }
 
 VirialAlpha::~VirialAlpha() {
@@ -23,6 +26,7 @@ void VirialAlpha::setVerbose(bool newVerbose) {
 }
 
 void VirialAlpha::setAlpha(double aCenter, double aSpan) {
+  alphaSpan = aSpan;
   refMeter.setAlpha(aCenter, aSpan);
   refAverage.reset();
   targetMeter.setAlpha(1/aCenter, -aSpan);
@@ -71,10 +75,22 @@ void VirialAlpha::getNewAlpha(double &na, double &nae, double &ac) {
   ac = alphaCor;
 }
 
+double* VirialAlpha::getAlphaStatistics() {
+  alphaStats[0] = newAlpha;
+  alphaStats[1] = newAlphaErr;
+  alphaStats[2] = alphaCor;
+  alphaStats[3] = alphaSpan;
+  return alphaStats;
+}
+
 void VirialAlpha::run() {
   while (!allDone) {
     runSteps(1000);
   }
+}
+
+bool VirialAlpha::getAllDone() {
+  return allDone;
 }
 
 void VirialAlpha::runSteps(int numSteps) {
@@ -86,18 +102,13 @@ void VirialAlpha::runSteps(int numSteps) {
     analyze(jBestAlpha);
     if (verbose) printf("alpha  avg: %22.15e   err: %12.5e   cor: % 6.4f\n", newAlpha, newAlphaErr, alphaCor);
     int numAlpha = refMeter.getNumAlpha();
-    const double* alpha = refMeter.getAlpha();
-    double span = log(alpha[numAlpha-1]/alpha[0]);
     double nextCheckFac = 1.4;
-    if (jBestAlpha<numAlpha*0.1 || jBestAlpha>(numAlpha-1)*0.9) span *= 2;
-    else if (alphaCor < 0.3 && span > 0.5 && jBestAlpha>numAlpha*0.2 && jBestAlpha<(numAlpha-1)*0.8) span *= 0.25;
-    else if (alphaCor < 0.6 && span > 0.5 && jBestAlpha>numAlpha*0.2 && jBestAlpha<(numAlpha-1)*0.8) span *= 0.6;
+    if (jBestAlpha<numAlpha*0.1 || jBestAlpha>(numAlpha-1)*0.9) alphaSpan *= 2;
+    else if (alphaCor < 0.3 && alphaSpan > 0.5 && jBestAlpha>numAlpha*0.2 && jBestAlpha<(numAlpha-1)*0.8) alphaSpan *= 0.25;
+    else if (alphaCor < 0.6 && alphaSpan > 0.5 && jBestAlpha>numAlpha*0.2 && jBestAlpha<(numAlpha-1)*0.8) alphaSpan *= 0.6;
     else if (alphaCor > 0.2) nextCheckFac *= 2;
     else if (alphaCor < 0.1 && newAlphaErr/newAlpha < 0.02) allDone = true;
-    refMeter.setAlpha(newAlpha, span);
-    targetMeter.setAlpha(1/newAlpha, -span);
-    refAverage.reset();
-    targetAverage.reset();
+    setAlpha(newAlpha, alphaSpan);
     nextCheck *= nextCheckFac;
     nextCheck = stepCount + nextCheck;
   }
