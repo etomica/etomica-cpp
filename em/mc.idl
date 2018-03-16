@@ -88,6 +88,12 @@ interface PotentialMasterList : PotentialMasterCell {
 
 PotentialMasterList implements PotentialMasterCell;
 
+interface PotentialMasterVirial : PotentialMaster {
+  void PotentialMasterVirial([Ref] SpeciesList sl, [Ref] Box box);
+};
+
+PotentialMasterVirial implements PotentialMaster;
+
 interface Random {
   void Random();
   void Random(long seed);
@@ -112,6 +118,18 @@ interface MCMoveInsertDelete : MCMove {
 };
 
 MCMoveInsertDelete implements MCMove;
+
+interface MCMoveDisplacementVirial : MCMove {
+  void MCMoveDisplacementVirial([Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double stepSize, [Ref] Cluster cluster);
+};
+
+MCMoveDisplacementVirial implements MCMove;
+
+interface MCMoveChainVirial : MCMove {
+  void MCMoveChainVirial([Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double sigma);
+};
+
+MCMoveDisplacementVirial implements MCMove;
 
 interface IntegratorListener { };
 
@@ -213,6 +231,30 @@ interface IntegratorMD : Integrator {
 };
 
 IntegratorMD implements Integrator;
+
+interface Cluster { };
+
+interface ClusterVirial : Cluster {
+  void ClusterVirial([Ref] PotentialMasterVirial potentialMaster, double temperature, long nDer, boolean cached);
+};
+
+ClusterVirial implements Cluster;
+
+interface ClusterChain : Cluster {
+  void ClusterChain([Ref] PotentialMasterVirial potentialMaster, double tempreature, double chainFac, double ringFac);
+};
+
+ClusterVirial implements Cluster;
+
+interface VirialAlpha {
+  void VirialAlpha([Ref] IntegratorMC refIntegrator, [Ref] IntegratorMC targetIntegrator,
+                   [Ref] Cluster refClusterRef, [Ref] Cluster refClusterTarget,
+                   [Ref] Cluster targetClusterRef, [Ref] Cluster targetClusterTarget);
+  void setVerbose(boolean newVerbose);
+  void runSteps(long steps);
+  VoidPtr getAlphaStatistics();
+  boolean getAllDone();
+};
 
 interface ArrayUtil {
   void ArrayUtil(VoidPtr p);

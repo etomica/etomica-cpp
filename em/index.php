@@ -130,13 +130,6 @@ stage = "init";
 var running = false, stopRequested = false;
 var uCustom = function(r) {return 0;}
 var startTime = 0;
-function getInputInt(id) {
-  var num = document.getElementById(id).value.trim();
-  if (!num) return 0;
-  num = Number(num);
-  //if (num<=0) return 0;
-  return num;
-}
   function setup() {
     var density = Number(document.getElementById("density").value.trim());
     if (density <= 0) {

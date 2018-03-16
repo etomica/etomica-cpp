@@ -5,4 +5,8 @@
 #include "em-util.h"
 #include "meter.h"
 #include "data-sink.h"
+#include "cluster.h"
+#include "virial.h"
+#include "move-virial.h"
+
 #include "glue-mc.cpp"

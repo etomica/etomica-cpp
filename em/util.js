@@ -140,3 +140,11 @@ function formatFloatForErr(value, err) {
   else if (d>15) d=15;
   return value.toPrecision(d);
 }
+
+function getInputInt(id) {
+  var num = document.getElementById(id).value.trim();
+  if (!num) return 0;
+  num = Number(num);
+  //if (num<=0) return 0;
+  return num;
+}
