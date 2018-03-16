@@ -213,6 +213,7 @@ interface Integrator {
   void reset();
   double getPotentialEnergy();
   void addListener(IntegratorListener listener);
+  long getStepCount();
 };
 
 interface IntegratorMC : Integrator {
@@ -255,6 +256,23 @@ interface VirialAlpha {
   VoidPtr getAlphaStatistics();
   boolean getAllDone();
 };
+
+interface VirialProduction {
+  void VirialProduction([Ref] IntegratorMC refIntegrator, [Ref] IntegratorMC targetIntegrator,
+                   [Ref] Cluster refClusterRef, [Ref] Cluster refClusterTarget,
+                   [Ref] Cluster targetClusterRef, [Ref] Cluster targetClusterTarget,
+                   double alpha, double refIntegral);
+  void runSteps(long numSteps);
+  VoidPtr getFullStats();
+  VoidPtr getAlphaStats();
+  VoidPtr getRefStats();
+  VoidPtr getTargetStats();
+  VoidPtr getRefBCStats();
+  VoidPtr getTargetBCStats();
+  VoidPtr getRefRatioStats();
+  VoidPtr getTargetRatioStats();
+};
+  
 
 interface ArrayUtil {
   void ArrayUtil(VoidPtr p);

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>LJ Virial Coefficients</title>
+<script src='//code.jquery.com/jquery-3.3.1.min.js' integrity='sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=' crossorigin='anonymous'></script>
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel='stylesheet' href='style.css'>
+  </head>
+  <body style='padding: 1em;'>
+  <div class='container'>
+    <figure style="overflow:visible;" id="spinner"><div class="spinner"></div><center style="margin-top:0.5em"><strong>emscripten</strong></center></figure>
+    <div class="emscripten" id="status">Downloading...</div>
+    <div class="emscripten">
+      <progress value="0" max="100" id="progress" hidden=1></progress>  
+    </div>
+    <h1>Virial coefficients via Mayer-sampling Monte Carlo</h1>
+    <div id='parametersDiv' class='card'>
+      <div class='card-header' role='tab' id='headingParameters'><h5 class='mb-0'><a role='button' data-toggle='collapse' href='#collapseParameters' aria-expanded='true' aria-controls='collapseParameters'>Parameters</a> <button type='button' id='btnNewParameters' style='display: none;' class='btn btn-sm btn-secondary'>New parameters</button></h5></div>
+      <div id='collapseParameters' class='collapse show' aria-labelledby='headingParameters'>
+      <div class='card-body'>
+    <div><label>Number of molecules: <input class='form-control' size='2' id='NOP' value='2' style='width: 4rem;'></label><br>
+    <label>Potential: <select class='form-control' id='potType' onchange='updatePotType()'>
+          <option value='0'>Soft sphere</option>
+          <option value='1' selected>Lennard-Jones</option>
+          <option value='2'>WCA</option>
+          <option value='3'>Custom</option>
+      </select></label><br>
+      <div id='uCustomDiv' style='display: none'><label>u(r) = <input class='form-control' id='uCustom' size='40' style='width: 40em;' value='4 * (Math.pow(r,-12) - Math.pow(r,-6))'></label><br>
+        <label>Reference HS sigma: <input id='sigmaHSRef' class='form-control' size='5' style='width: 5em;' value='1'></label></div>
+      <label>Temperature: <input class='form-control' id='T' size='3' value='1' style='width: 5em;'></label><br>
+    <div id='ttDiv'><label>Truncation type: <select class='form-control' id='truncType' onchange='updateTrunc()'>
+        <option value='0'>None</option>
+        <option value='1'>Simple</option>
+        <option value='3'>Shifted</option>
+        <option value='4' id='truncType4'>Force-shifted</option>
+  </select></label></div>
+  <div id='rcDiv'><label>Cutoff: <input class='form-control' id='rc' size='3' value='3' style='width: 5em;'></label></div>
+    <label># of derivatives: <input class='form-control' size='1' id='nDer' value='0' style='width: 3em;'></label><br>
+    <label>Seed: <input class='form-control' size='15' id='seed' style='width: 15em;'></label></div>
+    <button type='button' id='setButton' class='btn btn-sm btn-primary'>Start</button></p>
+    <div class='output' id="initOutput"></div>
+  </div>
+  </div>
+  </div>
+
+    <div id='alphaDiv' style='display: none' class='card'>
+      <div class='card-header' role='tab' id='headingAlpha'><h5 class='mb-0'><a role='button' data-toggle='collapse' href='#collapseAlpha' aria-expanded='true' aria-controls='collapseAlpha'>Alpha</a></h5></div>
+      <div id='collapseAlpha' class='collapse show' aria-labelledby='headingAlpha'>
+      <div class='card-body'>
+        <p><button type='button' id='alphaButton' class='btn btn-sm btn-primary'>Find alpha</button></p>
+      <div class='output' id="alphaOutput"></div>
+      <table class='table table-sm'>
+        <thead><tr><th>ln(span)</th><th>&alpha;</th><th>Uncertainty</th><th>Target autocorrelation</th></tr></thead>
+        <tbody id='alphaTable'></tbody>
+      </table>
+      <p>Step size: <span id="alphaStepSize"></span></p>
+      <p>Alpha: <span id="alpha"></span></p>
+    </div>
+  </div>
+</div>
+    <div id='productionDiv' style='display: none' class='card'>
+      <div class='card-header' role='tab' id='headingProduction'><h5 class='mb-0'><a role='button' data-toggle='collapse' href='#collapseProduction' aria-expanded='true' aria-controls='collapseProduction'>Production</a></h3></div>
+      <div id='collapseProduction' class='collapse show' aria-labelledby='headingProduction'>
+      <div class='card-body'>
+        <p><button type='button' id='productionButton' class='btn btn-sm btn-primary'>Run Production</button></p>
+      <div class='output' id="productionOutput"></div>
+      <h5>Reference (<span id='refSteps'></span>)</h5>
+      <table class='table table-sm'>
+        <thead><tr><th></th><th>Average</th><th>Uncertainty</th></tr></thead>
+        <tbody>
+        <tr>
+          <td>&gamma;<sub>OS</sub>/&pi;</td>
+          <td id='refOverAvg'></td>
+          <td id='refOverErr'></td>
+        </tr>
+        <tr>
+          <td>1/(&gamma;<sub>OS</sub>/&pi;)</td>
+          <td id='refRatioAvg'></td>
+          <td id='refRatioErr'></td>
+        </tr>
+      </table>
+      <h5>Target (<span id='targetSteps'></span>)</h5>
+      <table class='table table-sm'>
+        <thead><tr><th></th><th>Average</th><th>Uncertainty</th><th>Corrrelation</tr></thead>
+        <tbody id='results'>
+        <tr id='target0'>
+          <td>&gamma;/&pi;</td>
+          <td id='targetAvg'></td>
+          <td id='targetErr'></td>
+          <td id='targetAC'></td>
+        </tr>
+        <tr id='targetOver'>
+          <td>&gamma;<sub>OS</sub>/&pi;</td>
+          <td id='targetOverAvg'></td>
+          <td id='targetOverErr'></td>
+          <td id='targetOverAC'></td>
+        </tr>
+        <tr id='targetRatio'>
+          <td>(&gamma;/&pi;)/(&gamma;<sub>OS</sub>/&pi;)</td>
+          <td id='targetRatioAvg'></td>
+          <td id='targetRatioErr'></td>
+          <td><span id='targetRatioCor'></span>*</td>
+        </tr>
+      </table>
+      <p>* Correlation between numerator and denominator<br>
+      Alpha check: <span id='prodAlpha'></span> <span id='prodAlphaErr'></span><br>
+      Block size: <span id='prodBlockSize'></span><br>
+      Speed: <span id='prodSpeed'></span></p>
+      <h5>Results</h5>
+      <table class='table table-sm'>
+        <thead><tr><th></th><th>Estimate</th><th>Uncertainty</th></tr></thead>
+        <tbody id='resultsTable'>
+        <tr><td id='fullValueName'></td><td id='fullRatioAvg'></td><td id='fullRatioErr'></td></tr>
+        </tbody>
+      </table>
+      <h5 id='dCorHeading'>Derivative Correlations <button type='button' id='btnDCorrelations' class='btn btn-sm btn-info'>Show</button></h5>
+      <div id='dCorTables' style='display: none;'>
+      Correlation between raw averages.
+      <table class='table table-sm'>
+        <tbody id='dCorTableRawBody'><tr id='dCorTableRawHeadRow'><td></td></tr></tbody>
+      </table>
+      Correlation between results.
+      <table class='table table-sm'>
+        <tbody id='dCorTableFullBody'><tr id='dCorTableFullHeadRow'><td></td></tr></tbody>
+      </table>
+    </div>
+    </div>
+  </div>
+</div>
+  </div>
+    <script src='util.js'></script>
+    <script src='emscripten.js'></script>
+    <script type='text/javascript'>
+stage = "init";
+var running = false, stopRequested = false;
+var workSteps = 10;
+var rComps = {}, tComps = {};
+var speciesList = null;
+var virialAlpha = null, virialProduction = null;
+var refIntegral = 0;
+function setup() {
+  var potType = Number(document.getElementById("potType").value);
+  var truncType = 1, rc = 0;
+  if (potType != 2) {
+    truncType = getInputInt("truncType");
+    if (truncType < 0 || truncType > 4 || truncType != Math.round(truncType)) {
+      alert("Invalid truncation type " + truncType);
+      return;
+    }
+    rc = getInputInt("rc");
+    if (truncType>0 && rc <= 0) {
+      alert("Invalid rc "+rc);
+      document.getElementById("rc").focus();
+      return;
+    }
+    else if (truncType == 0) {
+      rc = Infinity;
+    }
+  }
+  var L = 10;
+  var n = getInputInt("NOP");
+  if (n<2 || n>20 || Number.isNaN(n)) return false;
+  var T = getInputInt("T");
+  if (T<=0 || Number.isNaN(T)) return false;
+  var seed = getInputInt("seed");
+  if (Number.isNaN(seed)) return false;
+  if (seed == 0) {
+    rand = new Module.Random();
+    seed = rand.getSeed();
+  }
+  else {
+    rand = new Module.Random(seed);
+  }
+  var nDer = getInputInt("nDer");
+  if (nDer<0 || Number.isNaN(nDer)) return false;
+  var refSigma = 1.5;
+  var potential;
+  switch (potType) {
+    case 0:
+      var ssPow = getInputInt("ssPow");
+      potential = new Module.PotentialSS(1,ssPow, truncType, rc);
+      refSigma = 1;
+      break;
+    case 1:
+      potential = new Module.PotentialLJ(1,1,truncType, rc);
+      break;
+    case 2:
+      potential = new Module.PotentialWCA(1,1);
+      refSigma = 1;
+      break;
+    case 3:
+      potential = new Module.PotentialHS(1);
+      refSigma = 1;
+      break;
+    case 4:
+      refSigma = getInputInt("sigmaHSRef");
+      if (refSigma<=0 || Number.isNaN(refSigma)) return false;
+      potential = new PotentialJS();
+      eval('potential.u = function(r2) { return '+document.getElementById('uCustom').value+';};');
+      eval('potential.du = function(r2) { return '+document.getElementById('duCustom').value+';};');
+      eval('potential.d2u = function(r2) { return '+document.getElementById('d2uCustom').value+';};');
+      potential.setCutoff(rc);
+      potential.setTruncationType(truncType);
+      break;
+    default:
+      throw new Exception("unknown potential type!");
+  }
+  speciesList = new SpeciesList();
+  speciesList.add(new SpeciesSimple(1,1));
+  rComps.potential = new Module.PotentialHS(refSigma);
+  tComps.potential = potential;
+  tComps.box = new Module.Box(speciesList);
+  tComps.box.setBoxSize(L,L,L);
+  tComps.box.setNumMolecules(0, n);
+  tComps.potentialMasterTarget = new Module.PotentialMasterVirial(speciesList, tComps.box);
+  tComps.potentialMasterTarget.setPairPotential(0, 0, potential);
+  tComps.potentialMasterRef = new Module.PotentialMasterVirial(speciesList, tComps.box);
+  tComps.potentialMasterRef.setPairPotential(0, 0, rComps.potential);
+  tComps.integrator = new Module.IntegratorMC(tComps.potentialMasterTarget, rand);
+  tComps.clusterTarget = new Module.ClusterVirial(tComps.potentialMasterTarget, T, 0, true);
+  tComps.clusterRef = new Module.ClusterChain(tComps.potentialMasterRef, T, 1, 0);
+  tComps.move = new Module.MCMoveDisplacementVirial(tComps.box, tComps.potentialMasterTarget, rand, 0.2, tComps.clusterTarget);
+  tComps.integrator.addMove(tComps.move, 1);
+
+  rComps.box = new Module.Box(speciesList);
+  rComps.box.setBoxSize(L,L,L);
+  rComps.box.setNumMolecules(0, n);
+  rComps.potentialMasterTarget = new Module.PotentialMasterVirial(speciesList, rComps.box);
+  rComps.potentialMasterTarget.setPairPotential(0, 0, potential);
+  rComps.potentialMasterRef = new Module.PotentialMasterVirial(speciesList, rComps.box);
+  rComps.potentialMasterRef.setPairPotential(0, 0, rComps.potential);
+  rComps.integrator = new Module.IntegratorMC(rComps.potentialMasterRef, rand);
+  rComps.clusterTarget = new Module.ClusterVirial(rComps.potentialMasterTarget, T, 0, false);
+  rComps.clusterRef = new Module.ClusterChain(rComps.potentialMasterRef, T, 1, 0);
+  rComps.move = new Module.MCMoveChainVirial(rComps.box, rComps.potentialMasterRef, rand, refSigma);
+  rComps.integrator.addMove(rComps.move, 1);
+
+  refIntegral = Math.pow(4/3*3.14159265358979*refSigma*refSigma*refSigma, n-1)/2;
+  for (var i=2; i<=n; i++) refIntegral *= i;
+
+  virialAlpha = new Module.VirialAlpha(rComps.integrator, tComps.integrator, rComps.clusterRef, rComps.clusterTarget, tComps.clusterRef, tComps.clusterTarget);
+}
+var uCustom = function(r) {return 0;}
+function makeDRow(i, NOP) {
+  var row = makeElement("TR", document.getElementById("results"), {id: 'targetD'+i});
+  makeElement("TD", row, {innerHTML: "&gamma;<sub>"+i+"</sub>/&pi;"});
+  makeElement("TD", row, {id: "targetD"+i+"Avg"});
+  makeElement("TD", row, {id: "targetD"+i+"Err"});
+  makeElement("TD", row, {id: "targetD"+i+"AC"});
+  row = makeElement("TR", document.getElementById("results"), {id: 'targetD'+i+'Over'});
+  makeElement("TD", row, {innerHTML: "(&gamma;<sub>"+i+"</sub>/&pi;)/(&gamma;<sub>OS</sub>/&pi;)"});
+  makeElement("TD", row, {id: "targetD"+i+"RatioAvg"});
+  makeElement("TD", row, {id: "targetD"+i+"RatioErr"});
+  var cell = makeElement("TD", row);
+  makeElement("SPAN", cell, {id: "targetD"+i+"RatioCor"});
+  makeText("*", cell);
+  row = makeElement("TR", document.getElementById("resultsTable"), {id: 'fullD'+i});
+  var p = i==1?"":("<sup>"+i+"</sup>");
+  var name = "d"+p+"B<sub>"+NOP+"</sub>/d&beta;"+p;
+  makeElement("TD", row, {innerHTML: name});
+  makeElement("TD", row, {id: "fullD"+i+"RatioAvg"});
+  makeElement("TD", row, {id: "fullD"+i+"RatioErr"});
+}
+
+function teardownDRow(i) {
+  var results = document.getElementById("results");
+  results.removeChild(document.getElementById("targetD"+i));
+  results.removeChild(document.getElementById("targetD"+i+"Over"));
+  document.getElementById("resultsTable").removeChild(document.getElementById("fullD"+i));
+}
+function buildDCorTable(name, nDer) {
+  var hr = document.getElementById('dCorTable'+name+'HeadRow');
+  for (var i=0; i<=nDer; i++) {
+    makeElement("TD", hr, {textContent: i});
+  }
+  var tbody = document.getElementById('dCorTable'+name+"Body");
+  for (var i=0; i<=nDer; i++) {
+    var row = makeElement("TR", body);
+    makeElement("TD", row, {textContent: i});
+    for (var j=0; j<=nDer; j++) {
+      var tc = i==j ? "1" : "";
+      makeElement("TD", row, {id: "dCor"+i+""+j+name, textContent: tc});
+    }
+  }
+}
+function teardownDCorTable(name) {
+  var tbody = document.getElementById('dCorTable'+name+"Body");
+  var rows = tbody.childNodes;
+  for (var i=0; i<rows.length; i++) {
+    var cols = rows[i].childNodes;
+    for (var j=(i==0?1:0); j<cols.length; j++) {
+      rows[i].removeChild(cols[j]);
+    }
+  }
+}
+function startOver() {
+  if (running) {
+    stopRequested = true;
+    running = false;
+  }
+  steps = 128;
+  empty(document.getElementById("alphaTable"));
+  document.getElementById("alphaDiv").style.display = "none";
+  $("#collapseAlpha").collapse('show');
+  for (var i=1; i<=nDer; i++) {
+    teardownDRow(i);
+  }
+  teardownDCorTable('Raw');
+  teardownDCorTable('Full');
+  document.getElementById("productionDiv").style.display = "none";
+
+  var fields = ['potType','uCustom','sigmaHSRef','truncType','NOP','T','seed','nDer','rc'];
+  for (var i in fields) {
+    document.getElementById(fields[i]).removeAttribute("readonly");
+  }
+  document.getElementById('setButton').style.display = "";
+  var btn = document.getElementById('alphaButton');
+  btn.style.display = "";
+  empty(btn);
+  makeText("Find alpha");
+  var stages = ['init','alpha','production'];
+  for (var i=0; i<stages.length; i++) {
+    empty(document.getElementById(stages[i]+"Output"));
+  }
+  stage = "init";
+}
+document.getElementById('setButton').addEventListener('click', function(){
+  setup();
+  document.getElementById("alphaDiv").style.display = "block";
+  var fields = ['potType','uCustom','sigmaHSRef','truncType','NOP','T','seed','nDer','rc'];
+  for (var i in fields) {
+    document.getElementById(fields[i]).setAttribute("readonly","true");
+  }
+  document.getElementById('setButton').style.display = "none";
+  var n = getInputInt("NOP");
+  document.getElementById('fullValueName').innerHTML = 'B<sub>'+n+'</sub>';
+  for (var m=1; m<=nDer; m++) {
+    makeDRow(m, n);
+  }
+  if (nDer==0) {
+    document.getElementById("dCorHeading").style.display = "none";
+  }
+  else {
+    buildDCorTable('Raw', nDer);
+    buildDCorTable('Full', nDer);
+  }
+  document.getElementById("btnNewParameters").style.display = "";
+  document.getElementById("btnNewParameters").addEventListener('click', startOver);
+  var runAlpha = function() {virialAlpha.runSteps(workSteps);}
+  btnRunner("alpha", "alphaButton", runAlpha, updateAlpha)();
+});
+var lastAlpha = 0;
+var lastStepSize = 0;
+var lastAcc = 0;
+document.getElementById('alphaButton').addEventListener('click', btnRunner("alpha", 'alphaButton','runAlpha',updateAlpha));
+document.getElementById('productionButton').addEventListener('click', btnRunner("production", 'productionButton','runProduction',updateProduction));
+
+function updateStepSize() {
+  var newStepSize = Module.ccall('getTargetStepSize', 'number', null, null);
+  if (newStepSize==lastStepSize) return true;
+  var totalSteps = Module.ccall('getSSSteps', 'number', null, null);
+  var acc = Module.ccall('getTargetAcceptance', 'number', null, null);
+  document.getElementById("stepSize").textContent = newStepSize.toPrecision(6);
+  var stepSizeTable = document.getElementById("stepSizeTable");
+  var row = makeElement("TR", stepSizeTable);
+  makeElement("TD", row, {textContent: totalSteps});
+  makeElement("TD", row, {textContent: newStepSize.toPrecision(6)});
+  makeElement("TD", row, {textContent: acc.toPrecision(3)});
+  if (Math.abs(acc-0.5) < 0.02 && Math.abs(lastAcc-0.5) < 0.02) {
+    //stopRequested = true;
+    var stepSizeButton = document.getElementById("stepSizeButton");
+    stepSizeButton.style.display = "none";
+    document.getElementById("alphaDiv").style.display = "block";
+    $("#collapseStepSize").collapse('hide');
+    running = false;
+    document.getElementById("alphaButton").click();
+    return false;
+  }
+  lastAcc = acc;
+  lastStepSize = newStepSize;
+  return true;
+}
+function updateAlpha() {
+  var alphaStats = virialAlpha.getAlphaStatistics();
+  alphaStats = new Module.ArrayUtil(alphaStats);
+  var newAlpha = alphaStats.x(0);
+  if (newAlpha==lastAlpha) return true;
+  var alphaErr = alphaStats.x(1);
+  var alphaCor = alphaStats.x(2);
+  var alphaSpan = alphaStats.x(3);
+  var stepSize = tComps.move.get_stepSize();
+  document.getElementById("alphaStepSize").textContent = stepSize;
+  document.getElementById("alpha").textContent = newAlpha;
+  lastAlpha = newAlpha;
+  var alphaTable = document.getElementById("alphaTable");
+  var row = makeElement("TR", alphaTable);
+  makeElement("TD", row, {textContent: alphaSpan});
+  makeElement("TD", row, {textContent: formatFloatForErr(newAlpha, alphaErr)});
+  makeElement("TD", row, {textContent: alphaErr.toPrecision(3)});
+  makeElement("TD", row, {textContent: alphaCor.toPrecision(3)});
+  if (virialAlpha.getAllDone()) {
+    //stopRequested = true;
+    var alphaButton = document.getElementById("alphaButton");
+    alphaButton.style.display = "none";
+    document.getElementById("productionDiv").style.display = "block";
+    $("#collapseAlpha").collapse('hide');
+    running = false;
+    var runProduction = function() {virialProduction.runSteps(workSteps);}
+    Module.destroy(virialAlpha);
+    virialProduction = new Module.VirialProduction(rComps.integrator, tComps.integrator, rComps.clusterRef, rComps.clusterTarget, tComps.clusterRef, tComps.clusterTarget, newAlpha, refIntegral);
+    btnRunner("production", "productionButton", runProduction, updateProduction)();
+    return false;
+  }
+  return true;
+}
+var lastProdUpdate = 0, startTime = 0;
+function updateProduction(forced) {
+  var now = Date.now();
+  if (!forced && now - lastProdUpdate < 500) return true;
+  lastProdUpdate = now;
+  var nDer = getInputInt("nDer");
+  var rs = rComps.integrator.getStepCount();
+  var ts = tComps.integrator.getStepCount();
+  var s = rs + ts;
+  document.getElementById("refSteps").textContent = rs + " steps";
+  document.getElementById("targetSteps").textContent = ts+" steps";
+  var refStats = new ArrayUtil(virialProduction.getRefStats());
+  var a = refStats.x2d(1,1);
+  var e = refStats.x2d(1,2);
+  var c = refStats.x2d(1,3);
+  document.getElementById("refOverAvg").textContent = formatFloatForErr(a,e);
+  document.getElementById("refOverErr").textContent = e.toPrecision(3);
+  var targetStats = new ArrayUtil(virialProduction.getTargetStats());
+  a = targetStats.x2d(0,1);
+  e = targetStats.x2d(0,2);
+  c = targetStats.x2d(0,3);
+  document.getElementById("targetAvg").textContent = formatFloatForErr(a,e);
+  document.getElementById("targetErr").textContent = e.toPrecision(3);
+  document.getElementById("targetAC").textContent = c.toPrecision(3);
+  a = targetStats.x2d(1,1);
+  e = targetStats.x2d(1,2);
+  c = targetStats.x2d(1,3);
+  document.getElementById("targetOverAvg").textContent = formatFloatForErr(a,e);
+  document.getElementById("targetOverErr").textContent = e.toPrecision(3);
+  document.getElementById("targetOverAC").textContent = c.toPrecision(3);
+  var refRatioStats = new ArrayUtil(virialProduction.getRefRatioStats());
+  a = refRatioStats.x2d(0,1);
+  e = refRatioStats.x2d(0,2);
+  document.getElementById("refRatioAvg").textContent = formatFloatForErr(a,e);
+  document.getElementById("refRatioErr").textContent = e.toPrecision(3);
+  var targetRatioStats = new ArrayUtil(virialProduction.getTargetRatioStats());
+  a = targetRatioStats.x2d(0,1);
+  e = targetRatioStats.x2d(0,2);
+  document.getElementById("targetRatioAvg").textContent = formatFloatForErr(a,e);
+  document.getElementById("targetRatioErr").textContent = e.toPrecision(3);
+  var targetBCStats = new ArrayUtil(virialProduction.getTargetBCStats());
+  c = targetBCStats.x2d(0,1);
+  document.getElementById("targetRatioCor").textContent = c.toPrecision(3);
+  var fullStats = new ArrayUtil(virialProduction.getFullStats());
+  a = fullStats.x2d(0,0);
+  e = fullStats.x2d(0,1);
+  document.getElementById("fullRatioAvg").textContent = formatFloatForErr(a,e);
+  document.getElementById("fullRatioErr").textContent = e.toPrecision(3);
+  return true;
+  var sys = ['ref','target','full'];
+  var stats = ['Avg','Err','AC','OverAvg','OverErr','OverAC','RatioAvg','RatioErr','RatioCor'];
+  var HSB = Module.ccall('getHSB', 'number', null, null);
+  var prevValueSpan = null;
+  var prevValue = NaN;
+  for (var is=0; is<sys.length; is++) {
+    for (var m=0; m<=nDer; m++) {
+      for (var ist=0; ist<stats.length; ist++) {
+        var name = sys[is]+(m==0?"":("D"+m))+stats[ist];
+        var span = document.getElementById(name);
+        if (!span) continue;
+        var v = Module.ccall('getResult', 'number', ['number','number','number'], [is,m,ist]);
+        if (is==2) {
+          v *= HSB;
+          if (/Err/.test(stats[ist])) v = Math.abs(v);
+        }
+        if (prevValueSpan) {
+          prevValueSpan.textContent = formatFloatForErr(prevValue, v);
+          prevValueSpan = null;
+        }
+        if (/(Err|Cor|AC)/.test(stats[ist])) v = v.toPrecision(3);
+        else if (/Avg/.test(stats[ist])) {
+          prevValue = v;
+          prevValueSpan = span;
+          continue;
+        }
+        span.textContent = v;
+      }
+    }
+  }
+  var prodAlpha = Module.ccall('getProdAlpha', 'number', null, null);
+  var prodAlphaErr = Module.ccall('getProdAlphaErr', 'number', null, null);
+  var speed = now>startTime ? (s/(now-startTime)/1000) : "";
+  document.getElementById("prodAlpha").textContent = formatFloatForErr(prodAlpha, prodAlphaErr);
+  document.getElementById("prodAlphaErr").textContent = '\u00B1 '+prodAlphaErr.toPrecision(3);
+  document.getElementById("prodSpeed").textContent = speed ? (speed.toPrecision(5)+" million steps/s") : "";
+  var prodBlockSize = Module.ccall('getBlockSize', 'number', null, null);
+  document.getElementById("prodBlockSize").textContent = prodBlockSize;
+  if (showDCor) {
+    var bits = ['Raw','Full'];
+    for (var i=0; i<bits.length; i++) {
+      for (var j=0; j<=nDer; j++) {
+        for (var k=j+1; k<=nDer; k++) {
+          var c = Module.ccall('getDCorrelation', 'number',['number','number','number'],[i, j, k]);
+          document.getElementById("dCor"+j+""+k+bits[i]).textContent = c.toPrecision(4);
+          document.getElementById("dCor"+k+""+j+bits[i]).textContent = c.toPrecision(4);
+        }
+      }
+    }
+  }
+  return true;
+}
+var steps = 128;
+function startRunner(btn, cFunc, cb) {
+  var runner = function() {
+    if (stopRequested) {
+      running = false;
+      stopRequested = false;
+      btn.textContent = "Continue";
+      return;
+    }
+    btn.textContent = "Pause";
+    running = true;
+    var t1 = Date.now();
+    cFunc();
+    var t2 = Date.now();
+    if (t2 - t1 < 50) workSteps *= 2;
+    else if (t2 - t1 > 200) workSteps /= 2;
+    var runMore = true;
+    if (cb) runMore = cb();
+    if (runMore) window.setTimeout(runner, 0);
+  };
+  window.setTimeout(runner, 0);
+}
+
+function btnRunner(thisStage, btnID, cfunc, cb) {
+  return function() {
+    stage = thisStage;
+    if (stopRequested && running) return;
+    if (running) {
+      cb(true);
+      if (stage=='production') startTime -= Date.now();
+      stopRequested = true;
+      return;
+    }
+    if (stage=='production') startTime += Date.now();
+    var btn = document.getElementById(btnID);
+    btn.textContent = "Pause";
+    startRunner(btn, cfunc, cb);
+  };
+}
+function updatePotType() {
+  var potType = Number(document.getElementById("potType").value);
+  var truncType = Number(document.getElementById("truncType").value);
+  document.getElementById("rcDiv").style.display = (truncType==0||potType==2) ? "none" : "block";
+  document.getElementById("ttDiv").style.display = potType==2 ? "none" : "block";
+  document.getElementById("uCustomDiv").style.display = potType==3 ? "block" : "none";
+  document.getElementById("truncType4").style.display = potType==3 ? "none" : "";
+}
+function updateTrunc() {
+  var truncType = Number(document.getElementById("truncType").value);
+  document.getElementById("rcDiv").style.display = truncType==0 ? "none" : "block";
+}
+var showDCor = false;
+document.getElementById('btnDCorrelations').addEventListener('click', function(){
+  showDCor = !showDCor;
+  document.getElementById("dCorTables").style.display = showDCor ? "table" : "none";
+  var btn = document.getElementById('btnDCorrelations');
+  empty(btn);
+  makeText(showDCor ? "Hide" : "Show", btn);
+});
+window.addEventListener("load", updatePotType);
+window.addEventListener("load", updateTrunc);
+    </script>
+    <script async type="text/javascript" src="mc.js"></script>
+  </body>
+</html>
