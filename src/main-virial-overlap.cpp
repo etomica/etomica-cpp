@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
   printf("target step size: %f\n", targetStepSize);
 
   VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterLJ, targetClusterHS, targetClusterLJ, alpha, refIntegral);
-  virialProduction.runSteps(steps, steps/1000);
+  virialProduction.runSteps(steps);
   double t3 = getTime();
   double acceptance = targetMove.getAcceptance();
   printf("target move acceptance: %5.3f\n", acceptance);
