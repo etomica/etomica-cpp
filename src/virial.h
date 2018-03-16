@@ -39,15 +39,25 @@ class VirialProduction {
     double idealTargetFraction;
     double **refStats, **refBCStats, **refRatioStats;
     double **targetStats, **targetBCStats, **targetRatioStats;
-    double newAlpha, alphaErr;
-    double *fullAvg, *fullErr;
+    double alphaStats[2];
+    double **fullStats;
     double refIntegral;
     bool disposed;
+    long refSteps, targetSteps;
   public:
     VirialProduction(IntegratorMC &refIntegrator, IntegratorMC &targetIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget, double alpha, double refIntegral);
     ~VirialProduction();
     void dispose();
     void analyze();
     void printResults(const char **targetNames);
-    void runSteps(long numSteps, int subSteps);
+    void getResults();
+    void runSteps(long numSteps);
+    double** getFullStats();
+    double* getAlphaStats();
+    double** getRefStats();
+    double** getTargetStats();
+    double** getRefBCStats();
+    double** getTargetBCStats();
+    double** getRefRatioStats();
+    double** getTargetRatioStats();
 };
