@@ -208,8 +208,8 @@ double** Average::getBlockCorrelation() {
   for (int i=0; i<nData; i++) {
     for (int j=0; j<i; j++) {
       double d = blockCovariance[i][i]*blockCovariance[j][j];
-      
-      blockCovariance[i][j] = blockCovariance[j][i] = d<=0 ? 0 : blockCovariance[i][j]/sqrt(d);
+      double c = d<=0 ? 0 : blockCovariance[i][j]/sqrt(d);
+      blockCovariance[i][j] = blockCovariance[j][i] = c;
     }
   }
   for (int i=0; i<nData; i++) {
