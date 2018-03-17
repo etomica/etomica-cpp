@@ -45,7 +45,7 @@ void VirialProduction::analyze() {
   refBCStats = refAverage.getBlockCorrelation();
   targetBCStats = targetAverage.getBlockCorrelation();
   for (int i=0; i<numTargets-1; i++) {
-    fullStats[i][0] = refIntegral * targetRatioStats[i][AVG_AVG] / refRatioStats[i][AVG_AVG] * alpha;
+    fullStats[i][0] = refIntegral * targetRatioStats[i][AVG_AVG] / refRatioStats[0][AVG_AVG] * alpha;
     fullStats[i][1] = fabs(refIntegral) * AverageRatio::ratioErr(targetRatioStats[i][AVG_AVG], targetRatioStats[i][AVG_ERR], 
         refRatioStats[0][AVG_AVG], refRatioStats[0][AVG_ERR],0) * alpha;
     // also compute covariance between fullStats
@@ -67,9 +67,9 @@ void VirialProduction::analyze() {
 }
 
 void VirialProduction::printResults(const char **targetNames) {
+  int numTargets = targetAverage.getNumData();
   printf("final reference step fraction: %5.4f\n", 1-idealTargetFraction);
   printf("actual reference step fraction: %5.4f\n", ((double)refSteps)/(refSteps+targetSteps));
-  const char* name0 = targetNames && targetNames[0] ? targetNames[0] : "Full";
   printf("alpha check:               % 22.15e  error: %12.5e\n", alphaStats[0], alphaStats[1]);
   printf("full average:              % 22.15e  error: %12.5e\n", fullStats[0][0], fullStats[0][1]);
   printf("reference ratio:           % 22.15e  error: %12.5e   cor: % 7.5f\n", refRatioStats[0][AVG_AVG], refRatioStats[0][AVG_ERR], refBCStats[0][1]);
@@ -77,7 +77,16 @@ void VirialProduction::printResults(const char **targetNames) {
   printf("reference overlap average: % 22.15e  error: %12.5e  acor: % 7.5f\n", refStats[1][AVG_AVG], refStats[1][AVG_ERR], refStats[1][AVG_ACOR]);
   printf("target ratio:              % 22.15e  error: %12.5e   cor: % 7.5f\n", targetRatioStats[0][AVG_AVG], targetRatioStats[0][AVG_ERR], targetBCStats[0][1]);
   printf("target average:            % 22.15e  error: %12.5e  acor: % 7.5f\n", targetStats[0][AVG_AVG], targetStats[0][AVG_ERR], targetStats[0][AVG_ACOR]);
-  printf("target overlap average:    % 22.15e  error: %12.5e  acor: % 7.5f\n", targetStats[1][AVG_AVG], targetStats[1][AVG_ERR], targetStats[1][AVG_ACOR]);
+  printf("target overlap average:    % 22.15e  error: %12.5e  acor: % 7.5f\n", targetStats[numTargets-1][AVG_AVG], targetStats[numTargets-1][AVG_ERR], targetStats[numTargets-1][AVG_ACOR]);
+  for (int i=1; i<numTargets-1; i++) {
+    char name[28];
+    if (targetNames && targetNames[i]) snprintf(name, 27, "%s average:", targetNames[i]);
+    else snprintf(name, 27, "extra %d average:", i);
+    printf("%-26s % 22.15e  error: %12.5e  acor: % 7.5f\n", name, targetStats[i][AVG_AVG], targetStats[i][AVG_ERR], targetStats[i][AVG_ACOR]);
+    if (targetNames && targetNames[i]) snprintf(name, 27, "full %s average:", targetNames[i]);
+    else snprintf(name, 27, "full extra %d average:", i);
+    printf("%-26s % 22.15e  error: %12.5e\n", name, fullStats[i][0], fullStats[i][1]);
+  }
 }
 
 double** VirialProduction::getFullStats() {return fullStats;}
