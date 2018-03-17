@@ -14,6 +14,7 @@
 
 int main(int argc, char** argv) {
   int order = 4;
+  int nDer = 1;
   double temperature = 1.0;
   long steps = 10000000;
   double sigmaRef = 1.5;
@@ -53,14 +54,14 @@ int main(int argc, char** argv) {
   PotentialMasterVirial targetPotentialMasterHS(speciesList, targetBox);
   targetPotentialMasterHS.setPairPotential(0, 0, &pHS);
   IntegratorMC targetIntegrator(targetPotentialMasterLJ, rand);
-  ClusterVirial targetClusterLJ(targetPotentialMasterLJ, temperature, 0, true);
+  ClusterVirial targetClusterLJ0(targetPotentialMasterLJ, temperature, 0, true);
   ClusterChain targetClusterHS(targetPotentialMasterHS, temperature, 1, 0);
-  MCMoveDisplacementVirial targetMove(targetBox, targetPotentialMasterLJ, rand, 0.2, targetClusterLJ);
-  targetIntegrator.addMove(&targetMove, 1);
+  MCMoveDisplacementVirial targetMove0(targetBox, targetPotentialMasterLJ, rand, 0.2, targetClusterLJ0);
+  targetIntegrator.addMove(&targetMove0, 1);
   targetIntegrator.setTemperature(temperature);
 
   double t1 = getTime();
-  VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterLJ, targetClusterHS, targetClusterLJ);
+  VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterLJ, targetClusterHS, targetClusterLJ0);
   virialAlpha->run();
   double t2 = getTime();
 
@@ -75,18 +76,22 @@ int main(int argc, char** argv) {
     fprintf(stderr, "block size for uncorrelated data is large (%ld) compared to number of steps (%ld)\n", blockSize, steps);
   }
   delete virialAlpha;
+  targetIntegrator.removeMove(&targetMove0);
 
   targetIntegrator.setTuning(false);
   refIntegrator.setTuning(false);
-  double targetStepSize = targetMove.getStepSize();
+  double targetStepSize = targetMove0.getStepSize();
   printf("target step size: %f\n", targetStepSize);
 
+  ClusterVirial targetClusterLJ(targetPotentialMasterLJ, temperature, nDer, true);
+  MCMoveDisplacementVirial targetMove(targetBox, targetPotentialMasterLJ, rand, 0.2, targetClusterLJ);
+  targetIntegrator.addMove(&targetMove, 1);
   VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterLJ, targetClusterHS, targetClusterLJ, alpha, refIntegral);
   virialProduction.runSteps(steps);
   double t3 = getTime();
   double acceptance = targetMove.getAcceptance();
   printf("target move acceptance: %5.3f\n", acceptance);
-  const char *targetNames[] = {"B"};
+  const char *targetNames[] = {"","derivative 1"};
   virialProduction.printResults(targetNames);
 
   printf("time: %4.3f\n", t3-t2);
