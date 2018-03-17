@@ -11,6 +11,21 @@ void IntegratorMC::addMove(MCMove* move, double prob) {
   pMoveSum += prob;
 }
 
+void IntegratorMC::removeMove(MCMove* move) {
+  pMoveSum = 0;
+  for (int i=0; i<moves.size(); i++) {
+    if (moves[i] == move) {
+      moves.erase(moves.begin()+i);
+      moveProbabilities.erase(moveProbabilities.begin()+i);
+      for (int j=i; j<moves.size(); j++) pMoveSum += moveProbabilities[j];
+      return;
+    }
+    pMoveSum += moveProbabilities[i];
+  }
+  fprintf(stderr, "Could not find listener");
+  abort();
+}
+
 void IntegratorMC::setTuning(bool doTune) {
   for (vector<MCMove*>::iterator it = moves.begin(); it!=moves.end(); it++) {
     (*it)->tunable = doTune;

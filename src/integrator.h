@@ -46,6 +46,7 @@ class IntegratorMC : public Integrator {
     IntegratorMC(PotentialMaster& potentialMaster, Random& random);
     ~IntegratorMC();
     void addMove(MCMove* move, double probability);
+    void removeMove(MCMove* move);
     virtual void doStep();
     void setTuning(bool doTuning);
     MCMove* getLastMove();
