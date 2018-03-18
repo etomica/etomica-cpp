@@ -56,16 +56,65 @@ double** AverageRatio::getRatioCovariance() {
   }
   getStatistics();
   getBlockCovariance();
-  double d = ratioStats[nData-1][AVG_ERR] / ratioStats[nData-1][AVG_AVG];
+  double vd = ratioStats[nData-1][AVG_AVG];
+  double ed = ratioStats[nData-1][AVG_ERR];
   for (int i=0; i<nData; i++) {
-    double ei = ratioStats[i][AVG_ERR] / ratioStats[i][AVG_AVG];
-    double ci = blockCovariance[i][nData-1] / sqrt(blockCovariance[i][i] * blockCovariance[nData-1][nData-1]);
+    double vi = ratioStats[i][AVG_AVG];
+    double ei = ratioStats[i][AVG_ERR];
+    double x = blockCovariance[i][i] * blockCovariance[nData-1][nData-1];
+    if (x <= 0) {
+      for (int j=0; j<=i; j++) ratioCovariance[j][i] = ratioCovariance[i][j] = 0;
+      continue;
+    }
+    double cid = blockCovariance[i][nData-1] / sqrt(x);
     for (int j=0; j<=i; j++) {
-      double ej = ratioStats[j][AVG_ERR] / ratioStats[j][AVG_AVG];
-      double cj = blockCovariance[j][nData-1] / sqrt(blockCovariance[j][j] * blockCovariance[nData-1][nData-1]);
+      double vj = ratioStats[j][AVG_AVG];
+      double ej = ratioStats[j][AVG_ERR];
+      if (blockCovariance[j][j] <= 0) {
+        ratioCovariance[j][i] = ratioCovariance[i][j] = 0;
+        continue;
+      }
+      double cjd = blockCovariance[j][nData-1] / sqrt(blockCovariance[j][j] * blockCovariance[nData-1][nData-1]);
       double cij = blockCovariance[i][j] / sqrt(blockCovariance[i][i]*blockCovariance[j][j]);
-      ratioCovariance[j][i] = ratioCovariance[i][j] = d*d + ei*ej*cij - ei*d*ci - ej*d*cj;
+      ratioCovariance[j][i] = ratioCovariance[i][j] = ratioCov(vi, vj, vd, ei, ej, ed, cij, cid, cjd);
     }
   }
-  return stats;
+  return ratioCovariance;
+}
+
+double** AverageRatio::getRatioCorrelation() {
+  if (blockCount<2) {
+    for (int i=0; i<nData; i++) {
+      for (int j=0; j<nData; j++) {
+        ratioCovariance[i][j] = NAN;
+      }
+    }
+    return ratioCovariance;
+  }
+  getStatistics();
+  getBlockCovariance();
+  double vd = ratioStats[nData-1][AVG_AVG];
+  double ed = ratioStats[nData-1][AVG_ERR];
+  for (int i=0; i<nData; i++) {
+    double vi = ratioStats[i][AVG_AVG];
+    double ei = ratioStats[i][AVG_ERR];
+    double x = blockCovariance[i][i] * blockCovariance[nData-1][nData-1];
+    if (x <= 0) {
+      for (int j=0; j<=i; j++) ratioCovariance[j][i] = ratioCovariance[i][j] = 0;
+      continue;
+    }
+    double cid = blockCovariance[i][nData-1] / sqrt(x);
+    for (int j=0; j<=i; j++) {
+      double vj = ratioStats[j][AVG_AVG];
+      double ej = ratioStats[j][AVG_ERR];
+      if (blockCovariance[j][j] <= 0) {
+        ratioCovariance[j][i] = ratioCovariance[i][j] = 0;
+        continue;
+      }
+      double cjd = blockCovariance[j][nData-1] / sqrt(blockCovariance[j][j] * blockCovariance[nData-1][nData-1]);
+      double cij = blockCovariance[i][j] / sqrt(blockCovariance[i][i]*blockCovariance[j][j]);
+      ratioCovariance[j][i] = ratioCovariance[i][j] = ratioCor(vi, vj, vd, ei, ej, ed, cij, cid, cjd);
+    }
+  }
+  return ratioCovariance;
 }
