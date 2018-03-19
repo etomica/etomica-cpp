@@ -39,7 +39,7 @@ double** AverageRatio::getRatioStatistics() {
       continue;
     }
     double d = blockCovariance[i][i] * blockCovariance[nData-1][nData-1];
-    double icor = d <= 0 ? 0 : blockCovariance[i][nData-1] / sqrt(blockCovariance[i][i] * blockCovariance[nData-1][nData-1]);
+    double icor = d <= 0 ? 0 : blockCovariance[i][nData-1] / sqrt(d);
     ratioStats[i][AVG_ERR] = ratioErr(stats[i][AVG_AVG], stats[i][AVG_ERR], stats[nData-1][AVG_AVG], stats[nData-1][AVG_ERR], icor);
   }
   return ratioStats;
