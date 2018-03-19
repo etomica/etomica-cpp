@@ -3,7 +3,6 @@
 PotentialMasterVirial::PotentialMasterVirial(const SpeciesList &sl, Box &box) : PotentialMaster(sl,box) {}
 
 void PotentialMasterVirial::computeAtoms(const int* iAtomList, const int nAtoms, double &energy) {
-  double dr[3];
   energy = 0;
   for (int i=0; i<nAtoms-1; i++) {
     int iAtom = iAtomList[i];
@@ -16,9 +15,8 @@ void PotentialMasterVirial::computeAtoms(const int* iAtomList, const int nAtoms,
       int jAtom = iAtomList[j];
       int jType = box.getAtomType(jAtom);
       double *rj = box.getAtomPosition(jAtom);
-      for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
       double r2 = 0;
-      for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
+      for (int k=0; k<3; k++) {double dr = rj[k]-ri[k]; r2 += dr*dr;}
       if (r2 > iCutoffs[jType]) continue;
       double uij = iPotentials[jType]->u(r2);
       energy += uij;
@@ -31,7 +29,6 @@ void PotentialMasterVirial::computeMolecules(const int* iMoleculeList, const int
     computeAtoms(iMoleculeList, nMolecules, energy);
     return;
   }
-  double dr[3];
   energy = 0;
   for (int i=0; i<nMolecules-1; i++) {
     int iMolecule = iMoleculeList[i];
@@ -51,9 +48,8 @@ void PotentialMasterVirial::computeMolecules(const int* iMoleculeList, const int
           //uAtomsChangedSet.insert(iAtom);
           int jType = box.getAtomType(jAtom);
           double *rj = box.getAtomPosition(jAtom);
-          for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
           double r2 = 0;
-          for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
+          for (int k=0; k<3; k++) {double dr = rj[k]-ri[k]; r2 += dr*dr;}
           if (r2 > iCutoffs[jType]) continue;
           //uAtomsChangedSet.insert(jAtom);
           double uij = iPotentials[jType]->u(r2);
