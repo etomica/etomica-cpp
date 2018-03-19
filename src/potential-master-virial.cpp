@@ -2,6 +2,30 @@
 
 PotentialMasterVirial::PotentialMasterVirial(const SpeciesList &sl, Box &box) : PotentialMaster(sl,box) {}
 
+void PotentialMasterVirial::computeAtoms(const int* iAtomList, const int nAtoms, double &energy) {
+  double dr[3];
+  energy = 0;
+  for (int i=0; i<nAtoms-1; i++) {
+    int iAtom = iAtomList[i];
+    int iType = box.getAtomType(iAtom);
+    double* iCutoffs = pairCutoffs[iType];
+    Potential** iPotentials = pairPotentials[iType];
+    double *ri = box.getAtomPosition(iAtom);
+
+    for (int j=i+1; j<nAtoms; j++) {
+      int jAtom = iAtomList[j];
+      int jType = box.getAtomType(jAtom);
+      double *rj = box.getAtomPosition(jAtom);
+      for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
+      double r2 = 0;
+      for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
+      if (r2 > iCutoffs[jType]) continue;
+      double uij = iPotentials[jType]->u(r2);
+      energy += uij;
+    }
+  }
+}
+
 void PotentialMasterVirial::computeMolecules(const int* iMoleculeList, const int nMolecules, double &energy) {
   double dr[3];
   energy = 0;
