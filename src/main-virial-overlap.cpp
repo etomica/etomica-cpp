@@ -91,8 +91,7 @@ int main(int argc, char** argv) {
   double t3 = getTime();
   double acceptance = targetMove.getAcceptance();
   printf("target move acceptance: %5.3f\n", acceptance);
-  const char *targetNames[] = {"","derivative 1"};
-  virialProduction.printResults(targetNames);
+  virialProduction.printResults(nullptr);
 
   printf("time: %4.3f\n", t3-t2);
 }
