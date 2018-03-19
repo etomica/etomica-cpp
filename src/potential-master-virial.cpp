@@ -27,6 +27,10 @@ void PotentialMasterVirial::computeAtoms(const int* iAtomList, const int nAtoms,
 }
 
 void PotentialMasterVirial::computeMolecules(const int* iMoleculeList, const int nMolecules, double &energy) {
+  if (pureAtoms) {
+    computeAtoms(iMoleculeList, nMolecules, energy);
+    return;
+  }
   double dr[3];
   energy = 0;
   for (int i=0; i<nMolecules-1; i++) {
