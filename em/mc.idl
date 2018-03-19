@@ -219,6 +219,7 @@ interface Integrator {
 interface IntegratorMC : Integrator {
   void IntegratorMC([Ref] PotentialMaster potentialMaster, [Ref] Random random);
   void addMove(MCMove move, double moveProb);
+  void removeMove(MCMove move);
   void setTuning(boolean doTuning);
 };
 

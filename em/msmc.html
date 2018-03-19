@@ -412,6 +412,16 @@ function updateAlpha() {
     running = false;
     var runProduction = function() {virialProduction.runSteps(workSteps);}
     Module.destroy(virialAlpha);
+    var nDer = getInputInt("nDer");
+    if (nDer > 0) {
+      var targetStepSize = tComps.move.getStepSize();
+      tComps.integrator.removeMove(tComps.move);
+      Module.destroy(tComps.move);
+      Module.destroy(tComps.clusterTarget);
+      tComps.clusterTarget = new Module.ClusterVirial(tComps.potentialMasterTarget, T, nDer, true);
+      tComps.move = new Module.MCMoveDisplacementVirial(tComps.box, tComps.potentialMasterTarget, rand, targetStepSize, tComps.clusterTarget);
+      tComps.integrator.addMove(tComps.move, 1);
+    }
     virialProduction = new Module.VirialProduction(rComps.integrator, tComps.integrator, rComps.clusterRef, rComps.clusterTarget, tComps.clusterRef, tComps.clusterTarget, newAlpha, refIntegral);
     btnRunner("production", "productionButton", runProduction, updateProduction)();
     return false;
