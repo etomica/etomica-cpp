@@ -1,6 +1,6 @@
 #include "cluster.h"
 
-ClusterChain::ClusterChain(PotentialMasterVirial &pm, double t, double cFac, double rFac) : Cluster(pm.getBox().getTotalNumMolecules(),1,false), potentialMaster(pm), beta(1/t), chainFac(cFac), ringFac(rFac) {
+ClusterChain::ClusterChain(PotentialMasterVirial &pm, double t, double cFac, double rFac, bool cached) : Cluster(pm.getBox().getTotalNumMolecules(),1,cached), potentialMaster(pm), beta(1/t), chainFac(cFac), ringFac(rFac) {
 }
 
 ClusterChain::~ClusterChain() {
@@ -8,6 +8,8 @@ ClusterChain::~ClusterChain() {
 
 #define NF1  (1 << (numMolecules-1))
 const double* ClusterChain::getValues() {
+  if (useCache && !cacheDirty) return values;
+  cacheDirty = false;
   const int n = numMolecules;
   double fValues[n][n];
   for(int iMol1=0; iMol1<n; iMol1++){
@@ -80,6 +82,7 @@ const double* ClusterChain::getValues() {
 
   }//end if(chainFrac)
 
+  oldValues[0] = values[0];
   values[0] = chainFac*chainValue + ringFac*ringValue;
 
   return values;

@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
   refPotentialMasterHS.setPairPotential(0, 0, &pHS);
   IntegratorMC refIntegrator(refPotentialMasterHS, rand);
   ClusterVirial refClusterLJ(refPotentialMasterLJ, temperature, 0, false);
-  ClusterChain refClusterHS(refPotentialMasterHS, temperature, 1.0, 0);
+  ClusterChain refClusterHS(refPotentialMasterHS, temperature, 1.0, 0, false);
   MCMoveChainVirial refMove(refBox, refPotentialMasterHS, rand, 1.5);
   refIntegrator.addMove(&refMove, 1);
   refIntegrator.setTemperature(temperature);
@@ -56,7 +56,9 @@ int main(int argc, char** argv) {
   targetPotentialMasterHS.setPairPotential(0, 0, &pHS);
   IntegratorMC targetIntegrator(targetPotentialMasterLJ, rand);
   ClusterVirial targetClusterLJ0(targetPotentialMasterLJ, temperature, 0, true);
-  ClusterChain targetClusterHS(targetPotentialMasterHS, temperature, 1, 0);
+  targetIntegrator.addListener(&targetClusterLJ0);
+  ClusterChain targetClusterHS(targetPotentialMasterHS, temperature, 1, 0, true);
+  targetIntegrator.addListener(&targetClusterHS);
   MCMoveDisplacementVirial targetMove0(targetBox, targetPotentialMasterLJ, rand, 0.2, targetClusterLJ0);
   targetIntegrator.addMove(&targetMove0, 1);
   targetIntegrator.setTemperature(temperature);
@@ -78,6 +80,7 @@ int main(int argc, char** argv) {
   }
   delete virialAlpha;
   targetIntegrator.removeMove(&targetMove0);
+  targetIntegrator.removeListener(&targetClusterLJ0);
 
   double targetStepSize = targetMove0.getStepSize();
   printf("target step size: %f\n", targetStepSize);
@@ -85,6 +88,7 @@ int main(int argc, char** argv) {
   ClusterVirial targetClusterLJ(targetPotentialMasterLJ, temperature, nDer, true);
   MCMoveDisplacementVirial targetMove(targetBox, targetPotentialMasterLJ, rand, targetStepSize, targetClusterLJ);
   targetIntegrator.addMove(&targetMove, 1);
+  targetIntegrator.addListener(&targetClusterLJ);
   targetIntegrator.setTuning(false);
   VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterLJ, targetClusterHS, targetClusterLJ, alpha, refIntegral);
   virialProduction.runSteps(steps);

@@ -42,7 +42,6 @@ void MCMoveDisplacementVirial::rejectNotify() {
   //printf("rejected\n");
   double* r = box.getAtomPosition(iAtom);
   std::copy(rOld, rOld+3, r);
-  cluster.trialRejected();
 }
 
 double MCMoveDisplacementVirial::energyChange() {

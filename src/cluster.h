@@ -1,12 +1,13 @@
 #pragma once
 
+#include "integrator.h"
 #include "potential-master.h"
 
-class Cluster {
+class Cluster : public IntegratorListener {
   protected:
     const int nValues;
     const int numMolecules;
-    bool useCache, cacheDirty;
+    bool useCache, cacheDirty, inTrial;
     double* values;
     double* oldValues;
 
@@ -17,6 +18,8 @@ class Cluster {
     int numValues();
     void setCachingEnabled(bool enabled);
     virtual const double* getValues() = 0;
+    void moveRejected(MCMove& move, double chi);
+    void moveAccepted(MCMove& move, double chi);
     void trialNotify();
     void trialRejected();
 };
@@ -45,7 +48,7 @@ class ClusterChain : public Cluster {
     double chainFac, ringFac;
 
   public:
-    ClusterChain(PotentialMasterVirial& potentialMaster, double temperature, double chainFac, double ringFac);
+    ClusterChain(PotentialMasterVirial& potentialMaster, double temperature, double chainFac, double ringFac, bool cached);
     virtual ~ClusterChain();
 
     const double* getValues();
