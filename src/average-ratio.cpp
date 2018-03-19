@@ -56,11 +56,11 @@ double** AverageRatio::getRatioCovariance() {
   }
   getStatistics();
   getBlockCovariance();
-  double vd = ratioStats[nData-1][AVG_AVG];
-  double ed = ratioStats[nData-1][AVG_ERR];
+  double vd = stats[nData-1][AVG_AVG];
+  double ed = stats[nData-1][AVG_ERR];
   for (int i=0; i<nData; i++) {
-    double vi = ratioStats[i][AVG_AVG];
-    double ei = ratioStats[i][AVG_ERR];
+    double vi = stats[i][AVG_AVG];
+    double ei = stats[i][AVG_ERR];
     double x = blockCovariance[i][i] * blockCovariance[nData-1][nData-1];
     if (x <= 0) {
       for (int j=0; j<=i; j++) ratioCovariance[j][i] = ratioCovariance[i][j] = 0;
@@ -68,8 +68,8 @@ double** AverageRatio::getRatioCovariance() {
     }
     double cid = blockCovariance[i][nData-1] / sqrt(x);
     for (int j=0; j<=i; j++) {
-      double vj = ratioStats[j][AVG_AVG];
-      double ej = ratioStats[j][AVG_ERR];
+      double vj = stats[j][AVG_AVG];
+      double ej = stats[j][AVG_ERR];
       if (blockCovariance[j][j] <= 0) {
         ratioCovariance[j][i] = ratioCovariance[i][j] = 0;
         continue;
@@ -93,11 +93,11 @@ double** AverageRatio::getRatioCorrelation() {
   }
   getStatistics();
   getBlockCovariance();
-  double vd = ratioStats[nData-1][AVG_AVG];
-  double ed = ratioStats[nData-1][AVG_ERR];
+  double vd = stats[nData-1][AVG_AVG];
+  double ed = stats[nData-1][AVG_ERR];
   for (int i=0; i<nData; i++) {
-    double vi = ratioStats[i][AVG_AVG];
-    double ei = ratioStats[i][AVG_ERR];
+    double vi = stats[i][AVG_AVG];
+    double ei = stats[i][AVG_ERR];
     double x = blockCovariance[i][i] * blockCovariance[nData-1][nData-1];
     if (x <= 0) {
       for (int j=0; j<=i; j++) ratioCovariance[j][i] = ratioCovariance[i][j] = 0;
@@ -105,8 +105,8 @@ double** AverageRatio::getRatioCorrelation() {
     }
     double cid = blockCovariance[i][nData-1] / sqrt(x);
     for (int j=0; j<=i; j++) {
-      double vj = ratioStats[j][AVG_AVG];
-      double ej = ratioStats[j][AVG_ERR];
+      double vj = stats[j][AVG_AVG];
+      double ej = stats[j][AVG_ERR];
       if (blockCovariance[j][j] <= 0) {
         ratioCovariance[j][i] = ratioCovariance[i][j] = 0;
         continue;
