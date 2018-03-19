@@ -92,7 +92,7 @@ class AverageRatio : public Average {
       double eid = ratioErr(vi, ei, vd, ed, cid);
       double ejd = ratioErr(vj, ej, vd, ed, cjd);
       if (eid==0 || ejd==0) return 0;
-      return ((vi/vd)/eid)*((vj/vd)/ejd)*((ei/vi)*(ed/vd) + (ei/vi)*(ej/vj)*cij - (ei/vi)*(ed/vd)*cid - (ej/vj)*(ed/vj)*cjd);
+      return (vi/vd)*(vj/vd)*((ei/vi)*(ed/vd) + (ei/vi)*(ej/vj)*cij - (ei/vi)*(ed/vd)*cid - (ej/vj)*(ed/vj)*cjd);
     }
 
     /**
@@ -112,6 +112,6 @@ class AverageRatio : public Average {
       double eid = ratioErr(vi, ei, vd, ed, cid);
       double ejd = ratioErr(vj, ej, vd, ed, cjd);
       if (eid==0 || ejd==0) return 0;
-      return ((vi/vd)/eid)*((vj/vd)/ejd)*((ei/vi)*(ed/vd) + (ei/vi)*(ej/vj)*cij - (ei/vi)*(ed/vd)*cid - (ej/vj)*(ed/vj)*cjd)/(eid*ejd);
+      return ((vi/vd)/eid)*((vj/vd)/ejd)*((ed/vd)*(ed/vd) + (ei/vi)*(ej/vj)*cij - (ei/vi)*(ed/vd)*cid - (ej/vj)*(ed/vd)*cjd);
     }
 };
