@@ -476,6 +476,13 @@ function updateProduction(forced) {
   e = fullStats.x2d(0,1);
   document.getElementById("fullRatioAvg").textContent = formatFloatForErr(a,e);
   document.getElementById("fullRatioErr").textContent = e.toPrecision(3);
+  var alphaStats = new ArrayUtil(virialProduction.getAlphaStats());
+  a = alphaStats.x(0);
+  e = alphaStats.x(1);
+  document.getElementById("prodAlpha").textContent = formatFloatForErr(a, e);
+  document.getElementById("prodAlphaErr").textContent = '\u00B1 '+e.toPrecision(3);
+  var speed = now>startTime ? (s/(now-startTime)/1000) : "";
+  document.getElementById("prodSpeed").textContent = speed ? (speed.toPrecision(5)+" million steps/s") : "";
   return true;
   var sys = ['ref','target','full'];
   var stats = ['Avg','Err','AC','OverAvg','OverErr','OverAC','RatioAvg','RatioErr','RatioCor'];
