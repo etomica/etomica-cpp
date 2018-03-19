@@ -138,12 +138,20 @@ interface DataSink { };
 interface Average : DataSink {
   void Average(long nData, long blockSize, long maxBlockCount, boolean doCovariance);
   void setNumData(long newNumData);
+  long getBlockSize();
+  long getBlockCount();
   VoidPtr getStatistics();
   VoidPtr getBlockCovariance();
   void reset();
 };
 
 Average implements DataSink;
+
+interface AverageRatio : Average {
+  VoidPtr getRatioStatistics();
+};
+
+AverageRatio implements Average;
 
 interface Meter {
   long getNumData();
@@ -257,6 +265,8 @@ interface VirialAlpha {
   void runSteps(long steps);
   VoidPtr getAlphaStatistics();
   boolean getAllDone();
+  [Ref] Average getTargetAverage();
+  [Ref] Average getRefAverage();
 };
 
 interface VirialProduction {
@@ -273,6 +283,8 @@ interface VirialProduction {
   VoidPtr getTargetBCStats();
   VoidPtr getRefRatioStats();
   VoidPtr getTargetRatioStats();
+  [Ref] AverageRatio getTargetAverage();
+  [Ref] AverageRatio getRefAverage();
 };
   
 

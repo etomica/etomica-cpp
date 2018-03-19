@@ -282,7 +282,7 @@ function buildDCorTable(name, nDer) {
   }
   var tbody = document.getElementById('dCorTable'+name+"Body");
   for (var i=0; i<=nDer; i++) {
-    var row = makeElement("TR", body);
+    var row = makeElement("TR", tbody);
     makeElement("TD", row, {textContent: i});
     for (var j=0; j<=nDer; j++) {
       var tc = i==j ? "1" : "";
@@ -341,6 +341,7 @@ document.getElementById('setButton').addEventListener('click', function(){
   document.getElementById('setButton').style.display = "none";
   var n = getInputInt("NOP");
   document.getElementById('fullValueName').innerHTML = 'B<sub>'+n+'</sub>';
+  var nDer = getInputInt("nDer");
   for (var m=1; m<=nDer; m++) {
     makeDRow(m, n);
   }
@@ -475,7 +476,7 @@ function updateProduction(forced) {
   document.getElementById("targetRatioAvg").textContent = formatFloatForErr(a,e);
   document.getElementById("targetRatioErr").textContent = e.toPrecision(3);
   var targetBCStats = new ArrayUtil(virialProduction.getTargetBCStats());
-  c = targetBCStats.x2d(0,1);
+  c = targetBCStats.x2d(0,nDer+1);
   document.getElementById("targetRatioCor").textContent = c.toPrecision(3);
   var fullStats = new ArrayUtil(virialProduction.getFullStats());
   a = fullStats.x2d(0,0);
@@ -489,6 +490,26 @@ function updateProduction(forced) {
   document.getElementById("prodAlphaErr").textContent = '\u00B1 '+e.toPrecision(3);
   var speed = now>startTime ? (s/(now-startTime)/1000) : "";
   document.getElementById("prodSpeed").textContent = speed ? (speed.toPrecision(5)+" million steps/s") : "";
+  var blockSize = virialProduction.getTargetAverage().getBlockSize();
+  document.getElementById("prodBlockSize").textContent = blockSize;
+  for (var m=1; m<=nDer; m++) {
+    a = targetStats.x2d(m,1);
+    e = targetStats.x2d(m,2);
+    c = targetStats.x2d(m,3);
+    document.getElementById("targetD"+m+"Avg").textContent = formatFloatForErr(a,e);
+    document.getElementById("targetD"+m+"Err").textContent = e.toPrecision(3);
+    document.getElementById("targetD"+m+"AC").textContent = c.toPrecision(3);
+    a = targetRatioStats.x2d(m,1);
+    e = targetRatioStats.x2d(m,2);
+    document.getElementById("targetD"+m+"RatioAvg").textContent = formatFloatForErr(a,e);
+    document.getElementById("targetD"+m+"RatioErr").textContent = e.toPrecision(3);
+    c = targetBCStats.x2d(m,nDer+1);
+    document.getElementById("targetD"+m+"RatioCor").textContent = c.toPrecision(3);
+    a = fullStats.x2d(m,0);
+    e = fullStats.x2d(m,1);
+    document.getElementById("fullD"+m+"RatioAvg").textContent = formatFloatForErr(a,e);
+    document.getElementById("fullD"+m+"RatioErr").textContent = e.toPrecision(3);
+  }
   return true;
   var sys = ['ref','target','full'];
   var stats = ['Avg','Err','AC','OverAvg','OverErr','OverAC','RatioAvg','RatioErr','RatioCor'];

@@ -60,4 +60,6 @@ class VirialProduction {
     double** getTargetBCStats();
     double** getRefRatioStats();
     double** getTargetRatioStats();
+    AverageRatio& getTargetAverage() {return targetAverage;}
+    AverageRatio& getRefAverage() {return refAverage;}
 };
