@@ -4,7 +4,9 @@
 MCMoveMoleculeRotate::MCMoveMoleculeRotate(Box& b, PotentialMaster& p, Random& r) : MCMove(b,p,r,0.5), numOldPositions(0), oldPositions(nullptr) {
 }
 
-MCMoveMoleculeRotate::~MCMoveMoleculeRotate() {}
+MCMoveMoleculeRotate::~MCMoveMoleculeRotate() {
+  free2D((void**)oldPositions);
+}
 
 bool MCMoveMoleculeRotate::doTrial() {
   if (tunable && numTrials >= adjustInterval) {

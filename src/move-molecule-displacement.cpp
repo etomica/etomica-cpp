@@ -4,7 +4,9 @@
 MCMoveMoleculeDisplacement::MCMoveMoleculeDisplacement(Box& b, PotentialMaster& p, Random& r, double ss) : MCMove(b,p,r,ss), numOldPositions(0), oldPositions(nullptr) {
 }
 
-MCMoveMoleculeDisplacement::~MCMoveMoleculeDisplacement() {}
+MCMoveMoleculeDisplacement::~MCMoveMoleculeDisplacement() {
+  free2D((void**)oldPositions);
+}
 
 bool MCMoveMoleculeDisplacement::doTrial() {
   if (tunable && numTrials >= adjustInterval) {
