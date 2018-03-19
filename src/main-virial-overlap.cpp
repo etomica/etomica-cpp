@@ -30,7 +30,8 @@ int main(int argc, char** argv) {
   PotentialLJ plj(1,1,TRUNC_NONE, 1.0/0.0);
   PotentialHS pHS(1.5);
   SpeciesList speciesList;
-  speciesList.add(new SpeciesSimple(1,1));
+  SpeciesSimple species(1,1);
+  speciesList.add(&species);
 
   Box refBox(speciesList);
   refBox.setBoxSize(5,5,5);

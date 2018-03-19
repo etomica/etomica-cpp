@@ -6,10 +6,7 @@
 SpeciesList::SpeciesList() : nSpecies(0), allSpecies(nullptr) {}
 
 SpeciesList::~SpeciesList() {
-  for (int i=0; i<nSpecies; i++) {
-    delete allSpecies[i];
-  }
-  if (allSpecies) free(allSpecies);
+  free(allSpecies);
 }
 
 int SpeciesList::size() const {
