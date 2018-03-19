@@ -79,6 +79,7 @@ void VirialProduction::printResults(const char **targetNames) {
   printf("target ratio:              % 22.15e  error: %12.5e   cor: % 7.5f\n", targetRatioStats[0][AVG_AVG], targetRatioStats[0][AVG_ERR], targetBCStats[0][numTargets-1]);
   printf("target average:            % 22.15e  error: %12.5e  acor: % 7.5f\n", targetStats[0][AVG_AVG], targetStats[0][AVG_ERR], targetStats[0][AVG_ACOR]);
   printf("target overlap average:    % 22.15e  error: %12.5e  acor: % 7.5f\n", targetStats[numTargets-1][AVG_AVG], targetStats[numTargets-1][AVG_ERR], targetStats[numTargets-1][AVG_ACOR]);
+  if (numTargets == 2) return;
   for (int i=1; i<numTargets-1; i++) {
     char name[28];
     if (targetNames && strlen(targetNames[i]) > 11) {
