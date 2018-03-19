@@ -13,11 +13,11 @@ void IntegratorMC::addMove(MCMove* move, double prob) {
 
 void IntegratorMC::removeMove(MCMove* move) {
   pMoveSum = 0;
-  for (int i=0; i<moves.size(); i++) {
+  for (int i=0; i<(int)moves.size(); i++) {
     if (moves[i] == move) {
       moves.erase(moves.begin()+i);
       moveProbabilities.erase(moveProbabilities.begin()+i);
-      for (int j=i; j<moves.size(); j++) pMoveSum += moveProbabilities[j];
+      for (int j=i; j<(int)moves.size(); j++) pMoveSum += moveProbabilities[j];
       return;
     }
     pMoveSum += moveProbabilities[i];
