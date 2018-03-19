@@ -356,12 +356,11 @@ document.getElementById('setButton').addEventListener('click', function(){
   document.getElementById("btnNewParameters").addEventListener('click', startOver);
   var runAlpha = function() {virialAlpha.runSteps(workSteps);}
   btnRunner("alpha", "alphaButton", runAlpha, updateAlpha)();
+  document.getElementById('alphaButton').addEventListener('click', btnRunner("alpha", 'alphaButton',runAlpha,updateAlpha));
 });
 var lastAlpha = 0;
 var lastStepSize = 0;
 var lastAcc = 0;
-document.getElementById('alphaButton').addEventListener('click', btnRunner("alpha", 'alphaButton','runAlpha',updateAlpha));
-document.getElementById('productionButton').addEventListener('click', btnRunner("production", 'productionButton','runProduction',updateProduction));
 
 function updateStepSize() {
   var newStepSize = Module.ccall('getTargetStepSize', 'number', null, null);
@@ -410,10 +409,6 @@ function updateAlpha() {
     //stopRequested = true;
     var alphaButton = document.getElementById("alphaButton");
     alphaButton.style.display = "none";
-    document.getElementById("productionDiv").style.display = "block";
-    $("#collapseAlpha").collapse('hide');
-    running = false;
-    var runProduction = function() {virialProduction.runSteps(workSteps);}
     Module.destroy(virialAlpha);
     var nDer = getInputInt("nDer");
     if (nDer > 0) {
@@ -430,7 +425,12 @@ function updateAlpha() {
     }
     tComps.integrator.setTuning(false);
     virialProduction = new Module.VirialProduction(rComps.integrator, tComps.integrator, rComps.clusterRef, rComps.clusterTarget, tComps.clusterRef, tComps.clusterTarget, newAlpha, refIntegral);
+    document.getElementById("productionDiv").style.display = "block";
+    $("#collapseAlpha").collapse('hide');
+    running = false;
+    runProduction = function() {virialProduction.runSteps(workSteps);}
     btnRunner("production", "productionButton", runProduction, updateProduction)();
+    document.getElementById('productionButton').addEventListener('click', btnRunner("production", 'productionButton',runProduction,updateProduction));
     return false;
   }
   return true;
