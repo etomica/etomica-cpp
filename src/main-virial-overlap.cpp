@@ -79,14 +79,13 @@ int main(int argc, char** argv) {
   delete virialAlpha;
   targetIntegrator.removeMove(&targetMove0);
 
-  targetIntegrator.setTuning(false);
-  refIntegrator.setTuning(false);
   double targetStepSize = targetMove0.getStepSize();
   printf("target step size: %f\n", targetStepSize);
 
   ClusterVirial targetClusterLJ(targetPotentialMasterLJ, temperature, nDer, true);
-  MCMoveDisplacementVirial targetMove(targetBox, targetPotentialMasterLJ, rand, 0.2, targetClusterLJ);
+  MCMoveDisplacementVirial targetMove(targetBox, targetPotentialMasterLJ, rand, targetStepSize, targetClusterLJ);
   targetIntegrator.addMove(&targetMove, 1);
+  targetIntegrator.setTuning(false);
   VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterLJ, targetClusterHS, targetClusterLJ, alpha, refIntegral);
   virialProduction.runSteps(steps);
   double t3 = getTime();
