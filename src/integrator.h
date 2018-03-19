@@ -12,12 +12,6 @@ class IntegratorListener {
     IntegratorListener();
     virtual ~IntegratorListener() {}
     virtual void stepFinished() {}
-};
-
-class IntegratorListenerMC : public IntegratorListener {
-  public:
-    IntegratorListenerMC();
-    virtual ~IntegratorListenerMC() {};
     virtual void moveAccepted(MCMove& move, double chi) {}
     virtual void moveRejected(MCMove& move, double chi) {}
 };

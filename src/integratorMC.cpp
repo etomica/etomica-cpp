@@ -56,12 +56,18 @@ void IntegratorMC::doStep() {
   if (chi==0 || (chi<1 && chi<random.nextDouble())) {
     //printf("chi %e 0\n", chi);
     m->rejectNotify();
+    for (vector<IntegratorListener*>::iterator it = listenersMoveRejected.begin(); it!=listenersMoveRejected.end(); it++) {
+      (*it)->moveRejected(*m, chi);
+    }
   }
   else {
     m->acceptNotify();
     double du = m->energyChange();
     energy += du;
     //printf("chi %e 1 %f\n", chi, du);
+    for (vector<IntegratorListener*>::iterator it = listenersMoveAccepted.begin(); it!=listenersMoveAccepted.end(); it++) {
+      (*it)->moveAccepted(*m, chi);
+    }
   }
 #ifdef DEBUG
   if (fabs(energy-potentialMaster.uTotalFromAtoms()) > 1e-6) {
@@ -101,5 +107,3 @@ void IntegratorMC::removeListener(IntegratorListener* listener) {
     if (it != listenersMoveRejected.end()) listenersMoveRejected.erase(it);
   }
 }
-
-IntegratorListenerMC::IntegratorListenerMC() : IntegratorListener() {}
