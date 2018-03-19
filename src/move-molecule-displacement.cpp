@@ -36,6 +36,7 @@ bool MCMoveMoleculeDisplacement::doTrial() {
       ri[j] += deltaR[j];
     }
     box.nearestImage(ri);
+    potentialMaster.updateAtom(iAtom);
   }
   numTrials++;
   return true;
@@ -57,6 +58,7 @@ void MCMoveMoleculeDisplacement::acceptNotify() {
     int iAtom = iAtomFirst + i;
     double *ri = box.getAtomPosition(iAtom);
     for (int j=0; j<3; j++) ri[j] = oldPositions[i][j];
+    potentialMaster.updateAtom(iAtom);
   }
   double uTmp = 0;
   potentialMaster.computeOneMolecule(iMolecule, uTmp);
@@ -79,6 +81,7 @@ void MCMoveMoleculeDisplacement::rejectNotify() {
     int iAtom = iAtomFirst + i;
     double *ri = box.getAtomPosition(iAtom);
     for (int j=0; j<3; j++) ri[j] = oldPositions[i][j];
+    potentialMaster.updateAtom(iAtom);
   }
   uNew = uOld;
   potentialMaster.resetAtomDU();

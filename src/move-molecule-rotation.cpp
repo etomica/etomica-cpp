@@ -39,6 +39,7 @@ bool MCMoveMoleculeRotate::doTrial() {
       oldPositions[i][j] = ri[j];
     }
     mat.transformAbout(ri, r0, box);
+    potentialMaster.updateAtom(iAtom);
   }
   numTrials++;
   return true;
@@ -63,6 +64,7 @@ void MCMoveMoleculeRotate::acceptNotify() {
     for (int j=0; j<3; j++) {
       ri[j] = oldPositions[i][j];
     }
+    potentialMaster.updateAtom(iAtom);
   }
   double uTmp = 0;
   potentialMaster.computeOneMolecule(iMolecule, uTmp);
@@ -87,6 +89,7 @@ void MCMoveMoleculeRotate::rejectNotify() {
     for (int j=0; j<3; j++) {
       ri[j] = oldPositions[i][j];
     }
+    potentialMaster.updateAtom(iAtom);
   }
   uNew = uOld;
   potentialMaster.resetAtomDU();
