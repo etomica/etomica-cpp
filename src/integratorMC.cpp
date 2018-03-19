@@ -75,7 +75,7 @@ void IntegratorMC::doStep() {
     if (fabs(oldEnergy-energy) > 1e-6) abort();
   }
 #endif
-  for (vector<IntegratorListener*>::iterator it = listeners.begin(); it!=listeners.end(); it++) {
+  for (vector<IntegratorListener*>::iterator it = listenersStepFinished.begin(); it!=listenersStepFinished.end(); it++) {
     (*it)->stepFinished();
   }
 }
@@ -83,3 +83,23 @@ void IntegratorMC::doStep() {
 MCMove* IntegratorMC::getLastMove() {
   return lastMove;
 }
+
+void IntegratorMC::addListener(IntegratorListener* listener) {
+  Integrator::addListener(listener);
+  if (listener->callAccept) listenersMoveAccepted.push_back(listener);
+  if (listener->callReject) listenersMoveRejected.push_back(listener);
+}
+
+void IntegratorMC::removeListener(IntegratorListener* listener) {
+  Integrator::removeListener(listener);
+  if (listener->callAccept) {
+    std::vector<IntegratorListener*>::iterator it = find (listenersMoveAccepted.begin(), listenersMoveAccepted.end(), listener);
+    if (it != listenersMoveAccepted.end()) listenersMoveAccepted.erase(it);
+  }
+  if (listener->callReject) {
+    std::vector<IntegratorListener*>::iterator it = find (listenersMoveRejected.begin(), listenersMoveRejected.end(), listener);
+    if (it != listenersMoveRejected.end()) listenersMoveRejected.erase(it);
+  }
+}
+
+IntegratorListenerMC::IntegratorListenerMC() : IntegratorListener() {}

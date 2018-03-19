@@ -7,9 +7,19 @@
 
 class IntegratorListener {
   public:
+    bool callFinished;
+    bool callAccept, callReject;
     IntegratorListener();
     virtual ~IntegratorListener() {}
-    virtual void stepFinished() = 0;
+    virtual void stepFinished() {}
+};
+
+class IntegratorListenerMC : public IntegratorListener {
+  public:
+    IntegratorListenerMC();
+    virtual ~IntegratorListenerMC() {};
+    virtual void moveAccepted(MCMove& move, double chi) {}
+    virtual void moveRejected(MCMove& move, double chi) {}
 };
 
 class Integrator : public PotentialCallback {
@@ -18,7 +28,7 @@ class Integrator : public PotentialCallback {
     double temperature;
     double energy;
     long stepCount;
-    vector<IntegratorListener*> listeners;
+    vector<IntegratorListener*> listenersStepFinished;
     vector<PotentialCallback*> selfPotentialCallbackVec;
   public:
     Integrator(PotentialMaster& potentialMaster);
@@ -30,8 +40,8 @@ class Integrator : public PotentialCallback {
     double getTemperature();
     void reset();
     double getPotentialEnergy();
-    void addListener(IntegratorListener* listener);
-    void removeListener(IntegratorListener* listener);
+    virtual void addListener(IntegratorListener* listener);
+    virtual void removeListener(IntegratorListener* listener);
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
 };
 
@@ -42,6 +52,7 @@ class IntegratorMC : public Integrator {
     vector<double> moveProbabilities;
     double pMoveSum;
     MCMove* lastMove;
+    vector<IntegratorListener*> listenersMoveAccepted, listenersMoveRejected;
   public:
     IntegratorMC(PotentialMaster& potentialMaster, Random& random);
     ~IntegratorMC();
@@ -50,6 +61,8 @@ class IntegratorMC : public Integrator {
     virtual void doStep();
     void setTuning(bool doTuning);
     MCMove* getLastMove();
+    virtual void addListener(IntegratorListener* listener);
+    virtual void removeListener(IntegratorListener* listener);
 };
 
 #define THERMOSTAT_NONE 0
