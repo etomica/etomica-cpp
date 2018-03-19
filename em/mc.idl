@@ -213,6 +213,7 @@ interface Integrator {
   void reset();
   double getPotentialEnergy();
   void addListener(IntegratorListener listener);
+  void removeListener(IntegratorListener listener);
   long getStepCount();
 };
 
@@ -243,7 +244,7 @@ interface ClusterVirial : Cluster {
 ClusterVirial implements Cluster;
 
 interface ClusterChain : Cluster {
-  void ClusterChain([Ref] PotentialMasterVirial potentialMaster, double tempreature, double chainFac, double ringFac);
+  void ClusterChain([Ref] PotentialMasterVirial potentialMaster, double tempreature, double chainFac, double ringFac, boolean cached);
 };
 
 ClusterVirial implements Cluster;

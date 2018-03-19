@@ -223,9 +223,11 @@ function setup() {
   tComps.potentialMasterRef.setPairPotential(0, 0, rComps.potential);
   tComps.integrator = new Module.IntegratorMC(tComps.potentialMasterTarget, rand);
   tComps.clusterTarget = new Module.ClusterVirial(tComps.potentialMasterTarget, T, 0, true);
-  tComps.clusterRef = new Module.ClusterChain(tComps.potentialMasterRef, T, 1, 0);
+  tComps.clusterRef = new Module.ClusterChain(tComps.potentialMasterRef, T, 1, 0, true);
   tComps.move = new Module.MCMoveDisplacementVirial(tComps.box, tComps.potentialMasterTarget, rand, 0.2, tComps.clusterTarget);
   tComps.integrator.addMove(tComps.move, 1);
+  tComps.integrator.addListener(tComps.clusterTarget);
+  tComps.integrator.addListener(tComps.clusterRef);
 
   rComps.box = new Module.Box(speciesList);
   rComps.box.setBoxSize(L,L,L);
@@ -236,7 +238,7 @@ function setup() {
   rComps.potentialMasterRef.setPairPotential(0, 0, rComps.potential);
   rComps.integrator = new Module.IntegratorMC(rComps.potentialMasterRef, rand);
   rComps.clusterTarget = new Module.ClusterVirial(rComps.potentialMasterTarget, T, 0, false);
-  rComps.clusterRef = new Module.ClusterChain(rComps.potentialMasterRef, T, 1, 0);
+  rComps.clusterRef = new Module.ClusterChain(rComps.potentialMasterRef, T, 1, 0, false);
   rComps.move = new Module.MCMoveChainVirial(rComps.box, rComps.potentialMasterRef, rand, refSigma);
   rComps.integrator.addMove(rComps.move, 1);
 
@@ -414,14 +416,18 @@ function updateAlpha() {
     Module.destroy(virialAlpha);
     var nDer = getInputInt("nDer");
     if (nDer > 0) {
-      var targetStepSize = tComps.move.getStepSize();
+      var targetStepSize = tComps.move.get_stepSize();
       tComps.integrator.removeMove(tComps.move);
+      tComps.integrator.removeListener(tComps.clusterTarget);
       Module.destroy(tComps.move);
       Module.destroy(tComps.clusterTarget);
+      var T = getInputInt("T");
       tComps.clusterTarget = new Module.ClusterVirial(tComps.potentialMasterTarget, T, nDer, true);
       tComps.move = new Module.MCMoveDisplacementVirial(tComps.box, tComps.potentialMasterTarget, rand, targetStepSize, tComps.clusterTarget);
       tComps.integrator.addMove(tComps.move, 1);
+      tComps.integrator.addListener(tComps.clusterTarget);
     }
+    tComps.integrator.setTuning(false);
     virialProduction = new Module.VirialProduction(rComps.integrator, tComps.integrator, rComps.clusterRef, rComps.clusterTarget, tComps.clusterRef, tComps.clusterTarget, newAlpha, refIntegral);
     btnRunner("production", "productionButton", runProduction, updateProduction)();
     return false;
