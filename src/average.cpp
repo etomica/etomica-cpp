@@ -104,7 +104,7 @@ void Average::addData(double *x) {
   }
   if (--blockCountdown == 0) {
     if (doCovariance) {
-      double blockSizeSq = blockSize*blockSize;
+      double blockSizeSq = ((double)blockSize)*((double)blockSize);
       for (int i=0; i<nData; i++) {
         for (int j=0; j<=i; j++) {
           double ijx = currentBlockSum[i]*currentBlockSum[j]/blockSizeSq;
