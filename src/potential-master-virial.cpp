@@ -37,3 +37,13 @@ void PotentialMasterVirial::computeMolecules(const int* iMoleculeList, const int
     }
   }
 }
+
+void PotentialMasterVirial::computeAll(vector<PotentialCallback*> &callbacks) {
+  for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
+    if ((*it)->callFinished) (*it)->allComputeFinished(0, 0, nullptr);
+  }
+}
+
+double PotentialMasterVirial::uTotalFromAtoms() {
+  return 0;
+}

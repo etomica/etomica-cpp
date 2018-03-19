@@ -141,7 +141,7 @@ class PotentialMaster {
     void resetAtomDU();
     void processAtomU(int coeff);
     void addCallback(PotentialCallback* pcb);
-    double uTotalFromAtoms();
+    virtual double uTotalFromAtoms();
 };
 
 class PotentialMasterVirial : public PotentialMaster {
@@ -149,8 +149,9 @@ class PotentialMasterVirial : public PotentialMaster {
     PotentialMasterVirial(const SpeciesList &speciesList, Box& box);
     virtual ~PotentialMasterVirial() {}
     // inter-molecular energy of a group of molecules
-    virtual void computeMolecules(const int* iMolecules, const int nMolecules, double &energy);
-    virtual void computeAll(vector<PotentialCallback*> &callbacks) {return;}
+    void computeMolecules(const int* iMolecules, const int nMolecules, double &energy);
+    void computeAll(vector<PotentialCallback*> &callbacks);
+    double uTotalFromAtoms();
 };
 
 class PotentialMasterCell : public PotentialMaster {

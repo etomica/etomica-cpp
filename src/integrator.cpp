@@ -1,6 +1,6 @@
 #include "integrator.h"
 
-Integrator::Integrator(PotentialMaster& p) : potentialMaster(p), temperature(1), stepCount(0) {
+Integrator::Integrator(PotentialMaster& p) : potentialMaster(p), temperature(1), energy(0), stepCount(0) {
   callFinished = true;
   selfPotentialCallbackVec.push_back(this);
 }
