@@ -15,8 +15,8 @@ ClusterVirial::ClusterVirial(PotentialMasterVirial &pm, double t, int nd, bool c
 }
 
 ClusterVirial::~ClusterVirial() {
-  for (int i=0; i<nDer; i++) {
-    delete[] binomial[i];
+  for (int m=0; m<=nDer; m++) {
+    delete[] binomial[m];
   }
   delete[] binomial;
 }

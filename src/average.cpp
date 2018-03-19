@@ -6,21 +6,15 @@
 
 Average::Average(int n, long bs, long mBC, bool doCov) : nData(n), defaultBlockSize(bs), blockSize(bs), blockCount(0),
                                maxBlockCount(mBC), blockCountdown(bs), doCovariance(doCov) {
-  mostRecent = nullptr;
-  currentBlockSum = nullptr;
-  blockSum = nullptr;
-  blockSum2 = nullptr;
-  correlationSum = nullptr;
-  blockSums = nullptr;
-  stats = nullptr;
-  blockCovariance = nullptr;
-  blockCovSum = nullptr;
-  prevBlockSum = nullptr;
-  firstBlockSum = nullptr;
-  reset();
+  unset();
+  if (nData>0) reset();
 }
 
 Average::~Average() {
+  dispose();
+}
+
+void Average::dispose() {
   free(mostRecent);
   free(currentBlockSum);
   free(blockSum);
@@ -36,6 +30,21 @@ Average::~Average() {
     free2D((void**)blockCovariance);
     free2D((void**)blockCovSum);
   }
+  unset();
+}
+
+void Average::unset() {
+  mostRecent = nullptr;
+  currentBlockSum = nullptr;
+  blockSum = nullptr;
+  blockSum2 = nullptr;
+  correlationSum = nullptr;
+  blockSums = nullptr;
+  stats = nullptr;
+  blockCovariance = nullptr;
+  blockCovSum = nullptr;
+  prevBlockSum = nullptr;
+  firstBlockSum = nullptr;
 }
 
 void Average::setNumData(int newNumData) {
@@ -51,6 +60,11 @@ void Average::reset() {
   blockCount = 0;
   blockSize = defaultBlockSize;
   blockCountdown = blockSize;
+  if (nData==0) {
+    // we can't allocate 0-size arrays, so just leave them as nullptr
+    // at some point nData will be positive, reset will be called again
+    return;
+  }
   // realloc our arrays so that we can adjust if n changes
   mostRecent = (double*)realloc(mostRecent, nData*sizeof(double));
   currentBlockSum = (double*)realloc(currentBlockSum, nData*sizeof(double));

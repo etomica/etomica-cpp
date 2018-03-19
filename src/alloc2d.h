@@ -40,6 +40,7 @@ inline static void** realloc2D0(void** array, int rows, int totalRows, int cols,
 
 
 inline static void free2D(void** array) {
+  if (!array) return;
   free(*array);
   free(array);
 }
@@ -64,7 +65,8 @@ inline static void*** malloc3D(int outer, int rows, int cols, size_t s) {
 }
 
 inline static void free3D(void*** array) {
-  free(**array);
+  if (!array) return;
+  if (*array) free(**array);
   free(*array);
   free(array);
 }

@@ -38,6 +38,7 @@ PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl
 PotentialMaster::~PotentialMaster() {
   free2D((void**)pairPotentials);
   free2D((void**)pairCutoffs);
+  free2D((void**)force);
   delete[] bondedPairs;
   delete[] bondedPotentials;
   delete[] bondedAtoms;

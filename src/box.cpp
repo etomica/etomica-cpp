@@ -32,11 +32,14 @@ Box::~Box() {
   delete[] numAtomsBySpecies;
   delete[] numMoleculesBySpecies;
   delete[] maxNumMoleculesBySpecies;
+  delete[] maxNumAtomsBySpecies;
+  delete[] speciesNumAtoms;
   for (int i=0; i<knownNumSpecies; i++) {
     if (!positions[i]) continue;
     free2D((void**)positions[i]);
     if (velocities)free2D((void**)velocities[i]);
     free(firstAtom[i]);
+    free(atomTypes[i]);
   }
   free(positions);
   free(velocities);

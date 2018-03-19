@@ -8,11 +8,13 @@ PotentialMasterList::PotentialMasterList(const SpeciesList& sl, Box& box, int ce
 }
 
 PotentialMasterList::~PotentialMasterList() {
-  if (numAtomNbrsUp) free(numAtomNbrsUp);
-  if (numAtomNbrsDn) free(numAtomNbrsDn);
-  if (nbrs) free2D((void**)nbrs);
-  if (nbrBoxOffsets) free2D((void**)nbrBoxOffsets);
-  if (oldAtomPositions) free2D((void**)oldAtomPositions);
+  free(maxR2);
+  free(maxR2Unsafe);
+  free(numAtomNbrsUp);
+  free(numAtomNbrsDn);
+  free2D((void**)nbrs);
+  free2D((void**)nbrBoxOffsets);
+  free2D((void**)oldAtomPositions);
 }
 
 double PotentialMasterList::getRange() {

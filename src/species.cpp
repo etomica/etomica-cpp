@@ -12,6 +12,7 @@ Species::Species(int na, int nat) : numAtoms(na), numAtomTypes(nat) {
 
 Species::~Species() {
   free(atomTypes);
+  free2D((void**)positions);
 }
 
 int Species::getNumAtoms() {

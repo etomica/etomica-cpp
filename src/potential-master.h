@@ -47,7 +47,7 @@ class PotentialCallbackHMA : public PotentialCallback {
     double** latticePositions;
   public:
     PotentialCallbackHMA(Box& box, double temperature, double Pharm);
-    ~PotentialCallbackHMA() {}
+    ~PotentialCallbackHMA();
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
     virtual int getNumData();
     virtual double* getData();

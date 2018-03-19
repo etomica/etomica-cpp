@@ -38,6 +38,9 @@ class Average : public DataSink {
 
     void collapseBlocks();
 
+    void dispose();
+    void unset();
+
   public:
     Average(int nData, long blockSize, long maxBlockCount, bool doCovariance);
     virtual ~Average();

@@ -2,6 +2,10 @@
 
 MeterFullCompute::MeterFullCompute(PotentialMaster& p) : Meter(0), potentialMaster(p), data(nullptr), doCompute(true) {}
 
+MeterFullCompute::~MeterFullCompute() {
+  free(data);
+}
+
 void MeterFullCompute::addCallback(PotentialCallback* pcb) {
   callbacks.push_back(pcb);
   nData += pcb->getNumData();

@@ -63,7 +63,7 @@ class MeterFullCompute : public Meter {
     bool doCompute;
   public:
     MeterFullCompute(PotentialMaster& potentialMaster);
-    ~MeterFullCompute() {}
+    ~MeterFullCompute();
     double* getData();
     void addCallback(PotentialCallback* pcb);
     void setDoCompute(bool doCompute);
@@ -75,6 +75,7 @@ class DataPump : public IntegratorListener {
     int interval;
     int intervalCountdown;
     vector<DataSink*> sinks;
+    const bool dataSink1isMine;
   public:
     DataPump(Meter& meter, int interval);
     DataPump(Meter& meter, int interval, DataSink* sink);

@@ -15,6 +15,10 @@ PotentialCallbackHMA::PotentialCallbackHMA(Box& b, double T, double Ph) : box(b)
   }
 }
 
+PotentialCallbackHMA::~PotentialCallbackHMA() {
+  free2D((void**)latticePositions);
+}
+
 int PotentialCallbackHMA::getNumData() {return 2;}
 
 void PotentialCallbackHMA::allComputeFinished(double uTot, double virialTot, double** f) {

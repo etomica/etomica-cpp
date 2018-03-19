@@ -6,6 +6,9 @@
 SpeciesList::SpeciesList() : nSpecies(0), allSpecies(nullptr) {}
 
 SpeciesList::~SpeciesList() {
+  for (int i=0; i<nSpecies; i++) {
+    delete allSpecies[i];
+  }
   if (allSpecies) free(allSpecies);
 }
 
@@ -13,6 +16,9 @@ int SpeciesList::size() const {
   return nSpecies;
 }
 
+/**
+ * Add Species s to the list.  Species will be destroyed along with the SpeciesList.
+ */
 int SpeciesList::add(Species* s) {
   allSpecies = (Species**)realloc(allSpecies, (nSpecies+1)*sizeof(Species*));
   allSpecies[nSpecies] = s;
