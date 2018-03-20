@@ -78,6 +78,8 @@ void VirialProduction::printResults(const char **targetNames) {
   int numTargets = targetAverage.getNumData();
   printf("final reference step fraction: %5.4f\n", 1-idealTargetFraction);
   printf("actual reference step fraction: %5.4f\n", ((double)refSteps)/(refSteps+targetSteps));
+  printf("reference blocks: %ld of size %ld\n", refAverage.getBlockCount(), refAverage.getBlockSize());
+  printf("target blocks: %ld of size %ld\n", targetAverage.getBlockCount(), targetAverage.getBlockSize());
   printf("alpha check:               % 22.15e  error: %12.5e\n", alphaStats[0], alphaStats[1]);
   printf("full average:              % 22.15e  error: %12.5e\n", fullStats[0][0], fullStats[0][1]);
   printf("reference ratio:           % 22.15e  error: %12.5e   cor: % 7.5f\n", refRatioStats[0][AVG_AVG], refRatioStats[0][AVG_ERR], refBCStats[0][1]);
