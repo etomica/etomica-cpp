@@ -22,8 +22,8 @@ bool MCMoveMoleculeDisplacement::doTrial() {
   deltaR[0] = 2*stepSize*(random.nextDouble32()-0.5);
   deltaR[1] = 2*stepSize*(random.nextDouble32()-0.5);
   deltaR[2] = 2*stepSize*(random.nextDouble32()-0.5);
-  int iSpecies;
-  box.getMoleculeInfo(iMolecule, iSpecies, iAtomFirst, iAtomLast);
+  int iSpecies, iMoleculeInSpecies;
+  box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iAtomFirst, iAtomLast);
   int na = iAtomLast-iAtomFirst+1;
   if (na>numOldPositions) {
     oldPositions = (double**)realloc2D((void**)oldPositions, na, 3, sizeof(double));

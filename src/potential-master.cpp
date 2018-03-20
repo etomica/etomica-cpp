@@ -272,8 +272,8 @@ double PotentialMaster::oldEnergy(int iAtom) {
 
 double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
   // only works for rigid molecules
-  int iSpecies, iFirstAtom, iLastAtom;
-  box.getMoleculeInfo(iMolecule, iSpecies, iFirstAtom, iLastAtom);
+  int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+  box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
   double u = 0;
   for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
     u += 2*uAtom[iAtom];
@@ -386,8 +386,8 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1) {
     duAtom.resize(numAtoms);
     fill(duAtom.begin()+s, duAtom.end(), 0);
   }
-  int iSpecies, firstAtom, lastAtom;
-  box.getMoleculeInfo(iMolecule, iSpecies, firstAtom, lastAtom);
+  int iSpecies, iMoleculeInSpecies, firstAtom, lastAtom;
+  box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
   for (int iAtom=firstAtom; iAtom<=lastAtom; iAtom++) {
     if (duAtom[iAtom] == 0) {
       uAtomsChanged.push_back(iAtom);

@@ -18,8 +18,8 @@ bool MCMoveMoleculeRotate::doTrial() {
     return false;
   }
   iMolecule = random.nextInt(nm);
-  int iSpecies;
-  box.getMoleculeInfo(iMolecule, iSpecies, iAtomFirst, iAtomLast);
+  int iSpecies, iMoleculeInSpecies;
+  box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iAtomFirst, iAtomLast);
   if (iAtomFirst==iAtomLast) {
     iMolecule = -1;
     return false;

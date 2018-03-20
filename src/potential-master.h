@@ -7,6 +7,7 @@
 #include <algorithm>
 #include "box.h"
 #include "potential.h"
+#include "potential-molecular.h"
 
 using namespace std;
 
@@ -144,17 +145,6 @@ class PotentialMaster {
     virtual double uTotalFromAtoms();
 };
 
-class PotentialMasterVirial : public PotentialMaster {
-  public:
-    PotentialMasterVirial(const SpeciesList &speciesList, Box& box);
-    virtual ~PotentialMasterVirial() {}
-    // inter-molecular energy of a group of molecules
-    void computeMolecules(const int* iMolecules, const int nMolecules, double &energy);
-    void computeAtoms(const int* iAtoms, const int nAtoms, double &energy);
-    void computeAll(vector<PotentialCallback*> &callbacks);
-    double uTotalFromAtoms();
-};
-
 class PotentialMasterCell : public PotentialMaster {
   protected:
     CellManager cellManager;
@@ -256,3 +246,27 @@ class PotentialMasterList : public PotentialMasterCell {
     void checkUpdateNbrs();
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
 };
+
+class PotentialMasterVirial : public PotentialMaster {
+  public:
+    PotentialMasterVirial(const SpeciesList &speciesList, Box& box);
+    virtual ~PotentialMasterVirial() {}
+    // inter-molecular energy of a group of molecules
+    void computeMolecules(const int* iMolecules, const int nMolecules, double &energy);
+    void computeAtoms(const int* iAtoms, const int nAtoms, double &energy);
+    void computeAll(vector<PotentialCallback*> &callbacks);
+    double uTotalFromAtoms();
+};
+
+class PotentialMasterVirialMolecular : public PotentialMasterVirial {
+  protected:
+    PotentialMolecular*** moleculePairPotentials;
+
+  public:
+    PotentialMasterVirialMolecular(const SpeciesList &speciesList, Box& box);
+    virtual ~PotentialMasterVirialMolecular() {}
+    // inter-molecular energy of a group of molecules
+    void setMoleculePairPotential(int iSpecies, int jSpecies, PotentialMolecular* p);
+    void computeMolecules(const int* iMolecules, const int nMolecules, double &energy);
+};
+

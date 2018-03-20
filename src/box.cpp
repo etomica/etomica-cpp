@@ -99,8 +99,8 @@ void Box::initCoordinates() {
           for (int j=0; j<3; j++) {
             ri[j] = (basisFCC[i][j] + ixyz[j] - 0.5*numCells[j]) * cellSize[j];
           }
-          int iSpecies, firstAtom, lastAtom;
-          getMoleculeInfo(iMolecule, iSpecies, firstAtom, lastAtom);
+          int iSpecies, iMoleculeInSpecies, firstAtom, lastAtom;
+          getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
           Species* s = speciesList.get(iSpecies);
           for (int jAtom=firstAtom; jAtom<=lastAtom; jAtom++) {
             double* jPos = s->getAtomPosition(jAtom-firstAtom);
@@ -204,19 +204,19 @@ void Box::getMoleculeInfoAtom(int iAtom, int &iMolecule, int &iSpecies, int &iFi
   iFirstAtom = firstAtom[iSpecies][iMolecule];
 }
 
-void Box::getMoleculeInfo(int iMolecule, int &iSpecies, int &fa, int &la) {
-  int idx = iMolecule;
+void Box::getMoleculeInfo(int iMolecule, int &iSpecies, int &iMoleculeInSpecies, int &fa, int &la) {
+  iMoleculeInSpecies = iMolecule;
   iSpecies = 0;
-  for ( ; iSpecies<knownNumSpecies-1 && idx >= numMoleculesBySpecies[iSpecies]; iSpecies++) {
-    idx -= numMoleculesBySpecies[iSpecies];
+  for ( ; iSpecies<knownNumSpecies-1 && iMoleculeInSpecies >= numMoleculesBySpecies[iSpecies]; iSpecies++) {
+    iMoleculeInSpecies -= numMoleculesBySpecies[iSpecies];
   }
 #ifdef DEBUG
-  if (idx>=numMoleculesBySpecies[iSpecies]) {
+  if (iMoleculeInSpecies>=numMoleculesBySpecies[iSpecies]) {
     printf("gFA oops i %d is more molecules than I have\n", iMolecule);
     abort();
   }
 #endif
-  fa = firstAtom[iSpecies][idx];
+  fa = firstAtom[iSpecies][iMoleculeInSpecies];
   la = fa + speciesNumAtoms[iSpecies] - 1;
 }
 

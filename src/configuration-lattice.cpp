@@ -55,8 +55,8 @@ void ConfigurationLattice::go() {
           for (int j=0; j<3; j++) {
             ri[j] = (basis[i][j] + ixyz[j] - 0.5*numCells[j]) * myCellSize[j];
           }
-          int iSpecies, firstAtom, lastAtom;
-          box.getMoleculeInfo(iMolecule, iSpecies, firstAtom, lastAtom);
+          int iSpecies, iMoleculeInSpecies, firstAtom, lastAtom;
+          box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
           Species* s = box.getSpeciesList().get(iSpecies);
           for (int jAtom=firstAtom; jAtom<=lastAtom; jAtom++) {
             double* jPos = s->getAtomPosition(jAtom-firstAtom);
