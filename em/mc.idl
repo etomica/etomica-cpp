@@ -283,6 +283,7 @@ interface VirialProduction {
   VoidPtr getTargetBCStats();
   VoidPtr getRefRatioStats();
   VoidPtr getTargetRatioStats();
+  VoidPtr getFullBCStats();
   [Ref] AverageRatio getTargetAverage();
   [Ref] AverageRatio getRefAverage();
 };

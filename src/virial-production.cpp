@@ -7,7 +7,8 @@
 
 VirialProduction::VirialProduction(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget, double alpha, double ri) : refIntegrator(rIntegrator), targetIntegrator(tIntegrator), refMeter(MeterVirialOverlap(refClusterRef, refClusterTarget, alpha, 0, 1)), targetMeter(MeterVirialOverlap(targetClusterTarget, targetClusterRef, 1/alpha, 0, 1)), refAverage(2, 1, 1000, true), targetAverage(targetClusterTarget.numValues()+1, 1, 1000, true), refPump(refMeter,1,&refAverage), targetPump(targetMeter,1,&targetAverage), idealTargetFraction(0.5), refIntegral(ri), disposed(false), refSteps(0), targetSteps(0) {
   int numTargets = targetAverage.getNumData();
-  fullStats = (double**)malloc2D(numTargets, 2, sizeof(double));
+  fullStats = (double**)malloc2D(numTargets-1, 2, sizeof(double));
+  fullBCStats = (double**)malloc2D(numTargets-1, numTargets-1, sizeof(double));
   refIntegrator.addListener(&refPump);
   targetIntegrator.addListener(&targetPump);
 }
@@ -15,6 +16,7 @@ VirialProduction::VirialProduction(IntegratorMC &rIntegrator, IntegratorMC &tInt
 VirialProduction::~VirialProduction() {
   dispose();
   free2D((void**)fullStats);
+  free2D((void**)fullBCStats);
 }
 
 void VirialProduction::dispose() {
@@ -44,19 +46,24 @@ void VirialProduction::analyze() {
   refRatioStats = refAverage.getRatioStatistics();
   targetRatioStats = targetAverage.getRatioStatistics();
   refBCStats = refAverage.getBlockCorrelation();
+  double **cij = targetAverage.getRatioCorrelation();
   targetBCStats = targetAverage.getBlockCorrelation();
+  double vd = refRatioStats[0][AVG_AVG];
+  double ed = refRatioStats[0][AVG_ERR];
   for (int i=0; i<numTargets-1; i++) {
-    fullStats[i][0] = refIntegral * targetRatioStats[i][AVG_AVG] / refRatioStats[0][AVG_AVG] * alpha;
-    fullStats[i][1] = fabs(refIntegral) * AverageRatio::ratioErr(targetRatioStats[i][AVG_AVG], targetRatioStats[i][AVG_ERR], 
-        refRatioStats[0][AVG_AVG], refRatioStats[0][AVG_ERR],0) * alpha;
-    // also compute covariance between fullStats
-    //printf("Bn(%d): %f %f\n", i, fullAvg[i], fullErr[i]);
-    /*printf("ref: %f %f\n", refRatioStats[0][AVG_AVG], refRatioStats[0][AVG_ERR]);
-    printf("  %f %f\n", refStats[0][AVG_AVG], refStats[0][AVG_ERR]);
-    printf("  %f %f\n", refStats[1][AVG_AVG], refStats[1][AVG_ERR]);
-    printf("tar: %f %f\n", targetRatioStats[i][AVG_AVG]*alpha, targetRatioStats[i][AVG_ERR]*alpha);
-    printf("  %f %f\n", targetStats[0][AVG_AVG], targetStats[0][AVG_ERR]);
-    printf("  %f %f\n", targetStats[1][AVG_AVG]/alpha, targetStats[1][AVG_ERR]/alpha);*/
+    fullStats[i][0] = refIntegral * targetRatioStats[i][AVG_AVG] / vd * alpha;
+    fullStats[i][1] = fabs(refIntegral) * AverageRatio::ratioErr(targetRatioStats[i][AVG_AVG], targetRatioStats[i][AVG_ERR], vd, ed,0) * alpha;
+    double vi = targetRatioStats[i][AVG_AVG];
+    double ei = targetRatioStats[i][AVG_ERR];
+    for (int j=0; j<numTargets-1; j++) {
+      if (j==i) {
+        fullBCStats[i][i] = 1;
+        continue;
+      }
+      double vj = targetRatioStats[j][AVG_AVG];
+      double ej = targetRatioStats[j][AVG_ERR];
+      fullBCStats[i][j] = fullBCStats[j][i] = AverageRatio::ratioCor(vi, vj, vd, ei, ej, ed, cij[i][j], 0, 0);
+    }
   }
 
   double oldFrac = ((double)targetSteps)/(targetSteps + refSteps);
@@ -96,30 +103,17 @@ void VirialProduction::printResults(const char **targetNames) {
     printf("%-26s % 22.15e  error: %12.5e\n", name, fullStats[i][0], fullStats[i][1]);
   }
   if (numTargets == 1) return;
-  double** cij = targetAverage.getBlockCorrelation();
   printf("Target Correlation:\n");
   for (int i=0; i<numTargets-1; i++) {
     for (int j=0; j<numTargets-1; j++) {
-      printf(" % 8.5f", cij[i][j]);
+      printf(" % 8.5f", targetBCStats[i][j]);
     }
     printf("\n");
   }
-  cij = targetAverage.getRatioCorrelation();
-  double vd = refRatioStats[0][AVG_AVG];
-  double ed = refRatioStats[0][AVG_ERR];
   printf("Full Correlation:\n");
   for (int i=0; i<numTargets-1; i++) {
-    double vi = targetRatioStats[i][AVG_AVG];
-    double ei = targetRatioStats[i][AVG_ERR];
     for (int j=0; j<numTargets-1; j++) {
-      if (j==i) {
-        printf(" % 8.5f", 1.0);
-        continue;
-      }
-      double vj = targetRatioStats[j][AVG_AVG];
-      double ej = targetRatioStats[j][AVG_ERR];
-      double c = AverageRatio::ratioCor(vi, vj, vd, ei, ej, ed, cij[i][j], 0, 0);
-      printf(" % 8.5f", c);
+      printf(" % 8.5f", fullBCStats[i][j]);
     }
     printf("\n");
   }
@@ -140,6 +134,8 @@ double** VirialProduction::getTargetBCStats() {return targetBCStats;}
 double** VirialProduction::getRefRatioStats() {return refRatioStats;}
 
 double** VirialProduction::getTargetRatioStats() {return targetRatioStats;}
+
+double** VirialProduction::getFullBCStats() {return fullBCStats;}
 
 void VirialProduction::runSteps(long numSteps) {
   long totalSteps = refSteps + targetSteps;

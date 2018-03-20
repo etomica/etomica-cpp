@@ -492,7 +492,20 @@ function updateProduction(forced) {
   document.getElementById("prodSpeed").textContent = speed ? (speed.toPrecision(5)+" million steps/s") : "";
   var blockSize = virialProduction.getTargetAverage().getBlockSize();
   document.getElementById("prodBlockSize").textContent = blockSize;
-  for (var m=1; m<=nDer; m++) {
+  if (nDer==0) return;
+  var fullRatioBCStats = showDCor ? new ArrayUtil(virialProduction.getFullBCStats()) : null;
+  for (var m=0; m<=nDer; m++) {
+    if (showDCor) {
+      for (var k=m+1; k<=nDer; k++) {
+        var c = targetBCStats.x2d(m,k).toPrecision(4);
+        document.getElementById("dCor"+m+""+k+"Raw").textContent = c;
+        document.getElementById("dCor"+k+""+m+"Raw").textContent = c;
+        c = fullRatioBCStats.x2d(m,k).toPrecision(4);
+        document.getElementById("dCor"+m+""+k+"Full").textContent = c;
+        document.getElementById("dCor"+k+""+m+"Full").textContent = c;
+      }
+    }
+    if (m==0) continue;
     a = targetStats.x2d(m,1);
     e = targetStats.x2d(m,2);
     c = targetStats.x2d(m,3);

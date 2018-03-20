@@ -39,6 +39,7 @@ class VirialProduction {
     double idealTargetFraction;
     double **refStats, **refBCStats, **refRatioStats;
     double **targetStats, **targetBCStats, **targetRatioStats;
+    double **fullBCStats;
     double alphaStats[2];
     double **fullStats;
     double refIntegral;
@@ -60,6 +61,7 @@ class VirialProduction {
     double** getTargetBCStats();
     double** getRefRatioStats();
     double** getTargetRatioStats();
+    double** getFullBCStats();
     AverageRatio& getTargetAverage() {return targetAverage;}
     AverageRatio& getRefAverage() {return refAverage;}
 };
