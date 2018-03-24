@@ -5,7 +5,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false) {
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false) {
 
   pairPotentials = (Potential***)malloc2D(numAtomTypes, numAtomTypes, sizeof(Potential*));
   pairCutoffs = (double**)malloc2D(numAtomTypes, numAtomTypes, sizeof(double));
@@ -91,11 +91,12 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
     if ((*it)->callPair) pairCallbacks.push_back(*it);
     if ((*it)->takesForces) doForces = true;
   }
-  if (doForces && !force) {
-    force = (double**)malloc2D(box.getNumAtoms(), 3, sizeof(double));
+  int numAtoms = box.getNumAtoms();
+  if (doForces && !force && numAtoms > numForceAtoms) {
+    force = (double**)realloc2D(box.getNumAtoms(), 3, sizeof(double));
+    numForceAtoms = numAtoms;
   }
 
-  int numAtoms = box.getNumAtoms();
   double uTot = 0, virialTot = 0;
   double u, du, d2u;
   double dr[3];
