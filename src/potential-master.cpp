@@ -93,7 +93,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   }
   int numAtoms = box.getNumAtoms();
   if (doForces && !force && numAtoms > numForceAtoms) {
-    force = (double**)realloc2D(box.getNumAtoms(), 3, sizeof(double));
+    force = (double**)realloc2D((void**)force, numAtoms, 3, sizeof(double));
     numForceAtoms = numAtoms;
   }
 

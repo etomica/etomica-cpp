@@ -97,8 +97,8 @@ class PotentialMaster {
     vector<double> duAtom;
     bool duAtomSingle, duAtomMulti;
     vector<int> uAtomsChanged;
-    int numForceAtoms;
     double** force;
+    int numForceAtoms;
     vector<PotentialCallback*> pairCallbacks;
     const int numAtomTypes;
     vector<vector<int*> > *bondedPairs;
