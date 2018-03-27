@@ -243,10 +243,10 @@ void Box::enableVelocities() {
     fprintf(stderr, "velocities alread enabled\n");
     return;
   }
-  velocities = (double***)realloc(velocities, speciesList.size()*sizeof(double**));
+  velocities = (double***)malloc(speciesList.size()*sizeof(double**));
   for (int i=0; i<speciesList.size(); i++) {
     int na = maxNumMoleculesBySpecies[i]*speciesList.get(i)->getNumAtoms();
-    velocities[i] = (double**)realloc2D((void**)velocities[i], na, 3, sizeof(double));
+    velocities[i] = (double**)malloc2D(na, 3, sizeof(double));
   }
 }
 
