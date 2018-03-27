@@ -1,6 +1,6 @@
 #include "integrator.h"
 
-IntegratorMD::IntegratorMD(PotentialMaster& p, Random& r, Box& b) : Integrator(p), random(r), box(b), forces(NULL), tStep(0.01), thermostat(THERMOSTAT_NONE), nbrCheckInterval(-1), nbrCheckCountdown(-1) {
+IntegratorMD::IntegratorMD(AtomInfo& ai, PotentialMaster& p, Random& r, Box& b) : Integrator(p), atomInfo(ai), random(r), box(b), forces(NULL), tStep(0.01), thermostat(THERMOSTAT_NONE), nbrCheckInterval(-1), nbrCheckCountdown(-1) {
   takesForces = true;
 }
 
@@ -27,10 +27,12 @@ void IntegratorMD::doStep() {
   stepCount++;
   int n = box.getNumAtoms();
   for (int iAtom=0; iAtom<n; iAtom++) {
+    int iType = box.getAtomType(iAtom);
+    double rMass = 1.0/atomInfo.getMass(iType);
     double* ri = box.getAtomPosition(iAtom);
     double* vi = box.getAtomVelocity(iAtom);
     for (int j=0; j<3; j++) {
-      vi[j] += 0.5*tStep*forces[iAtom][j];
+      vi[j] += 0.5*tStep*forces[iAtom][j]*rMass;
       ri[j] += tStep*vi[j];
     }
   }
@@ -47,42 +49,58 @@ void IntegratorMD::doStep() {
   }
   potentialMaster.computeAll(selfPotentialCallbackVec);
 
+  kineticEnergy = 0;
   for (int iAtom=0; iAtom<n; iAtom++) {
+    int iType = box.getAtomType(iAtom);
+    double mass = atomInfo.getMass(iType);
     double* vi = box.getAtomVelocity(iAtom);
     for (int j=0; j<3; j++) {
-      vi[j] += 0.5*tStep*forces[iAtom][j];
+      vi[j] += 0.5*tStep*forces[iAtom][j]/mass;
+      kineticEnergy += 0.5*mass*vi[j]*vi[j];
     }
   }
   for (vector<IntegratorListener*>::iterator it = listenersStepFinished.begin(); it!=listenersStepFinished.end(); it++) {
     (*it)->stepFinished();
   }
   if (nbrCheckInterval>0) nbrCheckCountdown--;
+#ifdef DEBUG
+  printf("%ld step %e %e %e\n", stepCount, energy/n, kineticEnergy/n, (energy + kineticEnergy)/n);
+#endif
 }
 
 void IntegratorMD::randomizeVelocities(bool zeroMomentum) {
-  double imass = 1;
-  double sqrtTM = sqrt(temperature/imass);
   double momentum[3];
   double totalMass = 0;
   int numAtoms = box.getNumAtoms();
+  double sqrtTM[atomInfo.getNumTypes()], imass[atomInfo.getNumTypes()];
+  for (int i=0; i<atomInfo.getNumTypes(); i++) {
+    imass[i] = atomInfo.getMass(i);
+    sqrtTM[i] = sqrt(temperature/imass[i]);
+  }
+  kineticEnergy = 0;
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+    int iType = box.getAtomType(iAtom);
     double* vi = box.getAtomVelocity(iAtom);
     for (int j=0; j<3; j++) {
-      vi[j] = random.nextGaussian()*sqrtTM;
+      vi[j] = random.nextGaussian()*sqrtTM[iType];
       if (zeroMomentum) {
-        momentum[j] += vi[j]*imass;
-        totalMass += imass;
+        momentum[j] += vi[j]*imass[iType];
+        totalMass += imass[iType];
+        kineticEnergy += 0.5*imass[iType]*vi[j]*vi[j];
       }
     }
   }
   if (zeroMomentum) {
+    kineticEnergy = 0;
     for (int j=0; j<3; j++ ){
       momentum[j] /= totalMass;
     }
     for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+      int iType = box.getAtomType(iAtom);
       double* vi = box.getAtomVelocity(iAtom);
       for (int j=0; j<3; j++ ){
         vi[j] -= momentum[j];
+        kineticEnergy += 0.5*imass[iType]*vi[j]*vi[j];
       }
     }
   }
@@ -95,6 +113,10 @@ void IntegratorMD::reset() {
   }
   Integrator::reset();
   randomizeVelocities(false);
+}
+
+double IntegratorMD::getKineticEnergy() {
+  return kineticEnergy;
 }
 
 void IntegratorMD::addPotentialCallback(PotentialCallback* callback, int interval) {

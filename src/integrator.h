@@ -72,6 +72,7 @@ struct PotentialCallbackInfo {
 
 class IntegratorMD : public Integrator {
   protected:
+    AtomInfo& atomInfo;
     Random& random;
     Box& box;
     double** forces;
@@ -80,8 +81,9 @@ class IntegratorMD : public Integrator {
     int nbrCheckInterval, nbrCheckCountdown;
     void randomizeVelocities(bool zeroMomentum);
     vector<struct PotentialCallbackInfo> allPotentialCallbacks;
+    double kineticEnergy;
   public:
-    IntegratorMD(PotentialMaster& potentialMaster, Random& random, Box& box);
+    IntegratorMD(AtomInfo& atomInfo, PotentialMaster& potentialMaster, Random& random, Box& box);
     ~IntegratorMD();
     void setTimeStep(double tStep);
     void setNbrCheckInterval(int interval);
@@ -89,5 +91,6 @@ class IntegratorMD : public Integrator {
     virtual void doStep();
     virtual void reset();
     void addPotentialCallback(PotentialCallback* callback, int interval=1);
+    double getKineticEnergy();
 };
 
