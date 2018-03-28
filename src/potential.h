@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdio.h>
+#include <math.h>
+
 #define TRUNC_NONE 0
 #define TRUNC_SIMPLE 1
 #define TRUNC_LRC 2
@@ -45,10 +48,10 @@ class PotentialLJ: public Potential {
 };
 
 class PotentialSS: public Potential {
-  private:
+  protected:
     const double epsilon;
     const int exponent;
-    double rpow(double r2);
+    double epsrpow(double r2);
   public:
     PotentialSS(double epsilon, int p, int tt, double rc);
     ~PotentialSS() {}
@@ -58,6 +61,52 @@ class PotentialSS: public Potential {
     double d2u(double r2);
     void u012(double r2, double &u, double &du, double &d2u);
     virtual void u012TC(double &u, double &du, double &d2u);
+};
+
+class PotentialSSfloat: public Potential {
+  protected:
+    const double epsilon;
+    const double exponent;
+    double epsrpow(double r2) { return epsilon*pow(r2, -0.5*exponent); }
+  public:
+    PotentialSSfloat(double epsilon, double p, int tt, double rc);
+    ~PotentialSSfloat() {}
+    virtual double ur(double r);
+    virtual double u(double r2);
+    virtual double du(double r2);
+    virtual double d2u(double r2);
+    virtual void u012(double r2, double &u, double &du, double &d2u);
+    virtual void u012TC(double &u, double &du, double &d2u);
+};
+
+class PotentialSSfloatTab: public PotentialSS {
+  protected:
+    double** rpTab;
+    const int nTab;
+    const double xFac;
+    double exponentFloat;
+    double rpInterp(const double r2) {
+      double x = r2*xFac;
+      int idx = (int)x;
+      x -= idx;
+      double* irp = rpTab[idx];
+      double z = irp[0] + x*(irp[1] + x*(irp[2] + x*irp[3]));
+      /*double y = pow(r2, 0.5*exponentFloat);
+      printf ("%f %f %f %e\n", sqrt(r2), z, y, (z-y)/y);*/
+      return z;
+      /*
+      double z = rpTab[idx] + (rpTab[idx+1]-rpTab[idx])*(x-idx);
+      return rpTab[idx] + (rpTab[idx+1]-rpTab[idx])*(x-idx);*/
+    } 
+  public:
+    PotentialSSfloatTab(double epsilon, double p, int tt, double rc, int nTab);
+    ~PotentialSSfloatTab();
+    double ur(double r);
+    double u(double r2);
+    double du(double r2);
+    double d2u(double r2);
+    void u012(double r2, double &u, double &du, double &d2u);
+    void u012TC(double &u, double &du, double &d2u);
 };
 
 class PotentialWCA: public PotentialLJ {

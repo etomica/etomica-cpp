@@ -2,7 +2,7 @@
 #include "potential-master.h"
 #include "alloc2d.h"
 
-PotentialMasterList::PotentialMasterList(const SpeciesList& sl, Box& box, int cellRange, double nRange) : PotentialMasterCell(sl, box, cellRange), nbrRange(nRange), nbrs(nullptr), onlyUpNbrs(true), numAtomNbrsUp(nullptr), numAtomNbrsDn(nullptr), nbrsNumAtoms(0), maxNab(0), nbrBoxOffsets(nullptr), forceReallocNbrs(false), oldAtomPositions(nullptr), safetyFac(0.1) {
+PotentialMasterList::PotentialMasterList(const SpeciesList& sl, Box& box, bool doEmbed, int cellRange, double nRange) : PotentialMasterCell(sl, box, doEmbed, cellRange), nbrRange(nRange), nbrs(nullptr), onlyUpNbrs(true), numAtomNbrsUp(nullptr), numAtomNbrsDn(nullptr), nbrsNumAtoms(0), maxNab(0), nbrBoxOffsets(nullptr), forceReallocNbrs(false), oldAtomPositions(nullptr), safetyFac(0.1) {
   maxR2 = (double*)malloc(numAtomTypes*sizeof(double));
   maxR2Unsafe = (double*)malloc(numAtomTypes*sizeof(double));
 }
@@ -23,10 +23,17 @@ double PotentialMasterList::getRange() {
 
 void PotentialMasterList::init() {
   PotentialMasterCell::init();
+  double maxRhoCut = 0;
+  if (embeddingPotentials) {
+    for (int i=0; i<numAtomTypes; i++) {
+      if (rhoCutoffs[i] > maxRhoCut) maxRhoCut = rhoCutoffs[i];
+    }
+  }
   for (int i=0; i<numAtomTypes; i++) {
     maxR2Unsafe[i] = maxR2[i] = 1e100;
     for (int j=0; j<numAtomTypes; j++) {
-      double rc = pairPotentials[i][j]->getCutoff();
+      double rc = sqrt(pairCutoffs[i][j]);
+      if (maxRhoCut > rc) rc = maxRhoCut;
       double maxDrUnsafe = (nbrRange-rc)*0.5;
       double x = maxDrUnsafe*maxDrUnsafe;
       if (maxR2Unsafe[i] < x) continue;
@@ -185,16 +192,22 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
   pairCallbacks.resize(0);
   bool doForces = false;
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
-    if ((*it)->callPair) pairCallbacks.push_back(*it);
+    if (!embeddingPotentials && (*it)->callPair) pairCallbacks.push_back(*it);
     if ((*it)->takesForces) doForces = true;
   }
-  if (doForces && !force) {
-    force = (double**)malloc2D(box.getNumAtoms(), 3, sizeof(double));
-  }
   int numAtoms = box.getNumAtoms();
+  if (doForces && numAtoms > numForceAtoms) {
+    force = (double**)realloc2D((void**)force, numAtoms, 3, sizeof(double));
+    if (embeddingPotentials) {
+      rhoSum = (double*)realloc(rhoSum, numAtoms*sizeof(double));
+      idf = (double*)realloc(idf, numAtoms*sizeof(double));
+    }
+    numForceAtoms = numAtoms;
+  }
   double uTot=0, virialTot=0;
   for (int i=0; i<numAtoms; i++) {
     uAtom[i] = 0;
+    if (embeddingPotentials) rhoSum[i] = 0;
     if (doForces) for (int k=0; k<3; k++) force[i][k] = 0;
   }
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
@@ -206,6 +219,8 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
     int iNumNbrs = numAtomNbrsUp[iAtom];
     int* iNbrs = nbrs[iAtom];
     double** iNbrBoxOffsets = nbrBoxOffsets[iAtom];
+    Potential* iRhoPotential = embeddingPotentials ? rhoPotentials[iType] : nullptr;
+    double iRhoCutoff = embeddingPotentials ? rhoCutoffs[iType] : 0;
     for (int j=0; j<iNumNbrs; j++) {
       int jAtom = iNbrs[j];
       int jType = box.getAtomType(jAtom);
@@ -213,7 +228,43 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
       Potential* pij = iPotentials[jType];
       double *rj = box.getAtomPosition(jAtom);
       double *jbo = iNbrBoxOffsets[j];
-      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, doForces);
+      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, iRhoPotential, iRhoCutoff, iType, jType, doForces);
+    }
+  }
+  if (embeddingPotentials) {
+    // we need another pass to include embedding contributions
+    int rdrhoIdx = 0;
+    for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+      int iType = box.getAtomType(iAtom);
+      double f, df, d2f;
+      embedF[iType]->f012(rhoSum[iAtom], f, df, d2f);
+      uTot += f;
+      if (doForces) {
+        idf[iAtom] = df;
+      }
+    }
+    if (doForces) {
+      for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+        int iType = box.getAtomType(iAtom);
+        if (doForces) {
+          double *ri = box.getAtomPosition(iAtom);
+          double iRhoCutoff = rhoCutoffs[iType];
+          Potential* iRhoPotential = rhoPotentials[iType];
+          int iNumNbrs = numAtomNbrsUp[iAtom];
+          int* iNbrs = nbrs[iAtom];
+          double** iNbrBoxOffsets = nbrBoxOffsets[iAtom];
+          double df = idf[iAtom];
+          for (int j=0; j<iNumNbrs; j++) {
+            int jAtom = iNbrs[j];
+            int jType = box.getAtomType(jAtom);
+            double *rj = box.getAtomPosition(jAtom);
+            double *jbo = iNbrBoxOffsets[j];
+
+            handleComputeAllEmbed(iAtom, jAtom, iType, jType, ri, rj, jbo, df, virialTot, iRhoPotential, iRhoCutoff, rdrhoIdx);
+          }
+        }
+      }
+      rdrho.clear();
     }
   }
   computeAllTruncationCorrection(uTot, virialTot);

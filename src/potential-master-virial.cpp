@@ -1,6 +1,6 @@
 #include "potential-master.h"
 
-PotentialMasterVirial::PotentialMasterVirial(const SpeciesList &sl, Box &box) : PotentialMaster(sl,box) {}
+PotentialMasterVirial::PotentialMasterVirial(const SpeciesList &sl, Box &box) : PotentialMaster(sl,box,false) {}
 
 void PotentialMasterVirial::computeAtoms(const int* iAtomList, const int nAtoms, double &energy) {
   for (int i=0; i<nAtoms-1; i++) {

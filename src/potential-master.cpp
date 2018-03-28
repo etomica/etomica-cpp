@@ -5,14 +5,34 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false) {
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed) {
 
+  if (embeddingPotentials && !pureAtoms) {
+    fprintf(stderr, "Embedding potentials require a purely atomic system");
+    abort();
+  }
   pairPotentials = (Potential***)malloc2D(numAtomTypes, numAtomTypes, sizeof(Potential*));
   pairCutoffs = (double**)malloc2D(numAtomTypes, numAtomTypes, sizeof(double));
+  if (embeddingPotentials) {
+    rhoPotentials = (Potential**)malloc(numAtomTypes*sizeof(Potential*));
+    embedF = (EmbedF**)malloc(numAtomTypes*sizeof(EmbedF*));
+    rhoCutoffs = (double*)malloc(numAtomTypes*sizeof(double));
+    setDoTruncationCorrection(false);
+  }
+  else {
+    rhoPotentials = nullptr;
+    embedF = nullptr;
+    rhoCutoffs = nullptr;
+  }
   for (int i=0; i<numAtomTypes; i++) {
     for (int j=0; j<numAtomTypes; j++) {
       pairPotentials[i][j] = nullptr;
       pairCutoffs[i][j] = 0;
+    }
+    if (embeddingPotentials) {
+      rhoPotentials[i] = nullptr;
+      rhoCutoffs[i] = 0;
+      embedF[i] = nullptr;
     }
   }
   uAtom.resize(b.getNumAtoms());
@@ -37,8 +57,12 @@ PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b) : speciesList(sl
 
 PotentialMaster::~PotentialMaster() {
   free2D((void**)pairPotentials);
+  free(rhoPotentials);
+  free(embedF);
   free2D((void**)pairCutoffs);
+  free(rhoCutoffs);
   free2D((void**)force);
+  free(idf);
   delete[] bondedPairs;
   delete[] bondedPotentials;
   delete[] bondedAtoms;
@@ -60,7 +84,29 @@ void PotentialMaster::setPairPotential(int iType, int jType, Potential* p) {
   pairCutoffs[iType][jType] = pairCutoffs[jType][iType] = rc*rc;
 }
 
+void PotentialMaster::setRhoPotential(int jType, Potential* p) {
+  if (!embeddingPotentials) {
+    fprintf(stderr, "Potential master not configured for embedding potentials!\n");
+    abort();
+  }
+  rhoPotentials[jType] = p;
+  double rc = p->getCutoff();
+  rhoCutoffs[jType] = rc*rc;
+}
+
+void PotentialMaster::setEmbedF(int iType, EmbedF* ef) {
+  if (!embeddingPotentials) {
+    fprintf(stderr, "Potential master not configured for embedding potentials!\n");
+    abort();
+  }
+  embedF[iType] = ef;
+}
+
 void PotentialMaster::setBondPotential(int iSpecies, vector<int*> &bp, Potential *p) {
+  if (pureAtoms) {
+    fprintf(stderr, "Potential master was configured for purely atomic interactions\n");
+    abort();
+  }
   rigidMolecules = false;
   bondedPairs[iSpecies].push_back(bp);
   bondedPotentials[iSpecies].push_back(p);
@@ -88,20 +134,26 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   pairCallbacks.resize(0);
   bool doForces = false;
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
-    if ((*it)->callPair) pairCallbacks.push_back(*it);
+    if (!embeddingPotentials && (*it)->callPair) pairCallbacks.push_back(*it);
     if ((*it)->takesForces) doForces = true;
   }
   int numAtoms = box.getNumAtoms();
-  if (doForces && !force && numAtoms > numForceAtoms) {
+  if (doForces && numAtoms > numForceAtoms) {
     force = (double**)realloc2D((void**)force, numAtoms, 3, sizeof(double));
+    if (embeddingPotentials) {
+      rhoSum = (double*)realloc(rhoSum, numAtoms*sizeof(double));
+      idf = (double*)realloc(idf, numAtoms*sizeof(double));
+    }
     numForceAtoms = numAtoms;
   }
 
   double uTot = 0, virialTot = 0;
-  double u, du, d2u;
   double dr[3];
+  double zero[3];
+  zero[0] = zero[1] = zero[2] = 0;
   for (int i=0; i<numAtoms; i++) {
     uAtom[i] = 0;
+    if (embeddingPotentials) rhoSum[i] = 0;
     if (doForces) for (int k=0; k<3; k++) force[i][k] = 0;
   }
   for (int i=0; i<numAtoms; i++) {
@@ -115,32 +167,42 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
     }
     double *ri = box.getAtomPosition(i);
     int iType = box.getAtomType(i);
-    for (int j=i+1; j<numAtoms; j++) {
+    Potential* iRhoPotential = embeddingPotentials ? rhoPotentials[iType] : nullptr;
+    double iRhoCutoff = embeddingPotentials ? rhoCutoffs[iType] : 0;
+    for (int j=0; j<i; j++) {
       if (checkSkip(j, iSpecies, iMolecule, iBondedAtoms)) continue;
       int jType = box.getAtomType(j);
       double *rj = box.getAtomPosition(j);
       for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
       box.nearestImage(dr);
-      double r2 = 0;
-      for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
-      double rc2 = pairCutoffs[iType][jType];
-      if (r2 > rc2) continue;
-      pairPotentials[iType][jType]->u012(r2, u, du, d2u);
-      uAtom[i] += 0.5*u;
-      uAtom[j] += 0.5*u;
-      uTot += u;
-      virialTot += du;
-      for (vector<PotentialCallback*>::iterator it = pairCallbacks.begin(); it!=pairCallbacks.end(); it++) {
-        (*it)->pairCompute(i, j, dr, u, du, d2u);
-      }
+      handleComputeAll(i, j, zero, dr, zero, pairPotentials[iType][jType], uAtom[i], uAtom[j], force[i], force[j], uTot, virialTot, pairCutoffs[iType][jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
+    }
+  }
+  if (embeddingPotentials) {
+    // we need another pass to include embedding contributions
+    int rdrhoIdx = 0;
+    for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+      int iType = box.getAtomType(iAtom);
+      double f, df, d2f;
+      embedF[iType]->f012(rhoSum[iAtom], f, df, d2f);
+      uTot += f;
+      if (doForces) {
+        double *ri = box.getAtomPosition(iAtom);
+        idf[iAtom] = df;
+        double iRhoCutoff = rhoCutoffs[iType];
+        Potential* iRhoPotential = rhoPotentials[iType];
+        for (int jAtom=0; jAtom<iAtom; jAtom++) {
+          int jType = box.getAtomType(jAtom);
+          double *rj = box.getAtomPosition(jAtom);
+          for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
+          box.nearestImage(dr);
 
-      // f0 = dr du / r^2
-      if (!doForces) continue;
-      du /= r2;
-      for (int k=0; k<3; k++) {
-        force[i][k] += dr[k]*du;
-        force[j][k] -= dr[k]*du;
+          handleComputeAllEmbed(iAtom, jAtom, iType, jType, zero, dr, zero, df, virialTot, iRhoPotential, iRhoCutoff, rdrhoIdx);
+        }
       }
+    }
+    if (doForces) {
+      rdrho.clear();
     }
   }
   if (!pureAtoms && !rigidMolecules) {

@@ -11,6 +11,28 @@
 
 using namespace std;
 
+class EmbedF {
+  public:
+    EmbedF() {}
+    virtual ~EmbedF() {}
+    virtual void f012(double rhoSum, double &f, double &df, double &d2f) = 0;
+};
+
+class EmbedFsqrt : public EmbedF {
+  private:
+    const double eps;
+  public:
+    EmbedFsqrt(double Ceps) : EmbedF(), eps(Ceps) {}
+    ~EmbedFsqrt() {}
+    void f012(double rhoSum, double &f, double &df, double &d2f) {
+      double s = sqrt(rhoSum);
+      f = -eps*s;
+      df = -0.5*eps/s;
+      d2f = 0;
+    }
+};
+
+
 class PotentialCallback {
   public:
     bool callPair;
@@ -90,8 +112,11 @@ class PotentialMaster {
   protected:
     const SpeciesList& speciesList;
     Potential*** pairPotentials;
+    Potential** rhoPotentials;
+    EmbedF **embedF;
     int* numAtomsByType;
     double** pairCutoffs;
+    double *rhoCutoffs;
     Box& box;
     vector<double> uAtom;
     vector<double> duAtom;
@@ -99,6 +124,10 @@ class PotentialMaster {
     vector<int> uAtomsChanged;
     double** force;
     int numForceAtoms;
+    double* rhoSum;
+    double* idf;
+    vector<double> rdrho;
+
     vector<PotentialCallback*> pairCallbacks;
     const int numAtomTypes;
     vector<vector<int*> > *bondedPairs;
@@ -107,6 +136,7 @@ class PotentialMaster {
     const bool pureAtoms;
     bool rigidMolecules;
     bool doTruncationCorrection, doSingleTruncationCorrection;
+    const bool embeddingPotentials;
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);
     void computeAllBonds(bool doForces, double &uTot, double &virialTot);
@@ -119,15 +149,114 @@ class PotentialMaster {
       if (rigidMolecules) return iSpecies==jSpecies && iMolecule == jMolecule;
       return binary_search(iBondedAtoms->begin(), iBondedAtoms->end(), jAtom-jFirstAtom);
     }
+    void handleComputeAll(int iAtom, int jAtom, const double *ri, const double *rj, const double *jbo, Potential* pij, double &ui, double &uj, double* fi, double* fj, double& uTot, double& virialTot, const double rc2, Potential* iRhoPotential, const double iRhoCutoff, const int iType, const int jType, const bool doForces) {
+      double dr[3];
+      dr[0] = (rj[0]+jbo[0])-ri[0];
+      dr[1] = (rj[1]+jbo[1])-ri[1];
+      dr[2] = (rj[2]+jbo[2])-ri[2];
+      double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
+      if (r2 < rc2) {
+        double u, du, d2u;
+        pij->u012(r2, u, du, d2u);
+        ui += 0.5*u;
+        uj += 0.5*u;
+
+        uTot += u;
+        virialTot += du;
+        for (vector<PotentialCallback*>::iterator it = pairCallbacks.begin(); it!=pairCallbacks.end(); it++) {
+          (*it)->pairCompute(iAtom, jAtom, dr, u, du, d2u);
+        }
+
+        // f0 = dr du / r^2
+        if (doForces) {
+          du /= r2;
+          double x = dr[0]*du;
+          fi[0] += x;
+          fj[0] -= x;
+          x = dr[1]*du;
+          fi[1] += x;
+          fj[1] -= x;
+          x = dr[2]*du;
+          fi[2] += x;
+          fj[2] -= x;
+        }
+      }
+      if (embeddingPotentials) {
+        if (r2 < iRhoCutoff) {
+          double rho, drho, d2rho;
+          iRhoPotential->u012(r2, rho, drho, d2rho);
+          rhoSum[iAtom] += rho;
+          rdrho.push_back(drho);
+          //if (iAtom==0||jAtom==0) printf("%d %d %f %f\n", iAtom, jAtom, sqrt(r2), drho);
+          if (jType == iType) {
+            rhoSum[jAtom] += rho;
+          }
+          else if (r2 < rhoCutoffs[jType]) {
+            rhoPotentials[jType]->u012(r2, rho, drho, d2rho);
+            rhoSum[jAtom] += rho;
+          }
+        }
+        else if (r2 < rhoCutoffs[jType]) {
+          double rho, drho, d2rho;
+          rhoPotentials[jType]->u012(r2, rho, drho, d2rho);
+          rhoSum[jAtom] += rho;
+          rdrho.push_back(drho);
+          //if (iAtom==0||jAtom==0) printf("%d %d %f %f\n", iAtom, jAtom, sqrt(r2), drho);
+        }
+      }
+    }
+    void handleComputeAllEmbed(const int iAtom, const int jAtom, const int iType, const int jType, const double *ri, const double *rj, const double *jbo, const double df, double &virialTot, Potential* iRhoPotential, double iRhoCutoff, int &rdrhoIdx) {
+      double dr[3];
+      dr[0] = (rj[0]+jbo[0])-ri[0];
+      dr[1] = (rj[1]+jbo[1])-ri[1];
+      dr[2] = (rj[2]+jbo[2])-ri[2];
+      double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
+
+      if (r2 < iRhoCutoff) {
+        // if rij < cutoff for rhoi, then we have a force
+        if (iType==jType) {
+          double fac = ((df + idf[jAtom]) * rdrho[rdrhoIdx])/r2;
+          //if (iAtom==0||jAtom==0) printf("go %d %d  %f %f  %f %f  %f\n", iAtom, jAtom, sqrt(r2), rdrho[rdrhoIdx], df, idf[jAtom], fac);
+          for (int k=0; k<3; k++) {
+            double fk = dr[k] * fac;
+            force[iAtom][k] += fk;
+            force[jAtom][k] -= fk;
+          }
+        }
+        else {
+          double fac = df * rdrho[rdrhoIdx];
+          if (r2 < rhoCutoffs[jAtom]) fac += idf[jAtom] * rdrho[rdrhoIdx];
+          fac /= r2;
+          for (int k=0; k<3; k++) {
+            double fk = dr[k] * fac;
+            force[iAtom][k] += fk;
+            force[jAtom][k] -= fk;
+          }
+        }
+        rdrhoIdx++;
+      }
+      else if (r2 < rhoCutoffs[jType]) {
+        // if rij < cutoff for rhoi, then we have a force
+        double fac = idf[jAtom] * rdrho[rdrhoIdx] / r2;
+        for (int k=0; k<3; k++) {
+          double fk = dr[k] * fac;
+          force[iAtom][k] += fk;
+          force[jAtom][k] -= fk;
+        }
+        rdrhoIdx++;
+      }
+    }
     virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom);
 
   public:
-    PotentialMaster(const SpeciesList &speciesList, Box& box);
+    PotentialMaster(const SpeciesList &speciesList, Box& box, bool doEmbed);
     virtual ~PotentialMaster();
     Box& getBox();
     void setDoTruncationCorrection(bool doCorrection);
     void setDoSingleTruncationCorrection(bool doCorrection);
     virtual void setPairPotential(int iType, int jType, Potential* pij);
+    virtual void setRhoPotential(int jType, Potential* rhoj);
+    virtual void setEmbedF(int iType, EmbedF* Fi);
     void setBondPotential(int iSpecies, vector<int*> &bondedPairs, Potential *pBond);
     // compute for the whole box
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
@@ -179,36 +308,10 @@ class PotentialMasterCell : public PotentialMaster {
       }
       uTot += uij;
     }
-    void handleComputeAll(int iAtom, int jAtom, const double *ri, const double *rj, const double *jbo, Potential* pij, double &ui, double &uj, double* fi, double* fj, double& uTot, double& virialTot, double rc2, bool doForces) {
-      double dr[3];
-      dr[0] = (rj[0]+jbo[0])-ri[0];
-      dr[1] = (rj[1]+jbo[1])-ri[1];
-      dr[2] = (rj[2]+jbo[2])-ri[2];
-      double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
-      if (r2 > rc2) return;
-      double u, du, d2u;
-      pij->u012(r2, u, du, d2u);
-      ui += 0.5*u;
-      uj += 0.5*u;
-
-      uTot += u;
-      virialTot += du;
-      for (vector<PotentialCallback*>::iterator it = pairCallbacks.begin(); it!=pairCallbacks.end(); it++) {
-        (*it)->pairCompute(iAtom, jAtom, dr, u, du, d2u);
-      }
-
-      // f0 = dr du / r^2
-      if (!doForces) return;
-      du /= r2;
-      for (int k=0; k<3; k++) {
-        fi[k] += dr[k]*du;
-        fj[k] -= dr[k]*du;
-      }
-    }
 
     virtual void computeOneInternal(const int iAtom, const double *ri, double &energy, const int iSpecies, const int iMolecule, const int iFirstAtom);
   public:
-    PotentialMasterCell(const SpeciesList &speciesList, Box& box, int cellRange);
+    PotentialMasterCell(const SpeciesList &speciesList, Box& box, bool doEmbed, int cellRange);
     ~PotentialMasterCell();
     virtual double getRange();
     virtual void setPairPotential(int iType, int jType, Potential* pij);
@@ -238,7 +341,7 @@ class PotentialMasterList : public PotentialMasterCell {
 
     int checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2, double *jbo);
   public:
-    PotentialMasterList(const SpeciesList& speciesList, Box& box, int cellRange, double nbrRange);
+    PotentialMasterList(const SpeciesList& speciesList, Box& box, bool doEmbed, int cellRange, double nbrRange);
     ~PotentialMasterList();
     virtual double getRange();
     virtual void init();

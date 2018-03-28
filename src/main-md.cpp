@@ -35,11 +35,11 @@ int main(int argc, char** argv) {
   potentialMaster.init();
   int* numCells = potentialMaster.getNumCells();
   printf("cells: %d %d %d\n", numCells[0], numCells[1], numCells[2]);*/
-  PotentialMasterList potentialMaster(speciesList, box, 2, 2.8);
+  PotentialMasterList potentialMaster(speciesList, box, false, 2, 2.8);
   potentialMaster.setPairPotential(0, 0, &plj);
   potentialMaster.init();
   //PotentialMaster potentialMaster(plj, box);
-  IntegratorMD integrator(potentialMaster, rand, box);
+  IntegratorMD integrator(speciesList.getAtomInfo(), potentialMaster, rand, box);
   integrator.setTimeStep(0.005);
   integrator.setTemperature(temperature);
   integrator.setNbrCheckInterval(20);

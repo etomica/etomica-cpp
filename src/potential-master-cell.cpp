@@ -3,7 +3,7 @@
 #include "alloc2d.h"
 #include "potential-master.h"
 
-PotentialMasterCell::PotentialMasterCell(const SpeciesList& sl, Box& box, int cRange) : PotentialMaster(sl, box), cellManager(sl, box, cRange), cellRange(cRange), cellNextAtom(cellManager.cellNextAtom), atomCell(cellManager.atomCell), cellLastAtom(cellManager.cellLastAtom), cellOffsets(cellManager.cellOffsets), wrapMap(cellManager.wrapMap), boxOffsets(cellManager.boxOffsets), lsNeeded(false) {
+PotentialMasterCell::PotentialMasterCell(const SpeciesList& sl, Box& box, bool doEmbed, int cRange) : PotentialMaster(sl, box, doEmbed), cellManager(sl, box, cRange), cellRange(cRange), cellNextAtom(cellManager.cellNextAtom), atomCell(cellManager.atomCell), cellLastAtom(cellManager.cellLastAtom), cellOffsets(cellManager.cellOffsets), wrapMap(cellManager.wrapMap), boxOffsets(cellManager.boxOffsets), lsNeeded(false) {
 }
 
 PotentialMasterCell::~PotentialMasterCell() {
@@ -76,13 +76,15 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     Potential** iPotentials = pairPotentials[iType];
     const double *ri = box.getAtomPosition(iAtom);
     double *fi = doForces ? force[iAtom] : nullptr;
+    Potential* iRhoPotential = embeddingPotentials ? rhoPotentials[iType] : nullptr;
+    double iRhoCutoff = embeddingPotentials ? rhoCutoffs[iType] : 0;
     int jAtom=iAtom;
     const double *jbo = boxOffsets[atomCell[iAtom]];
     while ((jAtom = cellNextAtom[jAtom]) > -1) {
       if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
       const double *rj = box.getAtomPosition(jAtom);
       const int jType = box.getAtomType(jAtom);
-      handleComputeAll(iAtom, jAtom, ri, rj, jbo, iPotentials[jType], uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], doForces);
+      handleComputeAll(iAtom, jAtom, ri, rj, jbo, iPotentials[jType], uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
     }
     const int iCell = atomCell[iAtom];
     for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
@@ -93,7 +95,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
         if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
         const int jType = box.getAtomType(jAtom);
         const double *rj = box.getAtomPosition(jAtom);
-        handleComputeAll(iAtom, jAtom, ri, rj, jbo, iPotentials[jType], uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], doForces);
+        handleComputeAll(iAtom, jAtom, ri, rj, jbo, iPotentials[jType], uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
       }
     }
   }

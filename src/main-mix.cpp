@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
   box.setNumMolecules(species1, numAtoms1);
   box.setNumMolecules(species2, numAtoms2);
   box.initCoordinates();
-  PotentialMasterCell potentialMaster(speciesList, box, 2);
+  PotentialMasterCell potentialMaster(speciesList, box, false, 2);
   potentialMaster.setPairPotential(species1, species1, &plj11);
   potentialMaster.setPairPotential(species1, species2, &plj12);
   potentialMaster.setPairPotential(species2, species2, &plj22);
