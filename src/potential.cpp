@@ -280,7 +280,7 @@ void PotentialSSfloat::u012TC(double &u, double &du, double &d2u) {
 
 PotentialSSfloatTab::PotentialSSfloatTab(double e, double p, int tt, double rc, int nt) : PotentialSS(e, (int)p, tt, rc), nTab(nt), xFac(nTab/(rc*rc)) {
   exponentFloat = p - exponent;
-  if (nTab >= 100000) {
+  if (nTab > 100000) {
     fprintf(stderr, "Allocating for %d values of r for tabulated potential is probably overkill\n", nTab);
   }
   rpTab = (double**)malloc2D(nTab+2, 4, sizeof(double));
@@ -292,7 +292,7 @@ PotentialSSfloatTab::PotentialSSfloatTab(double e, double p, int tt, double rc, 
     rpTab[i][1] = 0.5*exponentFloat*rpTab[i][0]/r2/xFac;
   }
 
-  // now set 3rd and 4th-order terms to enforce continuity
+  // now set quadratic, cubic terms to enforce continuity
   for (int i=0; i<=nTab; i++) {
     rpTab[i][2] = 3*(rpTab[i+1][0]-rpTab[i][0]) - 2*rpTab[i][1] - rpTab[i+1][1];
     rpTab[i][3] = 2*(rpTab[i][0]-rpTab[i+1][0]) + rpTab[i][1] + rpTab[i+1][1];
@@ -300,7 +300,7 @@ PotentialSSfloatTab::PotentialSSfloatTab(double e, double p, int tt, double rc, 
 }
 
 PotentialSSfloatTab::~PotentialSSfloatTab() {
-  delete[] rpTab;
+  free2D((void**)rpTab);
 }
 
 double PotentialSSfloatTab::ur(double r) {

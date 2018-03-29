@@ -94,9 +94,6 @@ class PotentialSSfloatTab: public PotentialSS {
       /*double y = pow(r2, 0.5*exponentFloat);
       printf ("%f %f %f %e\n", sqrt(r2), z, y, (z-y)/y);*/
       return z;
-      /*
-      double z = rpTab[idx] + (rpTab[idx+1]-rpTab[idx])*(x-idx);
-      return rpTab[idx] + (rpTab[idx+1]-rpTab[idx])*(x-idx);*/
     } 
   public:
     PotentialSSfloatTab(double epsilon, double p, int tt, double rc, int nTab);

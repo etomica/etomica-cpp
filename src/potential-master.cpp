@@ -61,6 +61,7 @@ PotentialMaster::~PotentialMaster() {
   free(embedF);
   free2D((void**)pairCutoffs);
   free(rhoCutoffs);
+  free(rhoSum);
   free2D((void**)force);
   free(idf);
   delete[] bondedPairs;
