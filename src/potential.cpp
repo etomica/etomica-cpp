@@ -278,7 +278,7 @@ void PotentialSSfloat::u012TC(double &u, double &du, double &d2u) {
   d2u = y;
 }
 
-PotentialSSfloatTab::PotentialSSfloatTab(double e, double p, int tt, double rc, int nt) : PotentialSS(e, (int)p, tt, rc), nTab(nt), xFac(nTab/(rc*rc)) {
+PotentialSSfloatTab::PotentialSSfloatTab(double e, double p, int tt, double rc, int nt) : PotentialSS(e, (((int)p)/2)*2, tt, rc), nTab(nt), xFac(nTab/(rc*rc)) {
   exponentFloat = p - exponent;
   if (nTab > 100000) {
     fprintf(stderr, "Allocating for %d values of r for tabulated potential is probably overkill\n", nTab);
