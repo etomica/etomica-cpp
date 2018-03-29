@@ -22,6 +22,12 @@ double PotentialMasterCell::getRange() {
       if (rc > range) range = rc;
     }
   }
+  if (embeddingPotentials) {
+    for (int iType=0; iType<numAtomTypes; iType++) {
+      double rc = rhoPotentials[iType]->getCutoff();
+      if (rc > range) range = rc;
+    }
+  }
   return range;
 }
 
@@ -97,6 +103,49 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
         const double *rj = box.getAtomPosition(jAtom);
         handleComputeAll(iAtom, jAtom, ri, rj, jbo, iPotentials[jType], uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
       }
+    }
+  }
+  if (embeddingPotentials) {
+    // we need another pass to include embedding contributions
+    int rdrhoIdx = 0;
+    for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+      int iType = box.getAtomType(iAtom);
+      double f, df, d2f;
+      embedF[iType]->f012(rhoSum[iAtom], f, df, d2f);
+      uTot += f;
+      if (doForces) {
+        idf[iAtom] = df;
+      }
+    }
+    if (doForces) {
+      for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+        int iType = box.getAtomType(iAtom);
+        if (doForces) {
+          double *ri = box.getAtomPosition(iAtom);
+          double iRhoCutoff = rhoCutoffs[iType];
+          Potential* iRhoPotential = rhoPotentials[iType];
+          double df = idf[iAtom];
+          int jAtom=iAtom;
+          const double *jbo = boxOffsets[atomCell[iAtom]];
+          while ((jAtom = cellNextAtom[jAtom]) > -1) {
+            int jType = box.getAtomType(jAtom);
+            double *rj = box.getAtomPosition(jAtom);
+            handleComputeAllEmbed(iAtom, jAtom, iType, jType, ri, rj, jbo, df, virialTot, iRhoPotential, iRhoCutoff, rdrhoIdx);
+          }
+          const int iCell = atomCell[iAtom];
+          for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
+            int jCell = iCell + *it;
+            jbo = boxOffsets[jCell];
+            jCell = wrapMap[jCell];
+            for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
+              const int jType = box.getAtomType(jAtom);
+              const double *rj = box.getAtomPosition(jAtom);
+              handleComputeAllEmbed(iAtom, jAtom, iType, jType, ri, rj, jbo, df, virialTot, iRhoPotential, iRhoCutoff, rdrhoIdx);
+            }
+          }
+        }
+      }
+      rdrho.clear();
     }
   }
   if (!pureAtoms && !rigidMolecules) {
