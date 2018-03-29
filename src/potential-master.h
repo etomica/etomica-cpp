@@ -15,6 +15,7 @@ class EmbedF {
   public:
     EmbedF() {}
     virtual ~EmbedF() {}
+    virtual double f(double rhoSum) = 0;
     virtual void f012(double rhoSum, double &f, double &df, double &d2f) = 0;
 };
 
@@ -24,6 +25,7 @@ class EmbedFsqrt : public EmbedF {
   public:
     EmbedFsqrt(double Ceps) : EmbedF(), eps(Ceps) {}
     ~EmbedFsqrt() {}
+    double f(double rhoSum) { return -eps*sqrt(rhoSum); }
     void f012(double rhoSum, double &f, double &df, double &d2f) {
       double s = sqrt(rhoSum);
       f = -eps*s;
@@ -127,6 +129,8 @@ class PotentialMaster {
     double* rhoSum;
     double* idf;
     vector<double> rdrho;
+    vector<int> rhoAtomsChanged;
+    vector<double> drhoSum;
 
     vector<PotentialCallback*> pairCallbacks;
     const int numAtomTypes;
@@ -247,6 +251,7 @@ class PotentialMaster {
       }
     }
     virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom);
+    virtual double oldEmbeddingEnergy(int iAtom);
 
   public:
     PotentialMaster(const SpeciesList &speciesList, Box& box, bool doEmbed);
@@ -308,8 +313,9 @@ class PotentialMasterCell : public PotentialMaster {
       }
       uTot += uij;
     }
-
     virtual void computeOneInternal(const int iAtom, const double *ri, double &energy, const int iSpecies, const int iMolecule, const int iFirstAtom);
+    virtual double oldEmbeddingEnergy(int iAtom);
+
   public:
     PotentialMasterCell(const SpeciesList &speciesList, Box& box, bool doEmbed, int cellRange);
     ~PotentialMasterCell();

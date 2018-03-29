@@ -43,6 +43,37 @@ void PotentialMasterCell::updateAtom(int iAtom) {
   cellManager.updateAtom(iAtom);
 }
 
+double PotentialMasterCell::oldEmbeddingEnergy(int iAtom) {
+  double u = 0;
+
+  const int iCell = atomCell[iAtom];
+
+  double f, df, d2f;
+  for (int jAtom = cellLastAtom[iCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
+    const int jType = box.getAtomType(jAtom);
+    embedF[jType]->f012(rhoSum[jAtom], f, df, d2f);
+    u += f;
+  }
+
+  for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
+    int jCell = iCell + *it;
+    jCell = wrapMap[jCell];
+    for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
+      const int jType = box.getAtomType(jAtom);
+      embedF[jType]->f012(rhoSum[jAtom], f, df, d2f);
+      u += f;
+    }
+    jCell = iCell - *it;
+    jCell = wrapMap[jCell];
+    for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
+      const int jType = box.getAtomType(jAtom);
+      embedF[jType]->f012(rhoSum[jAtom], f, df, d2f);
+      u += f;
+    }
+  }
+  return u;
+}
+
 void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   pairCallbacks.resize(0);
   bool doForces = false;

@@ -331,6 +331,42 @@ double PotentialMaster::oldEnergy(int iAtom) {
   if (doSingleTruncationCorrection) {
     u += computeOneTruncationCorrection(iAtom);
   }
+  if (embeddingPotentials) {
+    u += oldEmbeddingEnergy(iAtom);
+  }
+  return u;
+}
+
+double PotentialMaster::oldEmbeddingEnergy(int iAtom) {
+  // just compute everything
+  int numAtoms = box.getNumAtoms();
+  rhoAtomsChanged.clear();
+  rhoAtomsChanged.push_back(iAtom);
+  int s = drhoSum.size();
+  if (numAtoms>s) {
+    drhoSum.resize(numAtoms);
+    fill(drhoSum.begin()+s, drhoSum.end(), 0);
+  }
+  int iType = box.getAtomType(iAtom);
+  double u = embedF[iType]->f(rhoSum[iAtom]);
+  double *ri = box.getAtomPosition(iAtom);
+  for (int jAtom=0; jAtom<numAtoms; jAtom++) {
+    if (jAtom==iAtom) continue;
+    int jType = box.getAtomType(jAtom);
+    double *rj = box.getAtomPosition(jAtom);
+    double dr[3];
+    for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
+    box.nearestImage(dr);
+    double r2 = 0;
+    for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
+    if (r2 < rhoCutoffs[jType]) {
+      rhoAtomsChanged.push_back(jAtom);
+      double rho = rhoPotentials[jType]->u(r2);
+      drhoSum[jAtom] = rho;
+      u -= embedF[jType]->f(rhoSum[jAtom]-rho);
+      u += embedF[jType]->f(rhoSum[jAtom]);
+    }
+  }
   return u;
 }
 
@@ -361,6 +397,14 @@ void PotentialMaster::resetAtomDU() {
   }
   uAtomsChanged.resize(0);
   duAtomSingle = duAtomMulti = false;
+  if (embeddingPotentials) {
+    int numAtomsChanged = rhoAtomsChanged.size();
+    for (int i=0; i<numAtomsChanged; i++) {
+      int iAtom = rhoAtomsChanged[i];
+      drhoSum[iAtom] = 0;
+    }
+    rhoAtomsChanged.clear();
+  }
 }
 
 void PotentialMaster::processAtomU(int coeff) {
@@ -383,8 +427,20 @@ void PotentialMaster::processAtomU(int coeff) {
       duAtom[iAtom] = 0;
     }
   }
-  uAtomsChanged.resize(0);
+  uAtomsChanged.clear();
   duAtomSingle = duAtomMulti = false;
+  if (embeddingPotentials) {
+    numAtomsChanged = rhoAtomsChanged.size();
+    for (int i=0; i<numAtomsChanged; i++) {
+      int iAtom = rhoAtomsChanged[i];
+      // by the time we get to processAtom(+1), we have
+      // the difference.  just use that
+      if (coeff==1) rhoSum[iAtom] += drhoSum[iAtom];
+      // we when get called with -1, we'll ignore drhoSum
+      drhoSum[iAtom] = 0;
+    }
+    rhoAtomsChanged.clear();
+  }
 }
 
 void PotentialMaster::computeOne(const int iAtom, double &u1) {
@@ -424,19 +480,32 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
     box.nearestImage(dr);
     double r2 = 0;
     for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
-    if (r2 > iCutoffs[jType]) continue;
-    double uij = iPotentials[jType]->u(r2);
-    if (duAtomSingle) {
-      uAtomsChanged.push_back(jAtom);
-      duAtom[0] += 0.5*uij;
-      duAtom.push_back(0.5*uij);
+    if (r2 < iCutoffs[jType]) {
+      double uij = iPotentials[jType]->u(r2);
+      if (duAtomSingle) {
+        uAtomsChanged.push_back(jAtom);
+        duAtom[0] += 0.5*uij;
+        duAtom.push_back(0.5*uij);
+      }
+      else {
+        if (duAtom[jAtom] == 0) uAtomsChanged.push_back(jAtom);
+        duAtom[iAtom] += 0.5*uij;
+        duAtom[jAtom] += 0.5*uij;
+      }
+      u1 += uij;
     }
-    else {
-      if (duAtom[jAtom] == 0) uAtomsChanged.push_back(jAtom);
-      duAtom[iAtom] += 0.5*uij;
-      duAtom[jAtom] += 0.5*uij;
+    if (embeddingPotentials) {
+      if (r2 < rhoCutoffs[jType]) {
+        double rho = rhoPotentials[jType]->u(r2);
+        if (drhoSum[jAtom] == 0) rhoAtomsChanged.push_back(jAtom);
+        u1 += embedF[jType]->f(rhoSum[jAtom]-drhoSum[jAtom]+rho);
+        u1 -= embedF[jType]->f(rhoSum[jAtom]);
+        // drhoSum wil hold new-old
+        // processAtom(+1) handles this
+        // for processAtom(-1), we ignore drhoSum
+        drhoSum[jAtom] -= rho;
+      }
     }
-    u1 += uij;
   }
 }
 
