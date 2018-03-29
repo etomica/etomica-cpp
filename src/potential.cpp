@@ -283,18 +283,13 @@ PotentialSSfloatTab::PotentialSSfloatTab(double e, double p, int tt, double rc, 
   if (nTab >= 100000) {
     fprintf(stderr, "Allocating for %d values of r for tabulated potential is probably overkill\n", nTab);
   }
-  rpTab = (double**)malloc2D(nTab+4, 4, sizeof(double));
+  rpTab = (double**)malloc2D(nTab+2, 4, sizeof(double));
   // compute extra bits beyond rc so we can accurately compute
   // derivatives up to rc
-  for (int i=0; i<=nTab+3; i++) {
+  for (int i=0; i<=nTab+1; i++) {
     double r2 = i/xFac;
     rpTab[i][0] = pow(r2, 0.5*exponentFloat);
-  }
-  // small r end just doesn't matter
-  rpTab[0][1] = rpTab[1][1] = 0;
-  for (int i=2; i<=nTab+1; i++) {
-    // 2nd-order central difference for all others
-    rpTab[i][1] = (rpTab[i-2][0]-rpTab[i+2][0])/12 + 2*(rpTab[i+1][0]-rpTab[i-1][0])/3;
+    rpTab[i][1] = 0.5*exponentFloat*rpTab[i][0]/r2/xFac;
   }
 
   // now set 3rd and 4th-order terms to enforce continuity
