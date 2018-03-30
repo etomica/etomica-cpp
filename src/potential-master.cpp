@@ -145,6 +145,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
       rhoSum = (double*)realloc(rhoSum, numAtoms*sizeof(double));
       idf = (double*)realloc(idf, numAtoms*sizeof(double));
     }
+    drhoSum.resize(numAtoms);
     numForceAtoms = numAtoms;
   }
 
@@ -154,7 +155,10 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   zero[0] = zero[1] = zero[2] = 0;
   for (int i=0; i<numAtoms; i++) {
     uAtom[i] = 0;
-    if (embeddingPotentials) rhoSum[i] = 0;
+    if (embeddingPotentials) {
+      rhoSum[i] = 0;
+      drhoSum[i] = 0;
+    }
     if (doForces) for (int k=0; k<3; k++) force[i][k] = 0;
   }
   for (int i=0; i<numAtoms; i++) {
@@ -338,15 +342,11 @@ double PotentialMaster::oldEnergy(int iAtom) {
 }
 
 double PotentialMaster::oldEmbeddingEnergy(int iAtom) {
-  // just compute everything
+  // just compute all the embedding energies
   int numAtoms = box.getNumAtoms();
   rhoAtomsChanged.clear();
   rhoAtomsChanged.push_back(iAtom);
   int s = drhoSum.size();
-  if (numAtoms>s) {
-    drhoSum.resize(numAtoms);
-    fill(drhoSum.begin()+s, drhoSum.end(), 0);
-  }
   int iType = box.getAtomType(iAtom);
   double u = embedF[iType]->f(rhoSum[iAtom]);
   double *ri = box.getAtomPosition(iAtom);
