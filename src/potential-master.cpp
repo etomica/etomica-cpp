@@ -363,6 +363,7 @@ double PotentialMaster::oldEmbeddingEnergy(int iAtom) {
       rhoAtomsChanged.push_back(jAtom);
       double rho = rhoPotentials[jType]->u(r2);
       drhoSum[jAtom] = rho;
+      // we need to compute the old energy of the system with and without iAtom
       u -= embedF[jType]->f(rhoSum[jAtom]-rho);
       u += embedF[jType]->f(rhoSum[jAtom]);
     }
@@ -498,11 +499,14 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
       if (r2 < rhoCutoffs[jType]) {
         double rho = rhoPotentials[jType]->u(r2);
         if (drhoSum[jAtom] == 0) rhoAtomsChanged.push_back(jAtom);
+        // we need the energy of the configuration with the atom in the new spot
+        // minus the energy with no atom
         u1 += embedF[jType]->f(rhoSum[jAtom]-drhoSum[jAtom]+rho);
-        u1 -= embedF[jType]->f(rhoSum[jAtom]);
-        // drhoSum wil hold new-old
-        // processAtom(+1) handles this
-        // for processAtom(-1), we ignore drhoSum
+        u1 -= embedF[jType]->f(rhoSum[jAtom]-drhoSum[jAtom]);
+        // drhoSum will hold new-old
+        // processAtom(+1) handles this and we should be done
+        // we'll be called again and recompute rho for the old config
+        // for processAtom(-1), we ignore drhoSum since it was already handled
         drhoSum[jAtom] -= rho;
       }
     }
