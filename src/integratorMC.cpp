@@ -47,6 +47,10 @@ void IntegratorMC::doStep() {
       }
     }
   }
+  else if (nm==0) {
+    fprintf(stderr, "I need MC moves\n");
+    abort();
+  }
   else {
     m = moves[0];
   }
@@ -54,7 +58,7 @@ void IntegratorMC::doStep() {
   bool success = m->doTrial();
   double chi = success ? m->getChi(temperature) : 0;
   if (chi==0 || (chi<1 && chi<random.nextDouble())) {
-    //printf("chi %e 0\n", chi);
+    //printf("chi %e rej\n", chi);
     m->rejectNotify();
     for (vector<IntegratorListener*>::iterator it = listenersMoveRejected.begin(); it!=listenersMoveRejected.end(); it++) {
       (*it)->moveRejected(*m, chi);
@@ -64,21 +68,24 @@ void IntegratorMC::doStep() {
     m->acceptNotify();
     double du = m->energyChange();
     energy += du;
-    //printf("chi %e 1 %f\n", chi, du);
+    //printf("chi %e acc %f\n", chi, du);
     for (vector<IntegratorListener*>::iterator it = listenersMoveAccepted.begin(); it!=listenersMoveAccepted.end(); it++) {
       (*it)->moveAccepted(*m, chi);
     }
   }
 #ifdef DEBUG
-  if (fabs(energy-potentialMaster.uTotalFromAtoms()) > 1e-6) {
-    printf("uAtoms! %ld: %e %e %e\n", stepCount, energy, potentialMaster.uTotalFromAtoms(), energy-potentialMaster.uTotalFromAtoms());
+  if (fabs(energy-potentialMaster.uTotalFromAtoms()) > 1e-4) {
+    double x = potentialMaster.uTotalFromAtoms();
+    double y = energy;
+    reset();
+    printf("uAtoms! %ld: %e %e %e %e %e\n", stepCount, y, x, energy, energy-y, y-x);
     abort();
   }
   if (stepCount%100==0) {
     double oldEnergy = energy;
     reset();
-    if (fabs(oldEnergy-energy) > 1e-6) printf("%ld: %e %e %e\n", stepCount, oldEnergy, energy, oldEnergy-energy);
-    if (fabs(oldEnergy-energy) > 1e-6) abort();
+    if (fabs(oldEnergy-energy) > 1e-4) printf("%ld: %e %e %e\n", stepCount, oldEnergy, energy, oldEnergy-energy);
+    if (fabs(oldEnergy-energy) > 1e-4) abort();
   }
 #endif
   for (vector<IntegratorListener*>::iterator it = listenersStepFinished.begin(); it!=listenersStepFinished.end(); it++) {
