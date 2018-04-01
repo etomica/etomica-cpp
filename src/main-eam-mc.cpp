@@ -16,9 +16,9 @@ int main(int argc, char** argv) {
   double density = 0.15;
   long steps = 1000000;
   bool doData = true;
-  bool doHMA = false;
+  bool doHMA = true;
 
-  Random rand(1);
+  Random rand;
   printf("random seed: %d\n", rand.getSeed());
 
   PotentialSSfloatTab p2(1.2446188036318708E7, 8.7932, TRUNC_SIMPLE, 6, 1000);
@@ -34,11 +34,11 @@ int main(int argc, char** argv) {
   box.setNumMolecules(0, numAtoms);
   box.initCoordinates();
   box.enableVelocities();
-  PotentialMaster potentialMaster(speciesList, box, true);
+  PotentialMasterCell potentialMaster(speciesList, box, true, 2);
   potentialMaster.setPairPotential(0, 0, &p2);
   potentialMaster.setRhoPotential(0, &pRho);
   potentialMaster.setEmbedF(0, &embedF);
-  //potentialMaster.init();
+  potentialMaster.init();
   IntegratorMC integrator(potentialMaster, rand);
   integrator.setTemperature(temperature);
   integrator.reset();

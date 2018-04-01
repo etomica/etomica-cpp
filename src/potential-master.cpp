@@ -19,9 +19,8 @@ PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : 
     rhoCutoffs = (double*)malloc(numAtomTypes*sizeof(double));
     setDoTruncationCorrection(false);
     rhoSum = (double*)malloc(b.getNumAtoms()*sizeof(double));
-    int s = drhoSum.size();
     drhoSum.resize(b.getNumAtoms());
-    fill(drhoSum.begin()+s, drhoSum.end(), 0);
+    fill(drhoSum.begin(), drhoSum.end(), 0);
     numRhoSumAtoms = b.getNumAtoms();
   }
   else {
@@ -357,24 +356,15 @@ double PotentialMaster::oldEmbeddingEnergy(int iAtom) {
   int iType = box.getAtomType(iAtom);
   double u = embedF[iType]->f(rhoSum[iAtom]);
   double *ri = box.getAtomPosition(iAtom);
+  double zero[3];
+  zero[0] = zero[1] = zero[2] = 0;
   for (int jAtom=0; jAtom<numAtoms; jAtom++) {
     if (jAtom==iAtom) continue;
-    int jType = box.getAtomType(jAtom);
     double *rj = box.getAtomPosition(jAtom);
     double dr[3];
     for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
     box.nearestImage(dr);
-    double r2 = 0;
-    for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
-    if (r2 < rhoCutoffs[jType]) {
-      rhoAtomsChanged.push_back(jAtom);
-      double rho = rhoPotentials[jType]->u(r2);
-      drhoSum[jAtom] = -rho;
-      // we need to compute the old energy of the system with and without iAtom
-      u -= embedF[jType]->f(rhoSum[jAtom]-rho);
-      u += embedF[jType]->f(rhoSum[jAtom]);
-      //printf("%d %d %f  %e %e   %e %e  %e\n", iAtom, jAtom, r2, rhoSum[jAtom], rho, embedF[jType]->f(rhoSum[jAtom]), embedF[jType]->f(rhoSum[jAtom]-rho), embedF[jType]->f(rhoSum[jAtom])-embedF[jType]->f(rhoSum[jAtom]-rho));
-    }
+    handleOldEmbedding(zero, dr, zero, jAtom, u, box.getAtomType(jAtom));
   }
   return u;
 }
@@ -444,7 +434,9 @@ void PotentialMaster::processAtomU(int coeff) {
       int iAtom = rhoAtomsChanged[i];
       // by the time we get to processAtom(+1), we have
       // the difference.  just use that
-      if (coeff==1) rhoSum[iAtom] += drhoSum[iAtom];
+      if (coeff==1) {
+        rhoSum[iAtom] += drhoSum[iAtom];
+      }
       // we when get called with -1, we'll ignore drhoSum
       drhoSum[iAtom] = 0;
     }
@@ -483,6 +475,10 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
   double* iCutoffs = pairCutoffs[iType];
   Potential** iPotentials = pairPotentials[iType];
   int numAtoms = box.getNumAtoms();
+  double iRhoCutoff = embeddingPotentials ? rhoCutoffs[iType] : 0;
+  double zero[3];
+  zero[0] = zero[1] = zero[2] = 0;
+  Potential* iRhoPotential = embeddingPotentials ? rhoPotentials[iType] : nullptr;
   for (int jAtom=0; jAtom<numAtoms; jAtom++) {
     if (jAtom==iAtom) continue;
     if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
@@ -491,57 +487,7 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
     double dr[3];
     for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
     box.nearestImage(dr);
-    double r2 = 0;
-    double iRhoCutoff = embeddingPotentials ? rhoCutoffs[iType] : 0;
-    for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
-    if (r2 < iCutoffs[jType]) {
-      double uij = iPotentials[jType]->u(r2);
-      if (duAtomSingle) {
-        uAtomsChanged.push_back(jAtom);
-        duAtom[0] += 0.5*uij;
-        duAtom.push_back(0.5*uij);
-      }
-      else {
-        if (duAtom[jAtom] == 0) uAtomsChanged.push_back(jAtom);
-        duAtom[iAtom] += 0.5*uij;
-        duAtom[jAtom] += 0.5*uij;
-      }
-      u1 += uij;
-    }
-    if (embeddingPotentials) {
-      if (r2 < iRhoCutoff) {
-        double rho = rhoPotentials[iType]->u(r2);
-        drhoSum[iAtom] += rho;
-        if (iType == jType) {
-          if (drhoSum[jAtom] == 0) {
-            rhoAtomsChanged.push_back(jAtom);
-          }
-          // we need the energy of the configuration with the atom in the new spot
-          // minus the energy with no atom
-          u1 += embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]+rho);
-          u1 -= embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]);
-          // drhoSum will hold new-old
-          // processAtom(+1) handles this and we should be done
-          // we'll be called again and recompute rho for the old config
-          // for processAtom(-1), we ignore drhoSum since it was already handled
-          drhoSum[jAtom] += rho;
-        }
-        else if (r2 < rhoCutoffs[jType]) {
-          double rho = rhoPotentials[jType]->u(r2);
-          if (drhoSum[jAtom] == 0) rhoAtomsChanged.push_back(jAtom);
-          u1 += embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]+rho);
-          u1 -= embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]);
-          drhoSum[jAtom] += rho;
-        }
-      }
-      else if (r2 < rhoCutoffs[jType]) {
-        double rho = rhoPotentials[jType]->u(r2);
-        if (drhoSum[jAtom] == 0) rhoAtomsChanged.push_back(jAtom);
-        u1 += embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]+rho);
-        u1 -= embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]);
-        drhoSum[jAtom] += rho;
-      }
-    }
+    handleComputeOne(iPotentials[jType], zero, dr, zero, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
   }
   if (embeddingPotentials) {
     // we just computed new rhoSum[iAtom].  now subtract the old one

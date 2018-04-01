@@ -30,6 +30,7 @@ bool MCMoveDisplacement::doTrial() {
 double MCMoveDisplacement::getChi(double T) {
   uNew = 0;
   potentialMaster.computeOne(iAtom, uNew);
+  //printf("uOld %e   uNew %e\n", uOld, uNew);
   double chi = uNew<uOld ? 1 : exp(-(uNew-uOld)/T);
   chiSum += chi;
   return chi;

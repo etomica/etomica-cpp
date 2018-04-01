@@ -250,6 +250,76 @@ class PotentialMaster {
         rdrhoIdx++;
       }
     }
+    void handleOldEmbedding(const double *ri, const double *rj, const double *jbo, const int jAtom, double& uTot, const int jType) {
+      double dx = ri[0]-(rj[0]+jbo[0]);
+      double dy = ri[1]-(rj[1]+jbo[1]);
+      double dz = ri[2]-(rj[2]+jbo[2]);
+      double r2 = dx*dx + dy*dy + dz*dz;
+      if (r2 < rhoCutoffs[jType]) {
+        rhoAtomsChanged.push_back(jAtom);
+        double rho = rhoPotentials[jType]->u(r2);
+        drhoSum[jAtom] = -rho;
+        // we need to compute the old energy of the system with and without iAtom
+        uTot -= embedF[jType]->f(rhoSum[jAtom]-rho);
+        uTot += embedF[jType]->f(rhoSum[jAtom]);
+        //printf("%d %d %f  %e %e   %e %e  %e\n", iAtom, jAtom, r2, rhoSum[jAtom], rho, embedF[jType]->f(rhoSum[jAtom]), embedF[jType]->f(rhoSum[jAtom]-rho), embedF[jType]->f(rhoSum[jAtom])-embedF[jType]->f(rhoSum[jAtom]-rho));
+      }
+    }
+    void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int iAtom, const int jAtom, double& uTot, double rc2, const double iRhoCutoff, Potential* iRhoPotential, const int iType, const int jType) {
+      double dx = ri[0]-(rj[0]+jbo[0]);
+      double dy = ri[1]-(rj[1]+jbo[1]);
+      double dz = ri[2]-(rj[2]+jbo[2]);
+      double r2 = dx*dx + dy*dy + dz*dz;
+      if (r2 > rc2) return;
+      double uij = pij->u(r2);
+      if (duAtomSingle) {
+        uAtomsChanged.push_back(jAtom);
+        duAtom[0] += 0.5*uij;
+        duAtom.push_back(0.5*uij);
+      }
+      else {
+        if (duAtom[jAtom] == 0) {
+          uAtomsChanged.push_back(jAtom);
+        }
+        duAtom[iAtom] += 0.5*uij;
+        duAtom[jAtom] += 0.5*uij;
+      }
+      uTot += uij;
+      if (embeddingPotentials) {
+        if (r2 < iRhoCutoff) {
+          double rho = iRhoPotential->u(r2);
+          drhoSum[iAtom] += rho;
+          if (iType == jType) {
+            if (drhoSum[jAtom] == 0) {
+              rhoAtomsChanged.push_back(jAtom);
+            }
+            // we need the energy of the configuration with the atom in the new spot
+            // minus the energy with no atom
+            uTot += embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]+rho);
+            uTot -= embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]);
+            // drhoSum will hold new-old
+            // processAtom(+1) handles this and we should be done
+            // we'll be called again and recompute rho for the old config
+            // for processAtom(-1), we ignore drhoSum since it was already handled
+            drhoSum[jAtom] += rho;
+          }
+          else if (r2 < rhoCutoffs[jType]) {
+            double rho = rhoPotentials[jType]->u(r2);
+            if (drhoSum[jAtom] == 0) rhoAtomsChanged.push_back(jAtom);
+            uTot += embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]+rho);
+            uTot -= embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]);
+            drhoSum[jAtom] += rho;
+          }
+        }
+        else if (r2 < rhoCutoffs[jType]) {
+          double rho = rhoPotentials[jType]->u(r2);
+          if (drhoSum[jAtom] == 0) rhoAtomsChanged.push_back(jAtom);
+          uTot += embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]+rho);
+          uTot -= embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]);
+          drhoSum[jAtom] += rho;
+        }
+      }
+    }
     virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom);
     virtual double oldEmbeddingEnergy(int iAtom);
 
@@ -292,27 +362,6 @@ class PotentialMasterCell : public PotentialMaster {
     const vector<double*> &boxOffsets;
     bool lsNeeded;
 
-    void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int iAtom, const int jAtom, double& uTot, double rc2) {
-      double dx = ri[0]-(rj[0]+jbo[0]);
-      double dy = ri[1]-(rj[1]+jbo[1]);
-      double dz = ri[2]-(rj[2]+jbo[2]);
-      double r2 = dx*dx + dy*dy + dz*dz;
-      if (r2 > rc2) return;
-      double uij = pij->u(r2);
-      if (duAtomSingle) {
-        uAtomsChanged.push_back(jAtom);
-        duAtom[0] += 0.5*uij;
-        duAtom.push_back(0.5*uij);
-      }
-      else {
-        if (duAtom[jAtom] == 0) {
-          uAtomsChanged.push_back(jAtom);
-        }
-        duAtom[iAtom] += 0.5*uij;
-        duAtom[jAtom] += 0.5*uij;
-      }
-      uTot += uij;
-    }
     virtual void computeOneInternal(const int iAtom, const double *ri, double &energy, const int iSpecies, const int iMolecule, const int iFirstAtom);
     virtual double oldEmbeddingEnergy(int iAtom);
 

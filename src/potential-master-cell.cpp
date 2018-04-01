@@ -18,12 +18,14 @@ double PotentialMasterCell::getRange() {
   double range = 0;
   for (int iType=0; iType<numAtomTypes; iType++) {
     for (int jType=iType; jType<numAtomTypes; jType++) {
+      if (pairPotentials[iType][jType] == nullptr) continue;
       double rc = pairPotentials[iType][jType]->getCutoff();
       if (rc > range) range = rc;
     }
   }
   if (embeddingPotentials) {
     for (int iType=0; iType<numAtomTypes; iType++) {
+      if (rhoPotentials[iType] == nullptr) continue;
       double rc = rhoPotentials[iType]->getCutoff();
       if (rc > range) range = rc;
     }
@@ -44,31 +46,31 @@ void PotentialMasterCell::updateAtom(int iAtom) {
 }
 
 double PotentialMasterCell::oldEmbeddingEnergy(int iAtom) {
-  double u = 0;
+  rhoAtomsChanged.clear();
+  rhoAtomsChanged.push_back(iAtom);
+  int iType = box.getAtomType(iAtom);
+  double u = embedF[iType]->f(rhoSum[iAtom]);
 
   const int iCell = atomCell[iAtom];
 
-  double f, df, d2f;
+  const double *jbo = boxOffsets[iCell];
+  const double *ri = box.getAtomPosition(iAtom);
   for (int jAtom = cellLastAtom[iCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
-    const int jType = box.getAtomType(jAtom);
-    embedF[jType]->f012(rhoSum[jAtom], f, df, d2f);
-    u += f;
+    if (jAtom!=iAtom) handleOldEmbedding(ri, box.getAtomPosition(jAtom), jbo, jAtom, u, box.getAtomType(jAtom));
   }
 
   for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
     int jCell = iCell + *it;
+    jbo = boxOffsets[jCell];
     jCell = wrapMap[jCell];
     for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
-      const int jType = box.getAtomType(jAtom);
-      embedF[jType]->f012(rhoSum[jAtom], f, df, d2f);
-      u += f;
+      handleOldEmbedding(ri, box.getAtomPosition(jAtom), jbo, jAtom, u, box.getAtomType(jAtom));
     }
     jCell = iCell - *it;
+    jbo = boxOffsets[jCell];
     jCell = wrapMap[jCell];
     for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
-      const int jType = box.getAtomType(jAtom);
-      embedF[jType]->f012(rhoSum[jAtom], f, df, d2f);
-      u += f;
+      handleOldEmbedding(ri, box.getAtomPosition(jAtom), jbo, jAtom, u, box.getAtomType(jAtom));
     }
   }
   return u;
@@ -78,23 +80,39 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   pairCallbacks.resize(0);
   bool doForces = false;
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
-    if ((*it)->callPair) pairCallbacks.push_back(*it);
+    if (!embeddingPotentials && (*it)->callPair) pairCallbacks.push_back(*it);
     if ((*it)->takesForces) doForces = true;
   }
-  if (doForces && !force) {
-    force = (double**)malloc2D(box.getNumAtoms(), 3, sizeof(double));
-  }
   const int numAtoms = box.getNumAtoms();
+  if (doForces && numAtoms > numForceAtoms) {
+    force = (double**)malloc2D(numAtoms, 3, sizeof(double));
+    if (embeddingPotentials) {
+      idf = (double*)realloc(idf, numAtoms*sizeof(double));
+    }
+    numForceAtoms = numAtoms;
+  }
+  if (embeddingPotentials && numAtoms > numRhoSumAtoms) {
+    drhoSum.resize(numAtoms);
+    numRhoSumAtoms = numAtoms;
+    rhoSum = (double*)realloc(rhoSum, numAtoms*sizeof(double));
+  }
   double uTot=0, virialTot=0;
 #ifdef DEBUG
   vector<double> uCheck;
+  vector<double> rhoCheck;
   uCheck.resize(box.getNumAtoms());
+  if (embeddingPotentials) rhoCheck.resize(box.getNumAtoms());
 #endif
   for (int i=0; i<numAtoms; i++) {
 #ifdef DEBUG
     uCheck[i] = uAtom[i];
+    if (embeddingPotentials) rhoCheck[i] = rhoSum[i];
 #endif
     uAtom[i] = 0;
+    if (embeddingPotentials) {
+      rhoSum[i] = 0;
+      drhoSum[i] = 0;
+    }
     if (doForces) for (int k=0; k<3; k++) force[i][k] = 0;
   }
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
@@ -144,35 +162,31 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
       double f, df, d2f;
       embedF[iType]->f012(rhoSum[iAtom], f, df, d2f);
       uTot += f;
-      if (doForces) {
-        idf[iAtom] = df;
-      }
+      if (doForces) idf[iAtom] = df;
     }
     if (doForces) {
       for (int iAtom=0; iAtom<numAtoms; iAtom++) {
         int iType = box.getAtomType(iAtom);
-        if (doForces) {
-          double *ri = box.getAtomPosition(iAtom);
-          double iRhoCutoff = rhoCutoffs[iType];
-          Potential* iRhoPotential = rhoPotentials[iType];
-          double df = idf[iAtom];
-          int jAtom=iAtom;
-          const double *jbo = boxOffsets[atomCell[iAtom]];
-          while ((jAtom = cellNextAtom[jAtom]) > -1) {
-            int jType = box.getAtomType(jAtom);
-            double *rj = box.getAtomPosition(jAtom);
+        double *ri = box.getAtomPosition(iAtom);
+        double iRhoCutoff = rhoCutoffs[iType];
+        Potential* iRhoPotential = rhoPotentials[iType];
+        double df = idf[iAtom];
+        int jAtom = iAtom;
+        const double *jbo = boxOffsets[atomCell[iAtom]];
+        while ((jAtom = cellNextAtom[jAtom]) > -1) {
+          int jType = box.getAtomType(jAtom);
+          double *rj = box.getAtomPosition(jAtom);
+          handleComputeAllEmbed(iAtom, jAtom, iType, jType, ri, rj, jbo, df, virialTot, iRhoPotential, iRhoCutoff, rdrhoIdx);
+        }
+        const int iCell = atomCell[iAtom];
+        for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
+          int jCell = iCell + *it;
+          jbo = boxOffsets[jCell];
+          jCell = wrapMap[jCell];
+          for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
+            const int jType = box.getAtomType(jAtom);
+            const double *rj = box.getAtomPosition(jAtom);
             handleComputeAllEmbed(iAtom, jAtom, iType, jType, ri, rj, jbo, df, virialTot, iRhoPotential, iRhoCutoff, rdrhoIdx);
-          }
-          const int iCell = atomCell[iAtom];
-          for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
-            int jCell = iCell + *it;
-            jbo = boxOffsets[jCell];
-            jCell = wrapMap[jCell];
-            for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
-              const int jType = box.getAtomType(jAtom);
-              const double *rj = box.getAtomPosition(jAtom);
-              handleComputeAllEmbed(iAtom, jAtom, iType, jType, ri, rj, jbo, df, virialTot, iRhoPotential, iRhoCutoff, rdrhoIdx);
-            }
           }
         }
       }
@@ -189,6 +203,14 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
       if (fabs(uCheck[i]-uAtom[i]) > 1e-7) {
         fprintf(stderr, "PMC uAtomCheck oops %d %f %f %f\n", i, uCheck[i], uAtom[i], uCheck[i]-uAtom[i]);
         oops=true;
+      }
+    }
+    if (embeddingPotentials) {
+      for (int i=0; i<numAtoms; i++) {
+        if (fabs(rhoCheck[i] - rhoSum[i]) > 1e-7) {
+          fprintf(stderr, "PMC rhoSumCheck oops %d %e %e %e\n", i, rhoCheck[i], rhoSum[i], rhoCheck[i]-rhoSum[i]);
+          abort();
+        }
       }
     }
     if (oops) abort();
@@ -211,13 +233,15 @@ void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, 
   if (!pureAtoms && !rigidMolecules) {
     iBondedAtoms = &bondedAtoms[iSpecies][iAtom-iFirstAtom];
   }
+  double iRhoCutoff = embeddingPotentials ? rhoCutoffs[iType] : 0;
+  Potential* iRhoPotential = embeddingPotentials ? rhoPotentials[iType] : nullptr;
   const double *jbo = boxOffsets[iCell];
   for (int jAtom = cellLastAtom[iCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
     if (jAtom!=iAtom) {
       if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
       const int jType = box.getAtomType(jAtom);
       const double *rj = box.getAtomPosition(jAtom);
-      handleComputeOne(iPotentials[jType], ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType]);
+      handleComputeOne(iPotentials[jType], ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
     }
   }
 
@@ -229,7 +253,7 @@ void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, 
       if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
       const double *rj = box.getAtomPosition(jAtom);
       const int jType = box.getAtomType(jAtom);
-      handleComputeOne(iPotentials[jType], ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType]);
+      handleComputeOne(iPotentials[jType], ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
     }
     jCell = iCell - *it;
     jbo = boxOffsets[jCell];
@@ -238,8 +262,13 @@ void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, 
       if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
       const double *rj = box.getAtomPosition(jAtom);
       const int jType = box.getAtomType(jAtom);
-      handleComputeOne(iPotentials[jType], ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType]);
+      handleComputeOne(iPotentials[jType], ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
     }
+  }
+  if (embeddingPotentials) {
+    // we just computed new rhoSum[iAtom].  now subtract the old one
+    drhoSum[iAtom] -= rhoSum[iAtom];
+    u1 += embedF[iType]->f(rhoSum[iAtom] + drhoSum[iAtom]);
   }
 }
 
