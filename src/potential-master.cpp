@@ -5,7 +5,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed) {
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed) {
 
   if (embeddingPotentials && !pureAtoms) {
     fprintf(stderr, "Embedding potentials require a purely atomic system");
@@ -18,6 +18,11 @@ PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : 
     embedF = (EmbedF**)malloc(numAtomTypes*sizeof(EmbedF*));
     rhoCutoffs = (double*)malloc(numAtomTypes*sizeof(double));
     setDoTruncationCorrection(false);
+    rhoSum = (double*)malloc(b.getNumAtoms()*sizeof(double));
+    int s = drhoSum.size();
+    drhoSum.resize(b.getNumAtoms());
+    fill(drhoSum.begin()+s, drhoSum.end(), 0);
+    numRhoSumAtoms = b.getNumAtoms();
   }
   else {
     rhoPotentials = nullptr;
@@ -142,11 +147,14 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   if (doForces && numAtoms > numForceAtoms) {
     force = (double**)realloc2D((void**)force, numAtoms, 3, sizeof(double));
     if (embeddingPotentials) {
-      rhoSum = (double*)realloc(rhoSum, numAtoms*sizeof(double));
       idf = (double*)realloc(idf, numAtoms*sizeof(double));
     }
-    drhoSum.resize(numAtoms);
     numForceAtoms = numAtoms;
+  }
+  if (embeddingPotentials && numAtoms > numRhoSumAtoms) {
+    drhoSum.resize(numAtoms);
+    numRhoSumAtoms = numAtoms;
+    rhoSum = (double*)realloc(rhoSum, numAtoms*sizeof(double));
   }
 
   double uTot = 0, virialTot = 0;
@@ -180,7 +188,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
       double *rj = box.getAtomPosition(j);
       for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
       box.nearestImage(dr);
-      handleComputeAll(i, j, zero, dr, zero, pairPotentials[iType][jType], uAtom[i], uAtom[j], force[i], force[j], uTot, virialTot, pairCutoffs[iType][jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
+      handleComputeAll(i, j, zero, dr, zero, pairPotentials[iType][jType], uAtom[i], uAtom[j], doForces?force[i]:nullptr, doForces?force[j]:nullptr, uTot, virialTot, pairCutoffs[iType][jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
     }
   }
   if (embeddingPotentials) {
@@ -346,7 +354,6 @@ double PotentialMaster::oldEmbeddingEnergy(int iAtom) {
   int numAtoms = box.getNumAtoms();
   rhoAtomsChanged.clear();
   rhoAtomsChanged.push_back(iAtom);
-  int s = drhoSum.size();
   int iType = box.getAtomType(iAtom);
   double u = embedF[iType]->f(rhoSum[iAtom]);
   double *ri = box.getAtomPosition(iAtom);
@@ -362,10 +369,11 @@ double PotentialMaster::oldEmbeddingEnergy(int iAtom) {
     if (r2 < rhoCutoffs[jType]) {
       rhoAtomsChanged.push_back(jAtom);
       double rho = rhoPotentials[jType]->u(r2);
-      drhoSum[jAtom] = rho;
+      drhoSum[jAtom] = -rho;
       // we need to compute the old energy of the system with and without iAtom
       u -= embedF[jType]->f(rhoSum[jAtom]-rho);
       u += embedF[jType]->f(rhoSum[jAtom]);
+      //printf("%d %d %f  %e %e   %e %e  %e\n", iAtom, jAtom, r2, rhoSum[jAtom], rho, embedF[jType]->f(rhoSum[jAtom]), embedF[jType]->f(rhoSum[jAtom]-rho), embedF[jType]->f(rhoSum[jAtom])-embedF[jType]->f(rhoSum[jAtom]-rho));
     }
   }
   return u;
@@ -451,6 +459,10 @@ void PotentialMaster::computeOne(const int iAtom, double &u1) {
   duAtom.resize(1);
   uAtomsChanged[0] = iAtom;
   duAtom[0] = 0;
+  if (embeddingPotentials && rhoAtomsChanged.size()==0) {
+    // if we called oldEnergy for this atom, then it will already be in the list
+    rhoAtomsChanged.push_back(iAtom);
+  }
   int iMolecule = 0, iFirstAtom = 0, iSpecies = 0;
   if (!pureAtoms && !rigidMolecules) {
     box.getMoleculeInfoAtom(iAtom, iMolecule, iSpecies, iFirstAtom);
@@ -480,6 +492,7 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
     for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
     box.nearestImage(dr);
     double r2 = 0;
+    double iRhoCutoff = embeddingPotentials ? rhoCutoffs[iType] : 0;
     for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
     if (r2 < iCutoffs[jType]) {
       double uij = iPotentials[jType]->u(r2);
@@ -496,20 +509,44 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
       u1 += uij;
     }
     if (embeddingPotentials) {
-      if (r2 < rhoCutoffs[jType]) {
+      if (r2 < iRhoCutoff) {
+        double rho = rhoPotentials[iType]->u(r2);
+        drhoSum[iAtom] += rho;
+        if (iType == jType) {
+          if (drhoSum[jAtom] == 0) {
+            rhoAtomsChanged.push_back(jAtom);
+          }
+          // we need the energy of the configuration with the atom in the new spot
+          // minus the energy with no atom
+          u1 += embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]+rho);
+          u1 -= embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]);
+          // drhoSum will hold new-old
+          // processAtom(+1) handles this and we should be done
+          // we'll be called again and recompute rho for the old config
+          // for processAtom(-1), we ignore drhoSum since it was already handled
+          drhoSum[jAtom] += rho;
+        }
+        else if (r2 < rhoCutoffs[jType]) {
+          double rho = rhoPotentials[jType]->u(r2);
+          if (drhoSum[jAtom] == 0) rhoAtomsChanged.push_back(jAtom);
+          u1 += embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]+rho);
+          u1 -= embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]);
+          drhoSum[jAtom] += rho;
+        }
+      }
+      else if (r2 < rhoCutoffs[jType]) {
         double rho = rhoPotentials[jType]->u(r2);
         if (drhoSum[jAtom] == 0) rhoAtomsChanged.push_back(jAtom);
-        // we need the energy of the configuration with the atom in the new spot
-        // minus the energy with no atom
-        u1 += embedF[jType]->f(rhoSum[jAtom]-drhoSum[jAtom]+rho);
-        u1 -= embedF[jType]->f(rhoSum[jAtom]-drhoSum[jAtom]);
-        // drhoSum will hold new-old
-        // processAtom(+1) handles this and we should be done
-        // we'll be called again and recompute rho for the old config
-        // for processAtom(-1), we ignore drhoSum since it was already handled
-        drhoSum[jAtom] -= rho;
+        u1 += embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]+rho);
+        u1 -= embedF[jType]->f(rhoSum[jAtom]+drhoSum[jAtom]);
+        drhoSum[jAtom] += rho;
       }
     }
+  }
+  if (embeddingPotentials) {
+    // we just computed new rhoSum[iAtom].  now subtract the old one
+    drhoSum[iAtom] -= rhoSum[iAtom];
+    u1 += embedF[iType]->f(rhoSum[iAtom] + drhoSum[iAtom]);
   }
 }
 
@@ -579,6 +616,12 @@ double PotentialMaster::uTotalFromAtoms() {
   int numAtoms = box.getNumAtoms();
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
     uTot += uAtom[iAtom];
+  }
+  if (embeddingPotentials) {
+    for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+      int iType = box.getAtomType(iAtom);
+      uTot += embedF[iType]->f(rhoSum[iAtom]);
+    }
   }
   double virialTot;
   computeAllTruncationCorrection(uTot, virialTot);

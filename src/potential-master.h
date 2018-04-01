@@ -125,7 +125,7 @@ class PotentialMaster {
     bool duAtomSingle, duAtomMulti;
     vector<int> uAtomsChanged;
     double** force;
-    int numForceAtoms;
+    int numForceAtoms, numRhoSumAtoms;
     double* rhoSum;
     double* idf;
     vector<double> rdrho;
