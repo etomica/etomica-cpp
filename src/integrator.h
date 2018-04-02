@@ -84,13 +84,21 @@ class IntegratorMD : public Integrator {
     double kineticEnergy;
   public:
     IntegratorMD(AtomInfo& atomInfo, PotentialMaster& potentialMaster, Random& random, Box& box);
-    ~IntegratorMD();
+    virtual ~IntegratorMD();
     void setTimeStep(double tStep);
     void setNbrCheckInterval(int interval);
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
-    virtual void doStep();
+    virtual void doStep() = 0;
     virtual void reset();
     void addPotentialCallback(PotentialCallback* callback, int interval=1);
     double getKineticEnergy();
+};
+
+class IntegratorNVE : public IntegratorMD {
+  protected:
+  public:
+    IntegratorNVE(AtomInfo& atomInfo, PotentialMaster& potentialMaster, Random& random, Box& box);
+    virtual ~IntegratorNVE();
+    virtual void doStep();
 };
 

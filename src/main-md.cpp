@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
   potentialMaster.setPairPotential(0, 0, &plj);
   potentialMaster.init();
   //PotentialMaster potentialMaster(plj, box);
-  IntegratorMD integrator(speciesList.getAtomInfo(), potentialMaster, rand, box);
+  IntegratorNVE integrator(speciesList.getAtomInfo(), potentialMaster, rand, box);
   integrator.setTimeStep(0.005);
   integrator.setTemperature(temperature);
   integrator.setNbrCheckInterval(20);

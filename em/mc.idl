@@ -246,6 +246,12 @@ interface IntegratorMD : Integrator {
 
 IntegratorMD implements Integrator;
 
+interface IntegratorNVE : IntegratorMD {
+  void IntegratorNVE([Ref] AtomInfo atomInfo, [Ref] PotentialMaster potentialMaster, [Ref] Random random, [Ref] Box box);
+}
+
+IntegratorNVE implements IntegratorMD;
+
 interface Cluster { };
 
 interface ClusterVirial : Cluster {

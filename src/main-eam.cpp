@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
   potentialMaster.setEmbedF(0, &embedF);
   potentialMaster.init();
   //PotentialMaster potentialMaster(plj, box);
-  IntegratorMD integrator(speciesList.getAtomInfo(), potentialMaster, rand, box);
+  IntegratorNVE integrator(speciesList.getAtomInfo(), potentialMaster, rand, box);
   integrator.setTimeStep(0.001);
   integrator.setTemperature(temperature);
   integrator.setNbrCheckInterval(1);
