@@ -63,7 +63,6 @@ void IntegratorMD::reset() {
     nbrCheckCountdown = nbrCheckInterval;
   }
   Integrator::reset();
-  randomizeVelocities(false);
 }
 
 double IntegratorMD::getKineticEnergy() {
@@ -76,3 +75,18 @@ void IntegratorMD::addPotentialCallback(PotentialCallback* callback, int interva
   pci.interval = pci.countdown = interval;
   allPotentialCallbacks.push_back(pci);
 }
+
+void IntegratorMD::computeForces() {
+  selfPotentialCallbackVec.clear();
+  selfPotentialCallbackVec.push_back(this);
+  for (vector<struct PotentialCallbackInfo>::iterator it = allPotentialCallbacks.begin(); it!=allPotentialCallbacks.end(); it++) {
+    (*it).countdown--;
+    if ((*it).countdown == 0) {
+      (*it).countdown = (*it).interval;
+      (*it).pcb->reset();
+      selfPotentialCallbackVec.push_back((*it).pcb);
+    }
+  }
+  potentialMaster.computeAll(selfPotentialCallbackVec);
+}
+

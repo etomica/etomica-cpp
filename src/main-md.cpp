@@ -12,16 +12,16 @@
 
 int main(int argc, char** argv) {
   int numAtoms = 32000;
-  double temperature = 1.44;
+  double temperature = 0.69;
   double density = 0.8442;
-  long steps = 1000;
+  long steps = 2000;
   bool doData = true;
-  bool doHMA = false;
+  bool doHMA = true;
 
   Random rand;
   printf("random seed: %d\n", rand.getSeed());
 
-  PotentialLJ plj(1,1,TRUNC_SIMPLE, 2.5);
+  PotentialLJ plj(1,1,TRUNC_SHIFT, 2.5);
   SpeciesList speciesList;
   speciesList.add(new SpeciesSimple(1,1));
   Box box(speciesList);
@@ -39,7 +39,8 @@ int main(int argc, char** argv) {
   potentialMaster.setPairPotential(0, 0, &plj);
   potentialMaster.init();
   //PotentialMaster potentialMaster(plj, box);
-  IntegratorNVE integrator(speciesList.getAtomInfo(), potentialMaster, rand, box);
+  //IntegratorNVE integrator(speciesList.getAtomInfo(), potentialMaster, rand, box);
+  IntegratorNHC integrator(speciesList.getAtomInfo(), potentialMaster, rand, box, 3, 0.1);
   integrator.setTimeStep(0.005);
   integrator.setTemperature(temperature);
   integrator.setNbrCheckInterval(20);

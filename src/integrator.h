@@ -32,7 +32,7 @@ class Integrator : public PotentialCallback {
     long getStepCount();
     void setTemperature(double temperature);
     double getTemperature();
-    void reset();
+    virtual void reset();
     double getPotentialEnergy();
     virtual void addListener(IntegratorListener* listener);
     virtual void removeListener(IntegratorListener* listener);
@@ -82,6 +82,8 @@ class IntegratorMD : public Integrator {
     void randomizeVelocities(bool zeroMomentum);
     vector<struct PotentialCallbackInfo> allPotentialCallbacks;
     double kineticEnergy;
+
+    virtual void computeForces();
   public:
     IntegratorMD(AtomInfo& atomInfo, PotentialMaster& potentialMaster, Random& random, Box& box);
     virtual ~IntegratorMD();
@@ -100,5 +102,24 @@ class IntegratorNVE : public IntegratorMD {
     IntegratorNVE(AtomInfo& atomInfo, PotentialMaster& potentialMaster, Random& random, Box& box);
     virtual ~IntegratorNVE();
     virtual void doStep();
+    virtual void reset();
+};
+
+class IntegratorNHC : public IntegratorMD {
+  protected:
+    const int numChains;
+    double* q;
+    double* eta;
+    double* etaP;
+  public:
+    IntegratorNHC(AtomInfo& atomInfo, PotentialMaster& potentialMaster, Random& random, Box& box, int nChains, double tau);
+    virtual ~IntegratorNHC();
+    virtual void setTemperature(double newTermpature);
+    virtual void doStep();
+    virtual void propagatorU1(double dt);
+    virtual void propagatorU2(double dt);
+    virtual void propagatorU3(double dt);
+    virtual void propagatorU4(double dt, int direction);
+    virtual void reset();
 };
 

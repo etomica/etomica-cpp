@@ -23,17 +23,7 @@ void IntegratorNVE::doStep() {
     }
   }
 
-  selfPotentialCallbackVec.clear();
-  selfPotentialCallbackVec.push_back(this);
-  for (vector<struct PotentialCallbackInfo>::iterator it = allPotentialCallbacks.begin(); it!=allPotentialCallbacks.end(); it++) {
-    (*it).countdown--;
-    if ((*it).countdown == 0) {
-      (*it).countdown = (*it).interval;
-      (*it).pcb->reset();
-      selfPotentialCallbackVec.push_back((*it).pcb);
-    }
-  }
-  potentialMaster.computeAll(selfPotentialCallbackVec);
+  computeForces();
 
   kineticEnergy = 0;
   for (int iAtom=0; iAtom<n; iAtom++) {
@@ -52,4 +42,9 @@ void IntegratorNVE::doStep() {
 #ifdef DEBUG
   printf("%ld step %e %e %e\n", stepCount, energy/n, kineticEnergy/n, (energy + kineticEnergy)/n);
 #endif
+}
+
+void IntegratorNVE::reset() {
+  IntegratorMD::reset();
+  randomizeVelocities(false);
 }
