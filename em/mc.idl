@@ -37,11 +37,14 @@ interface PotentialJS {
   double d2u(double r2);
 };
 
+interface AtomInfo {};
+
 interface SpeciesList {
   void SpeciesList();
   long size();
   void add(Species species);
   Species get(long iSpecies);
+  [Ref] AtomInfo getAtomInfo();
 };
 
 interface Species {
@@ -70,20 +73,20 @@ interface Box {
 };
 
 interface PotentialMaster {
-  void PotentialMaster([Ref] SpeciesList sl, [Ref] Box box);
+  void PotentialMaster([Ref] SpeciesList sl, [Ref] Box box, boolean doEmbed);
   void setPairPotential(long iType, long jType, Potential pij);
   void setDoTruncationCorrection(boolean doCorrection);
 };
 
 interface PotentialMasterCell : PotentialMaster {
-  void PotentialMasterCell([Ref] SpeciesList sl, [Ref] Box box, long cellRange);
+  void PotentialMasterCell([Ref] SpeciesList sl, [Ref] Box box, boolean doEmbed, long cellRange);
   void init();
 };
 
 PotentialMasterCell implements PotentialMaster;
 
 interface PotentialMasterList : PotentialMasterCell {
-  void PotentialMasterList([Ref] SpeciesList sl, [Ref] Box box, long cellRange, double nbrRange);
+  void PotentialMasterList([Ref] SpeciesList sl, [Ref] Box box, boolean doEmbed, long cellRange, double nbrRange);
 };
 
 PotentialMasterList implements PotentialMasterCell;
@@ -235,7 +238,7 @@ interface IntegratorMC : Integrator {
 IntegratorMC implements Integrator;
 
 interface IntegratorMD : Integrator {
-  void IntegratorMD([Ref] PotentialMaster potentialMaster, [Ref] Random random, [Ref] Box box);
+  void IntegratorMD([Ref] AtomInfo atomInfo, [Ref] PotentialMaster potentialMaster, [Ref] Random random, [Ref] Box box);
   void setTimeStep(double tStep);
   void setNbrCheckInterval(long interval);
   void addPotentialCallback(PotentialCallback pc, long interval);

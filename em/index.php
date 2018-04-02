@@ -124,7 +124,7 @@
     <script src='util.js'></script>
     <script src='emscripten.js'></script>
     <script type='text/javascript'>
-var box = null, potentialMaster = null, rand = null, move = null, moveID = null, integrator = null, pcHMA = null, meterFull = null, avgFull = null, doMD = false;
+var box = null, potentialMaster = null, rand = null, move = null, moveID = null, integrator = null, pcHMA = null, meterFull = null, avgFull = null, doMD = false, speciesList = null;
 var workSteps = 1, totalSteps = 0;
 stage = "init";
 var running = false, stopRequested = false;
@@ -201,20 +201,20 @@ var startTime = 0;
       default:
         throw new Exception("unknown potential type!");
     }
-    var speciesList = new SpeciesList();
+    speciesList = new SpeciesList();
     speciesList.add(new SpeciesSimple(1,1));
     box = new Module.Box(speciesList);
     box.setBoxSize(L,L,L);
     box.setNumMolecules(0, numAtoms);
     box.initCoordinates();
     if (doNbrList) {
-      potentialMaster = new Module.PotentialMasterList(speciesList, box, 2, nbrRange);
+      potentialMaster = new Module.PotentialMasterList(speciesList, box, false, 2, nbrRange);
     }
     else if (doCells) {
-      potentialMaster = new Module.PotentialMasterCell(speciesList, box, 2);
+      potentialMaster = new Module.PotentialMasterCell(speciesList, box, false, 2);
     }
     else {
-      potentialMaster = new Module.PotentialMaster(potential, box);
+      potentialMaster = new Module.PotentialMaster(speciesList, box, false);
     }
     potentialMaster.setPairPotential(0, 0, potential);
     var lrc = document.getElementById("lrc").checked;
@@ -230,7 +230,7 @@ var startTime = 0;
     }
     document.getElementById("seed").value = seed;
     if (doMD) {
-      integrator = new Module.IntegratorMD(potentialMaster, rand, box);
+      integrator = new Module.IntegratorMD(speciesList.getAtomInfo(), potentialMaster, rand, box);
       integrator.setTimeStep(tStep);
       box.enableVelocities();
       if (doNbrList) {
