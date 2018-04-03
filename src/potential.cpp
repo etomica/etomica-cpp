@@ -420,9 +420,9 @@ void PotentialEwald::u012(double r2, double &u, double &du, double &d2u) {
   double pu, pdu, pd2u;
   p.u012(r2, pu, pdu, pd2u);
   double r = sqrt(r2);
-  double eor = erfc(alpha*r)/r;
-  u = qiqj*eor + pu;
-  double dexp = twoosqrtpi * exp(-alpha*alpha*r2) * alpha;
-  du = -qiqj * (dexp + eor) + pdu;
-  d2u = -qiqj * (dexp * (1 - alpha*alpha*2*r) + eor) + pd2u;
+  double uq = qiqj*erfc(alpha*r)/r;
+  u = uq + pu;
+  double dexp = qiqj*twoosqrtpi * exp(-alpha*alpha*r2) * alpha;
+  du = -dexp - uq + pdu;
+  d2u = -dexp * (1 - alpha*alpha*2*r) - uq + pd2u;
 }
