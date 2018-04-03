@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
   DataPump pumpPE(meterPE, 1);
   MeterFullCompute meterFull(potentialMaster);
   meterFull.setDoCompute(false);
-  PotentialCallbackPressure pcp(box, temperature);
+  PotentialCallbackPressure pcp(box, temperature, true);
   meterFull.addCallback(&pcp);
   integrator.addPotentialCallback(&pcp);
   if (doHMA) {

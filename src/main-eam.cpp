@@ -12,11 +12,11 @@
 
 int main(int argc, char** argv) {
   int numAtoms = 864;
-  double temperature = 8000;
+  double temperature = 6000*0.8314;
   double density = 0.15;
-  long steps = 1000;
+  long steps = 10000;
   bool doData = true;
-  bool doHMA = false;
+  bool doHMA = true;
 
   Random rand;
   printf("random seed: %d\n", rand.getSeed());
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
   potentialMaster.setEmbedF(0, &embedF);
   potentialMaster.init();
   //PotentialMaster potentialMaster(plj, box);
-  IntegratorNVE integrator(speciesList.getAtomInfo(), potentialMaster, rand, box);
+  IntegratorNHC integrator(speciesList.getAtomInfo(), potentialMaster, rand, box, 3, 0.1);
   integrator.setTimeStep(0.001);
   integrator.setTemperature(temperature);
   integrator.setNbrCheckInterval(1);
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
   DataPump pumpPE(meterPE, 1);
   MeterFullCompute meterFull(potentialMaster);
   meterFull.setDoCompute(false);
-  PotentialCallbackPressure pcp(box, temperature);
+  PotentialCallbackPressure pcp(box, temperature, true);
   meterFull.addCallback(&pcp);
   integrator.addPotentialCallback(&pcp);
   if (doHMA) {

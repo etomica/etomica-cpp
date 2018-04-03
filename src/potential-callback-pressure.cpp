@@ -2,8 +2,9 @@
 
 #include "potential-master.h"
 
-PotentialCallbackPressure::PotentialCallbackPressure(Box& b, double T) : box(b), temperature(T) {
+PotentialCallbackPressure::PotentialCallbackPressure(Box& b, double T, bool tf) : box(b), temperature(T) {
   callFinished = true;
+  takesForces = tf;
 }
 
 int PotentialCallbackPressure::getNumData() {return 1;}

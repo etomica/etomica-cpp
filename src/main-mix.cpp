@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
   MeterPotentialEnergy meterPE(integrator);
   DataPump pumpPE(meterPE, 10);
   MeterFullCompute meterFull(potentialMaster);
-  PotentialCallbackPressure pcp(box, temperature);
+  PotentialCallbackPressure pcp(box, temperature, false);
   meterFull.addCallback(&pcp);
   //if (doHMA) meterFull.addCallback(&pcHMA);
   DataPump pumpFull(meterFull, 4*numAtoms);
