@@ -3,6 +3,7 @@
 /**
  * Nose-Hoover chains molecular dynamics integrator
  * adopted from Allen & Tildesley's example code, md_nvt_lj
+ * https://github.com/Allen-Tildesley/examples
  */
 
 IntegratorNHC::IntegratorNHC(AtomInfo& ai, PotentialMaster& p, Random& r, Box& b, int nc, double tau) : IntegratorMD(ai, p, r, b), numChains(nc) {
