@@ -56,7 +56,7 @@ class PotentialCallbackPressure : public PotentialCallback {
     double temperature;
     double data[1];
   public:
-    PotentialCallbackPressure(Box& box, double temperature);
+    PotentialCallbackPressure(Box& box, double temperature, bool takesForces);
     ~PotentialCallbackPressure() {}
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
     virtual int getNumData();
@@ -198,6 +198,7 @@ class PotentialMaster {
           else if (r2 < rhoCutoffs[jType]) {
             rhoPotentials[jType]->u012(r2, rho, drho, d2rho);
             rhoSum[jAtom] += rho;
+            rdrho.push_back(drho);
           }
         }
         else if (r2 < rhoCutoffs[jType]) {
@@ -219,7 +220,10 @@ class PotentialMaster {
       if (r2 < iRhoCutoff) {
         // if rij < cutoff for rhoi, then we have a force
         if (iType==jType) {
-          double fac = ((df + idf[jAtom]) * rdrho[rdrhoIdx])/r2;
+          double fac = (df + idf[jAtom]) * rdrho[rdrhoIdx];
+          rdrhoIdx++;
+          virialTot += fac;
+          fac /= r2;
           //if (iAtom==0||jAtom==0) printf("go %d %d  %f %f  %f %f  %f\n", iAtom, jAtom, sqrt(r2), rdrho[rdrhoIdx], df, idf[jAtom], fac);
           for (int k=0; k<3; k++) {
             double fk = dr[k] * fac;
@@ -229,7 +233,12 @@ class PotentialMaster {
         }
         else {
           double fac = df * rdrho[rdrhoIdx];
-          if (r2 < rhoCutoffs[jAtom]) fac += idf[jAtom] * rdrho[rdrhoIdx];
+          rdrhoIdx++;
+          if (r2 < rhoCutoffs[jAtom]) {
+            fac += idf[jAtom] * rdrho[rdrhoIdx];
+            rdrhoIdx++;
+          }
+          virialTot += fac;
           fac /= r2;
           for (int k=0; k<3; k++) {
             double fk = dr[k] * fac;
@@ -237,17 +246,18 @@ class PotentialMaster {
             force[jAtom][k] -= fk;
           }
         }
-        rdrhoIdx++;
       }
       else if (r2 < rhoCutoffs[jType]) {
         // if rij < cutoff for rhoi, then we have a force
-        double fac = idf[jAtom] * rdrho[rdrhoIdx] / r2;
+        double fac = idf[jAtom] * rdrho[rdrhoIdx];
+        rdrhoIdx++;
+        virialTot += fac;
+        fac /= r2;
         for (int k=0; k<3; k++) {
           double fk = dr[k] * fac;
           force[iAtom][k] += fk;
           force[jAtom][k] -= fk;
         }
-        rdrhoIdx++;
       }
     }
     void handleOldEmbedding(const double *ri, const double *rj, const double *jbo, const int jAtom, double& uTot, const int jType) {
