@@ -382,3 +382,47 @@ void PotentialHS::u012(double r2, double &u, double &du, double &d2u) {
   u = r2>sigma2 ? 0 : INFINITY;
   du = d2u = 0;
 }
+
+PotentialEwald::PotentialEwald(Potential& p2, double a, double qq, double rc) : Potential(TRUNC_SIMPLE, rc), p(p2), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
+}
+
+PotentialEwald::~PotentialEwald() {}
+
+double PotentialEwald::erfc(double x) {
+  double t = 1.0 / (1.0 + 0.3275911 * x);
+  return exp(-x * x) * (t * (
+        0.254829592 + t * (
+          -0.284496736 + t * (
+            1.421413741 + t * (
+              -1.453152027 + 1.061405429 * t)))));
+}
+
+double PotentialEwald::ur(double r) {
+  return qiqj*erfc(alpha*r)/r + p.ur(r);
+}
+
+double PotentialEwald::u(double r2) {
+  double r = sqrt(r2);
+  return ur(r);
+}
+
+double PotentialEwald::du(double r2) {
+  double r = sqrt(r2);
+  return -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *alpha + erfc(alpha*r)/r) + p.du(r2);
+}
+
+double PotentialEwald::d2u(double r2) {
+  double r = sqrt(r2);
+  return -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *(alpha*(1 - alpha*alpha*2*r)) + erfc(alpha*r)/r) + p.du(r2);
+}
+
+void PotentialEwald::u012(double r2, double &u, double &du, double &d2u) {
+  double pu, pdu, pd2u;
+  p.u012(r2, pu, pdu, pd2u);
+  double r = sqrt(r2);
+  double eor = erfc(alpha*r)/r;
+  u = qiqj*eor + pu;
+  double dexp = twoosqrtpi * exp(-alpha*alpha*r2) * alpha;
+  du = -qiqj * (dexp + eor) + pdu;
+  d2u = -qiqj * (dexp * (1 - alpha*alpha*2*r) + eor) + pd2u;
+}
