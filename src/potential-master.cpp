@@ -5,7 +5,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed) {
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed), charges(nullptr), doEwald(false) {
 
   if (embeddingPotentials && !pureAtoms) {
     fprintf(stderr, "Embedding potentials require a purely atomic system");
@@ -72,6 +72,7 @@ PotentialMaster::~PotentialMaster() {
   delete[] bondedPotentials;
   delete[] bondedAtoms;
   delete[] numAtomsByType;
+  delete[] charges;
 }
 
 void PotentialMaster::setDoTruncationCorrection(bool doCorrection) {
@@ -105,6 +106,28 @@ void PotentialMaster::setEmbedF(int iType, EmbedF* ef) {
     abort();
   }
   embedF[iType] = ef;
+}
+
+void PotentialMaster::setCharge(int iType, double q) {
+  if (!doEwald) {
+    doEwald = true;
+    charges = new double[numAtomTypes];
+    for (int i=0; i<numAtomTypes; i++) charges[i] = 0;
+    setEwald(0, 0);
+  }
+  charges[iType] = q;
+}
+
+void PotentialMaster::setEwald(double kc, double a) {
+  kCut = kc;
+  alpha = a;
+  const double* bs = box.getBoxSize();
+  for (int i=0; i<3; i++) {
+    kBasis[i] = 2*M_PI/bs[i];
+  }
+  if (!doEwald) {
+    setCharge(0, 0);
+  }
 }
 
 void PotentialMaster::setBondPotential(int iSpecies, vector<int*> &bp, Potential *p) {
@@ -224,6 +247,44 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);
   }
+}
+
+void PotentialMaster::computeAllFourier(double &uTot) {
+  const double kCut2 = kCut*kCut;
+  const double* bs = box.getBoxSize();
+  const int numAtoms = box.getNumAtoms();
+  double fourierSum = 0;
+  int kxMax = (int)(0.5*bs[0]/M_PI*kCut);
+  for (int ikx=-kxMax; ikx<=kxMax; ikx++) {
+    double kx = ikx*kBasis[0];
+    double kx2 = kx*kx;
+    double kyCut2 = kCut2 - kx2;
+    int kyMax = (int)(0.5*bs[1]*sqrt(kyCut2)/M_PI);
+    for (int iky=-kyMax; iky<=kyMax; iky++) {
+      double ky = iky*kBasis[1];
+      double kxy2 = kx2 + ky*ky;
+      int kzMax = (int)(0.5*bs[2]*sqrt(kCut2 - kxy2)/M_PI);
+      for (int ikz=-kzMax; ikz<=kzMax; ikz++) {
+        if (ikx==0 && iky==0 && ikz==0) continue;
+        double kz = ikz*kBasis[2];
+        double kxyz2 = kxy2 + kz*kz;
+        double sFacReal = 0;
+        double sFacImag = 0;
+        for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+          int iType = box.getAtomType(iAtom);
+          double qi = charges[iType];
+          if (qi==0) continue;
+          double* ri = box.getAtomPosition(iAtom);
+          double kr = kx*ri[0] + ky*ri[1] + kz*ri[2];
+          sFacReal += qi * cos(kr);
+          sFacImag += qi * sin(kr);
+        }
+        fourierSum += exp(-0.25*kxyz2/(alpha*alpha))
+              * (sFacReal*sFacReal + sFacImag*sFacImag) / kxyz2;
+      }
+    }
+  }
+  uTot += 2*M_PI/(bs[0]*bs[1]*bs[2]) * fourierSum;
 }
 
 void PotentialMaster::computeAllTruncationCorrection(double &uTot, double &virialTot) {

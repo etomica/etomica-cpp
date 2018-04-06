@@ -141,6 +141,10 @@ class PotentialMaster {
     bool rigidMolecules;
     bool doTruncationCorrection, doSingleTruncationCorrection;
     const bool embeddingPotentials;
+    double* charges;
+    double kBasis[3];
+    double kCut, alpha;
+    bool doEwald;
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);
     void computeAllBonds(bool doForces, double &uTot, double &virialTot);
@@ -332,6 +336,7 @@ class PotentialMaster {
     }
     virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom);
     virtual double oldEmbeddingEnergy(int iAtom);
+    void computeAllFourier(double &uTot);
 
   public:
     PotentialMaster(const SpeciesList &speciesList, Box& box, bool doEmbed);
@@ -358,6 +363,8 @@ class PotentialMaster {
     void processAtomU(int coeff);
     void addCallback(PotentialCallback* pcb);
     virtual double uTotalFromAtoms();
+    void setCharge(int iType, double charge);
+    void setEwald(double kCut, double alpha);
 };
 
 class PotentialMasterCell : public PotentialMaster {
