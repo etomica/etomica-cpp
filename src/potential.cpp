@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "potential.h"
 #include "alloc2d.h"
+#include "util.h"
 
 Potential::Potential(int tt, double rc) : truncType(tt), rCut(rc), correctTruncation(true) {
   init();
@@ -387,15 +388,6 @@ PotentialEwald::PotentialEwald(Potential& p2, double a, double qq, double rc) : 
 }
 
 PotentialEwald::~PotentialEwald() {}
-
-double PotentialEwald::erfc(double x) {
-  double t = 1.0 / (1.0 + 0.3275911 * x);
-  return exp(-x * x) * (t * (
-        0.254829592 + t * (
-          -0.284496736 + t * (
-            1.421413741 + t * (
-              -1.453152027 + 1.061405429 * t)))));
-}
 
 double PotentialEwald::ur(double r) {
   return qiqj*erfc(alpha*r)/r + p.ur(r);

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "potential-master.h"
 #include "alloc2d.h"
+#include "util.h"
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
@@ -259,9 +260,40 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
 }
 
 void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
+  const int numAtoms = box.getNumAtoms();
+  double q2sum = 0;
+  for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+    int iType = box.getAtomType(iAtom);
+    double qi = charges[iType];
+    if (qi==0) continue;
+    q2sum += qi*qi;
+  }
+  uTot -= alpha/sqrt(M_PI)*q2sum;
+
+  for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
+    int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+    box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
+    if (iLastAtom==iFirstAtom) continue;
+    for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+      double qi = charges[box.getAtomType(iAtom)];
+      if (qi==0) continue;
+      double* ri = box.getAtomPosition(iAtom);
+      for (int jAtom=iFirstAtom; jAtom<=iLastAtom; jAtom++) {
+        double qj = charges[box.getAtomType(jAtom)];
+        if (qj==0) continue;
+        double* rj = box.getAtomPosition(jAtom);
+        double dr[3];
+        for (int k=0; k<3; k++) dr[k] = ri[k]-rj[k];
+        box.nearestImage(dr);
+        double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
+        double r = sqrt(r2);
+        uTot -= qi*qj*erf(alpha*r)/r;
+      }
+    }
+  }
+
   const double kCut2 = kCut*kCut;
   const double* bs = box.getBoxSize();
-  const int numAtoms = box.getNumAtoms();
   double fourierSum = 0;
   int kxMax = (int)(0.5*bs[0]/M_PI*kCut);
   double coeff = 4*M_PI/(bs[0]*bs[1]*bs[2]);

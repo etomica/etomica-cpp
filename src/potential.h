@@ -135,7 +135,6 @@ class PotentialEwald : public Potential {
   public:
     PotentialEwald(Potential& p2, double alpha, double qiqj, double rc);
     virtual ~PotentialEwald();
-    double erfc(double r);
     double ur(double r);
     double u(double r2);
     double du(double r2);
