@@ -1,6 +1,6 @@
 #include "meter.h"
 
-MeterKineticEnergy::MeterKineticEnergy(Box& b) : Meter(1), box(b), integrator(nullptr) {
+MeterKineticEnergy::MeterKineticEnergy() : Meter(1), integrator(nullptr) {
   data[0] = data[1] = 0;
 }
 
