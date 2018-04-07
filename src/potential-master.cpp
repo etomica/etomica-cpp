@@ -270,6 +270,7 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
   }
   uTot -= alpha/sqrt(M_PI)*q2sum;
 
+  double twoosqrtpi = 2.0/sqrt(M_PI);
   for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
     int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
     box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
@@ -283,11 +284,20 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
         if (qj==0) continue;
         double* rj = box.getAtomPosition(jAtom);
         double dr[3];
-        for (int k=0; k<3; k++) dr[k] = ri[k]-rj[k];
+        for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
         box.nearestImage(dr);
         double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
         double r = sqrt(r2);
-        uTot -= qi*qj*erf(alpha*r)/r;
+        double qiqj = qi*qj;
+        double ec = erfc(alpha*r);
+        uTot -= qiqj*(1-ec)/r;
+        if (doForces) {
+          double du = -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *alpha + (ec-1)/r) / r2;
+          for (int m=0; m<3; m++) {
+            force[iAtom][m] += dr[m]*du;
+            force[jAtom][m] -= dr[m]*du;
+          }
+        }
       }
     }
   }
