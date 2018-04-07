@@ -29,6 +29,10 @@ interface PotentialHS : Potential {
 
 PotentialHS implements Potential;
 
+interface PotentialEwald : Potential {
+  void PotentialEwald([Ref] Potential p2, double alpha, double qiqj, double rc);
+};
+
 [JSImplementation="Potential"]
 interface PotentialJS {
   void PotentialJS();
@@ -36,6 +40,14 @@ interface PotentialJS {
   double du(double r2);
   double d2u(double r2);
 };
+
+interface EmbedF {};
+
+interface EmbedFsqrt : EmbedF {
+  void EmbedFsqrt(double Ceps);
+};
+
+EmbedFsqrt implements EmbedF;
 
 interface AtomInfo {};
 
@@ -76,6 +88,10 @@ interface PotentialMaster {
   void PotentialMaster([Ref] SpeciesList sl, [Ref] Box box, boolean doEmbed);
   void setPairPotential(long iType, long jType, Potential pij);
   void setDoTruncationCorrection(boolean doCorrection);
+  void setRhoPotential(long jType, Potential rhoj);
+  void setEmbedF(long iType, EmbedF Fi);
+  void setCharge(long iType, double charge);
+  void setEwald(double kCut, double alpha);
 };
 
 interface PotentialMasterCell : PotentialMaster {
@@ -164,7 +180,7 @@ interface Meter {
 interface PotentialCallback { };
 
 interface PotentialCallbackPressure : PotentialCallback {
-  void PotentialCallbackPressure([Ref] Box box, double temperature);
+  void PotentialCallbackPressure([Ref] Box box, double temperature, boolean takesForces);
 };
 
 PotentialCallbackPressure implements PotentialCallback;
@@ -182,8 +198,8 @@ interface MeterPotentialEnergy : Meter {
 MeterPotentialEnergy implements Meter;
 
 interface MeterKineticEnergy : Meter {
-  void MeterKineticEnergy([Ref] Box box);
-  void setIntegrator(Integrator integrator);
+  void MeterKineticEnergy();
+  void setIntegrator(IntegratorMD integrator);
 };
 
 MeterKineticEnergy implements Meter;
@@ -238,7 +254,6 @@ interface IntegratorMC : Integrator {
 IntegratorMC implements Integrator;
 
 interface IntegratorMD : Integrator {
-  void IntegratorMD([Ref] AtomInfo atomInfo, [Ref] PotentialMaster potentialMaster, [Ref] Random random, [Ref] Box box);
   void setTimeStep(double tStep);
   void setNbrCheckInterval(long interval);
   void addPotentialCallback(PotentialCallback pc, long interval);
@@ -248,7 +263,7 @@ IntegratorMD implements Integrator;
 
 interface IntegratorNVE : IntegratorMD {
   void IntegratorNVE([Ref] AtomInfo atomInfo, [Ref] PotentialMaster potentialMaster, [Ref] Random random, [Ref] Box box);
-}
+};
 
 IntegratorNVE implements IntegratorMD;
 
