@@ -137,9 +137,11 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     const double *jbo = boxOffsets[atomCell[iAtom]];
     while ((jAtom = cellNextAtom[jAtom]) > -1) {
       if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
-      const double *rj = box.getAtomPosition(jAtom);
       const int jType = box.getAtomType(jAtom);
-      handleComputeAll(iAtom, jAtom, ri, rj, jbo, iPotentials[jType], uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
+      Potential* pij = iPotentials[jType];
+      if (!pij) continue;
+      const double *rj = box.getAtomPosition(jAtom);
+      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
     }
     const int iCell = atomCell[iAtom];
     for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
@@ -149,8 +151,10 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
       for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
         if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
         const int jType = box.getAtomType(jAtom);
+        Potential* pij = iPotentials[jType];
+        if (!pij) continue;
         const double *rj = box.getAtomPosition(jAtom);
-        handleComputeAll(iAtom, jAtom, ri, rj, jbo, iPotentials[jType], uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
+        handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
       }
     }
   }
@@ -240,8 +244,10 @@ void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, 
     if (jAtom!=iAtom) {
       if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
       const int jType = box.getAtomType(jAtom);
+      Potential* pij = iPotentials[jType];
+      if (!pij) continue;
       const double *rj = box.getAtomPosition(jAtom);
-      handleComputeOne(iPotentials[jType], ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
+      handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
     }
   }
 
@@ -251,18 +257,22 @@ void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, 
     jCell = wrapMap[jCell];
     for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
       if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
-      const double *rj = box.getAtomPosition(jAtom);
       const int jType = box.getAtomType(jAtom);
-      handleComputeOne(iPotentials[jType], ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
+      Potential* pij = iPotentials[jType];
+      if (!pij) continue;
+      const double *rj = box.getAtomPosition(jAtom);
+      handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
     }
     jCell = iCell - *it;
     jbo = boxOffsets[jCell];
     jCell = wrapMap[jCell];
     for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
       if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
-      const double *rj = box.getAtomPosition(jAtom);
       const int jType = box.getAtomType(jAtom);
-      handleComputeOne(iPotentials[jType], ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
+      Potential* pij = iPotentials[jType];
+      if (!pij) continue;
+      const double *rj = box.getAtomPosition(jAtom);
+      handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
     }
   }
   if (embeddingPotentials) {

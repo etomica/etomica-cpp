@@ -144,6 +144,7 @@ class PotentialMaster {
     double* charges;
     double kBasis[3];
     double kCut, alpha;
+    double **cossinkri;
     bool doEwald;
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);
@@ -336,7 +337,7 @@ class PotentialMaster {
     }
     virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom);
     virtual double oldEmbeddingEnergy(int iAtom);
-    void computeAllFourier(double &uTot);
+    void computeAllFourier(const bool doForces, double &uTot);
 
   public:
     PotentialMaster(const SpeciesList &speciesList, Box& box, bool doEmbed);

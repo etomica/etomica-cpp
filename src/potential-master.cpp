@@ -5,7 +5,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed), charges(nullptr), doEwald(false) {
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed), charges(nullptr), cossinkri(nullptr), doEwald(false) {
 
   if (embeddingPotentials && !pureAtoms) {
     fprintf(stderr, "Embedding potentials require a purely atomic system");
@@ -113,6 +113,7 @@ void PotentialMaster::setCharge(int iType, double q) {
     doEwald = true;
     charges = new double[numAtomTypes];
     for (int i=0; i<numAtomTypes; i++) charges[i] = 0;
+    cossinkri = (double**)malloc2D(box.getNumAtoms(), 2, sizeof(double));
     setEwald(0, 0);
   }
   charges[iType] = q;
@@ -171,6 +172,9 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
     if (embeddingPotentials) {
       idf = (double*)realloc(idf, numAtoms*sizeof(double));
     }
+    if (doEwald) {
+      cossinkri = (double**)realloc2D((void**)cossinkri, box.getNumAtoms(), 2, sizeof(double));
+    }
     numForceAtoms = numAtoms;
   }
   if (embeddingPotentials && numAtoms > numRhoSumAtoms) {
@@ -207,10 +211,12 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
     for (int j=0; j<i; j++) {
       if (checkSkip(j, iSpecies, iMolecule, iBondedAtoms)) continue;
       int jType = box.getAtomType(j);
+      Potential* pij = pairPotentials[iType][jType];
+      if (!pij) continue;
       double *rj = box.getAtomPosition(j);
       for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
       box.nearestImage(dr);
-      handleComputeAll(i, j, zero, dr, zero, pairPotentials[iType][jType], uAtom[i], uAtom[j], doForces?force[i]:nullptr, doForces?force[j]:nullptr, uTot, virialTot, pairCutoffs[iType][jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
+      handleComputeAll(i, j, zero, dr, zero, pij, uAtom[i], uAtom[j], doForces?force[i]:nullptr, doForces?force[j]:nullptr, uTot, virialTot, pairCutoffs[iType][jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
     }
   }
   if (embeddingPotentials) {
@@ -240,6 +246,9 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
       rdrho.clear();
     }
   }
+  if (doEwald) {
+    computeAllFourier(doForces, uTot);
+  }
   if (!pureAtoms && !rigidMolecules) {
     computeAllBonds(doForces, uTot, virialTot);
   }
@@ -249,12 +258,13 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   }
 }
 
-void PotentialMaster::computeAllFourier(double &uTot) {
+void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
   const double kCut2 = kCut*kCut;
   const double* bs = box.getBoxSize();
   const int numAtoms = box.getNumAtoms();
   double fourierSum = 0;
   int kxMax = (int)(0.5*bs[0]/M_PI*kCut);
+  double coeff = 4*M_PI/(bs[0]*bs[1]*bs[2]);
   for (int ikx=-kxMax; ikx<=kxMax; ikx++) {
     double kx = ikx*kBasis[0];
     double kx2 = kx*kx;
@@ -276,15 +286,26 @@ void PotentialMaster::computeAllFourier(double &uTot) {
           if (qi==0) continue;
           double* ri = box.getAtomPosition(iAtom);
           double kr = kx*ri[0] + ky*ri[1] + kz*ri[2];
-          sFacReal += qi * cos(kr);
-          sFacImag += qi * sin(kr);
+          cossinkri[iAtom][0] = qi * cos(kr);
+          sFacReal += cossinkri[iAtom][0];
+          cossinkri[iAtom][1] = qi * sin(kr);
+          sFacImag += cossinkri[iAtom][1];
         }
-        fourierSum += exp(-0.25*kxyz2/(alpha*alpha))
-              * (sFacReal*sFacReal + sFacImag*sFacImag) / kxyz2;
+        double fExp = exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
+        fourierSum += fExp * (sFacReal*sFacReal + sFacImag*sFacImag);
+        if (doForces) {
+          double coeffk = coeff * fExp;
+          for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+            double coeffki = coeffk * (cossinkri[iAtom][1]*sFacReal - cossinkri[iAtom][0]*sFacImag);
+            force[iAtom][0] -= coeffki * kx;
+            force[iAtom][1] -= coeffki * ky;
+            force[iAtom][2] -= coeffki * kz;
+          }
+        }
       }
     }
   }
-  uTot += 2*M_PI/(bs[0]*bs[1]*bs[2]) * fourierSum;
+  uTot += 0.5*coeff * fourierSum;
 }
 
 void PotentialMaster::computeAllTruncationCorrection(double &uTot, double &virialTot) {
@@ -544,11 +565,13 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
     if (jAtom==iAtom) continue;
     if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
     int jType = box.getAtomType(jAtom);
+    Potential* pij = iPotentials[jType];
+    if (!pij) continue;
     double *rj = box.getAtomPosition(jAtom);
     double dr[3];
     for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
     box.nearestImage(dr);
-    handleComputeOne(iPotentials[jType], zero, dr, zero, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
+    handleComputeOne(pij, zero, dr, zero, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
   }
   if (embeddingPotentials) {
     // we just computed new rhoSum[iAtom].  now subtract the old one

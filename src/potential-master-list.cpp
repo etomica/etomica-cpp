@@ -142,7 +142,9 @@ resetStart:
     int jAtom=iAtom;
     int iCell = atomCell[iAtom];
     double *jbo = boxOffsets[iCell]; // always 0
+    Potential** iPotentials = pairPotentials[box.getAtomType(iAtom)];
     while ((jAtom = cellNextAtom[jAtom]) > -1) {
+      if (!iPotentials[box.getAtomType(jAtom)]) continue;
       double *rj = box.getAtomPosition(jAtom);
       tooMuch += checkNbrPair(iAtom, jAtom, ri, rj, rc2, jbo);
     }
@@ -152,6 +154,7 @@ resetStart:
       jCell = wrapMap[jCell];
       for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
         if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
+        if (!iPotentials[box.getAtomType(jAtom)]) continue;
         double *rj = box.getAtomPosition(jAtom);
         tooMuch += checkNbrPair(iAtom, jAtom, ri, rj, rc2, jbo);
       }
