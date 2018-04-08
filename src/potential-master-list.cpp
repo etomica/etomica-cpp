@@ -48,13 +48,13 @@ void PotentialMasterList::setDoDownNbrs(bool doDown) {
   onlyUpNbrs = !doDown;
 }
 
-int PotentialMasterList::checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2, double *jbo) {
+int PotentialMasterList::checkNbrPair(int iAtom, int jAtom, const bool skipIntra, double *ri, double *rj, double rc2, double minR2, double *jbo) {
   double r2 = 0;
   for (int k=0; k<3; k++) {
     double dr = rj[k]+jbo[k]-ri[k];
     r2 += dr*dr;
   }
-  if (r2 > rc2) return 0;
+  if (r2 > rc2 || (skipIntra && r2 < minR2)) return 0;
   if (numAtomNbrsUp[iAtom] >= maxNab) return 1;
   nbrs[iAtom][numAtomNbrsUp[iAtom]] = jAtom;
   nbrBoxOffsets[iAtom][numAtomNbrsUp[iAtom]] = jbo;
@@ -126,6 +126,10 @@ resetStart:
   for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) numAtomNbrsUp[iAtom] = 0;
 
   double rc2 = nbrRange*nbrRange;
+  const double *bs = box.getBoxSize();
+  double minR2 = 0.5*bs[0];
+  for (int k=1; k<3; k++) minR2 = bs[k]<minR2 ? 0.5*bs[k] : minR2;
+  minR2 *= minR2;
   for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) {
     int iMolecule = iAtom;
     vector<int> *iBondedAtoms = nullptr;
@@ -145,18 +149,21 @@ resetStart:
     Potential** iPotentials = pairPotentials[box.getAtomType(iAtom)];
     while ((jAtom = cellNextAtom[jAtom]) > -1) {
       if (!iPotentials[box.getAtomType(jAtom)]) continue;
+      if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
       double *rj = box.getAtomPosition(jAtom);
-      tooMuch += checkNbrPair(iAtom, jAtom, ri, rj, rc2, jbo);
+      tooMuch += checkNbrPair(iAtom, jAtom, false, ri, rj, rc2, minR2, jbo);
     }
     for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
       int jCell = iCell + *it;
       jbo = boxOffsets[jCell];
       jCell = wrapMap[jCell];
       for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
-        if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
-        if (!iPotentials[box.getAtomType(jAtom)]) continue;
+        if (!iPotentials[box.getAtomType(jAtom)]) {
+          continue;
+        }
+        bool skipIntra = checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms);
         double *rj = box.getAtomPosition(jAtom);
-        tooMuch += checkNbrPair(iAtom, jAtom, ri, rj, rc2, jbo);
+        tooMuch += checkNbrPair(iAtom, jAtom, skipIntra, ri, rj, rc2, minR2, jbo);
       }
     }
     if (tooMuch > 0) {
@@ -269,6 +276,9 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
       }
       rdrho.clear();
     }
+  }
+  if (doEwald) {
+    computeAllFourier(doForces, uTot);
   }
   computeAllTruncationCorrection(uTot, virialTot);
   if (!pureAtoms && !rigidMolecules) {

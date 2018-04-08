@@ -275,11 +275,11 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
     int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
     box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
     if (iLastAtom==iFirstAtom) continue;
-    for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+    for (int iAtom=iFirstAtom; iAtom<iLastAtom; iAtom++) {
       double qi = charges[box.getAtomType(iAtom)];
       if (qi==0) continue;
       double* ri = box.getAtomPosition(iAtom);
-      for (int jAtom=iFirstAtom; jAtom<=iLastAtom; jAtom++) {
+      for (int jAtom=iAtom+1; jAtom<=iLastAtom; jAtom++) {
         double qj = charges[box.getAtomType(jAtom)];
         if (qj==0) continue;
         double* rj = box.getAtomPosition(jAtom);
@@ -357,8 +357,9 @@ void PotentialMaster::computeAllTruncationCorrection(double &uTot, double &viria
   for (int i=0; i<numAtomTypes; i++) {
     int iNumAtoms = numAtomsByType[i];
     for (int j=i; j<numAtomTypes; j++) {
-      int jNumAtoms = numAtomsByType[j];
       Potential *p = pairPotentials[i][j];
+      if (p==nullptr) continue;
+      int jNumAtoms = numAtomsByType[j];
       double u, du, d2u;
       p->u012TC(u, du, d2u);
       int numPairs = j==i ? iNumAtoms*(jNumAtoms-1)/2 : iNumAtoms*jNumAtoms;

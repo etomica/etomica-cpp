@@ -63,6 +63,17 @@ class PotentialCallbackPressure : public PotentialCallback {
     virtual double* getData();
 };
     
+class PotentialCallbackEnergy : public PotentialCallback {
+  protected:
+    double data[1];
+  public:
+    PotentialCallbackEnergy();
+    ~PotentialCallbackEnergy() {}
+    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual int getNumData();
+    virtual double* getData();
+};
+
 class PotentialCallbackHMA : public PotentialCallback {
   protected:
     Box& box;
@@ -412,7 +423,7 @@ class PotentialMasterList : public PotentialMasterCell {
     double safetyFac;
     double *maxR2, *maxR2Unsafe;
 
-    int checkNbrPair(int iAtom, int jAtom, double *ri, double *rj, double rc2, double *jbo);
+    int checkNbrPair(int iAtom, int jAtom, const bool skipIntra, double *ri, double *rj, double rc2, double minR2, double *jbo);
   public:
     PotentialMasterList(const SpeciesList& speciesList, Box& box, bool doEmbed, int cellRange, double nbrRange);
     ~PotentialMasterList();
