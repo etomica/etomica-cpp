@@ -1,12 +1,16 @@
 #pragma once
 
+#include <vector>
 #include "atom-info.h"
+
+using namespace std;
 
 class Species {
   protected:
     int numAtoms, numAtomTypes;
     int* atomTypes;
     double** positions;
+    void setup(int numAtoms, int numAtomTypes);
 
   public:
     Species(int numAtoms, int numAtomTypes);
@@ -25,6 +29,19 @@ class SpeciesSimple : public Species {
   public:
     SpeciesSimple(int numAtoms, double mass);
     virtual ~SpeciesSimple() {}
+    virtual void init(AtomInfo& atomInfo);
+    void setAtomPosition(int iAtom, double* iPosition);
+};
+
+class SpeciesFile : public Species {
+  private:
+    vector<double> typeMass;
+    vector<int> types;
+    vector<char*> typeSymbols;
+
+  public:
+    SpeciesFile(const char *filename);
+    virtual ~SpeciesFile() {}
     virtual void init(AtomInfo& atomInfo);
     void setAtomPosition(int iAtom, double* iPosition);
 };
