@@ -45,6 +45,7 @@ void IntegratorNHC::doStep() {
   }
   if (nbrCheckInterval>0) nbrCheckCountdown--;
 #ifdef DEBUG
+  int n = box.getTotalNumMolecules();
   printf("%ld step %e %e %e\n", stepCount, energy/n, kineticEnergy/n, (energy + kineticEnergy)/n);
 #endif
 }
