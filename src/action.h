@@ -21,3 +21,14 @@ class ConfigurationLattice : Action {
     ~ConfigurationLattice();
     virtual void go();
 };
+
+class ConfigurationFile : Action {
+  protected:
+    Box& box;
+    const char* filename;
+
+  public:
+    ConfigurationFile(Box& box, const char* filename);
+    ~ConfigurationFile();
+    virtual void go();
+};
