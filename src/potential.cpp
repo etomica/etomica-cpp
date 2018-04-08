@@ -418,3 +418,36 @@ void PotentialEwald::u012(double r2, double &u, double &du, double &d2u) {
   du = -dexp - uq + pdu;
   d2u = -dexp * (1 - alpha*alpha*2*r) - uq + pd2u;
 }
+
+PotentialEwaldBare::PotentialEwaldBare(double a, double qq, double rc) : Potential(TRUNC_SIMPLE, rc), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
+}
+
+PotentialEwaldBare::~PotentialEwaldBare() {}
+
+double PotentialEwaldBare::ur(double r) {
+  return qiqj*erfc(alpha*r)/r;
+}
+
+double PotentialEwaldBare::u(double r2) {
+  double r = sqrt(r2);
+  return ur(r);
+}
+
+double PotentialEwaldBare::du(double r2) {
+  double r = sqrt(r2);
+  return -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *alpha + erfc(alpha*r)/r);
+}
+
+double PotentialEwaldBare::d2u(double r2) {
+  double r = sqrt(r2);
+  return -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *(alpha*(1 - alpha*alpha*2*r)) + erfc(alpha*r)/r);
+}
+
+void PotentialEwaldBare::u012(double r2, double &u, double &du, double &d2u) {
+  double r = sqrt(r2);
+  double uq = qiqj*erfc(alpha*r)/r;
+  u = uq;
+  double dexp = qiqj*twoosqrtpi * exp(-alpha*alpha*r2) * alpha;
+  du = -dexp - uq;
+  d2u = -dexp * (1 - alpha*alpha*2*r) - uq;
+}

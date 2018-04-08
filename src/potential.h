@@ -126,6 +126,21 @@ class PotentialHS: public Potential {
     void u012(double r2, double &u, double &du, double &d2u);
 };
 
+class PotentialEwaldBare : public Potential {
+  private:
+    const double qiqj;
+    const double alpha;
+    const double twoosqrtpi;
+  public:
+    PotentialEwaldBare(double alpha, double qiqj, double rc);
+    virtual ~PotentialEwaldBare();
+    double ur(double r);
+    double u(double r2);
+    double du(double r2);
+    double d2u(double r2);
+    void u012(double r2, double &u, double &du, double &d2u);
+};
+
 class PotentialEwald : public Potential {
   private:
     Potential& p;
