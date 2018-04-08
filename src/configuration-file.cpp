@@ -32,6 +32,7 @@ void ConfigurationFile::go() {
       }
       c = c2;
     }
+    box.nearestImage(ri);
   }
   fclose(inp);
 }
