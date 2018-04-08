@@ -38,12 +38,14 @@ class SpeciesFile : public Species {
     vector<double> typeMass;
     vector<int> types;
     vector<char*> typeSymbols;
+    int typeOffset;
 
   public:
     SpeciesFile(const char *filename);
-    virtual ~SpeciesFile() {}
+    virtual ~SpeciesFile();
     virtual void init(AtomInfo& atomInfo);
     void setAtomPosition(int iAtom, double* iPosition);
+    int getTypeForSymbol(const char* symbol);
 };
 
 class SpeciesList {

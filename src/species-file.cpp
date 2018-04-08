@@ -3,7 +3,7 @@
 #include <string.h>
 #include "species.h"
 
-SpeciesFile::SpeciesFile(const char* filename) : Species(0,0) {
+SpeciesFile::SpeciesFile(const char* filename) : Species(0,0), typeOffset(0) {
   FILE* f;
   if (!(f = fopen(filename, "r"))) {
     fprintf(stderr, "Unable to open species file '%s'\n", filename);
@@ -20,7 +20,8 @@ SpeciesFile::SpeciesFile(const char* filename) : Species(0,0) {
     char* c = buf;
     char* symbol = strsep(&c, " ");
     if (!symbol || symbol[0] == '#') continue;
-    if (strncmp(symbol, "atoms:", 5)) break;
+    if (strncmp(symbol, "atoms:", 6) == 0) break;
+    if (strncmp(symbol, "types:", 6) == 0) continue;
     if (!c) {
       fprintf(stderr, "found atom type symbol and no mass in file %s\n", filename);
       abort();
@@ -71,6 +72,7 @@ SpeciesFile::SpeciesFile(const char* filename) : Species(0,0) {
       fprintf(stderr, "Type symbol %s not matched in file %s\n", symbol, filename);
       abort();
     }
+    types.push_back(iType);
     double* ri = new double[3];
     for (int j=0; j<3; j++) {
       char* c2;
@@ -87,8 +89,9 @@ SpeciesFile::SpeciesFile(const char* filename) : Species(0,0) {
     fprintf(stderr, "Did not find any atoms in file %s\n", filename);
     abort();
   }
+  fclose(f);
 
-  setup(typeSymbols.size(), types.size());
+  setup(types.size(), typeSymbols.size());
   // now copy over positions
   for (int i=0; i<numAtoms; i++) {
     double* ri = tmpPositions[i];
@@ -97,8 +100,15 @@ SpeciesFile::SpeciesFile(const char* filename) : Species(0,0) {
   }
 }
 
+SpeciesFile::~SpeciesFile() {
+  for (int i=0; i<numAtomTypes; i++) {
+    char* s = typeSymbols[i];
+    free(s);
+  }
+}
+
 void SpeciesFile::init(AtomInfo& atomInfo) {
-  int typeOffset = 0;
+  typeOffset = 0;
   for (int i=0; i<numAtomTypes; i++) {
     int myType = atomInfo.addAtomType(typeMass[i]);
     typeOffset = myType-i;
@@ -108,3 +118,11 @@ void SpeciesFile::init(AtomInfo& atomInfo) {
   }
 }
 
+
+int SpeciesFile::getTypeForSymbol(const char* symbol) {
+  for (int i=0; i<numAtomTypes; i++) {
+    if (strcmp(typeSymbols[i], symbol) == 0) return i + typeOffset;
+  }
+  fprintf(stderr, "Unknown symbol %s\n", symbol);
+  abort();
+}
