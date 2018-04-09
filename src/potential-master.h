@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <set>
 #include <algorithm>
+#include <complex>
 #include "box.h"
 #include "potential.h"
 #include "potential-molecular.h"
@@ -156,6 +157,9 @@ class PotentialMaster {
     double kBasis[3];
     double kCut, alpha;
     double **cossinkri;
+    vector<complex<double>> sFac;
+    vector<double> sFacReal, sFacImag;
+    vector<complex<double>> eik[3];
     bool doEwald;
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);

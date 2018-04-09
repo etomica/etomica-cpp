@@ -304,9 +304,47 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
 
   const double kCut2 = kCut*kCut;
   const double* bs = box.getBoxSize();
-  double fourierSum = 0;
   int kxMax = (int)(0.5*bs[0]/M_PI*kCut);
+  int kMax[3] = {kxMax, (int)(0.5*bs[1]/M_PI*kCut), (int)(0.5*bs[2]/M_PI*kCut)};
+  // cube instead of sphere, so conservatively big
+  int nk[3] = {kMax[0]+1, 2*kMax[1]+1, 2*kMax[2]+1};
+  int nktot = ((2*(nk[0]-1)+1)*nk[1]*nk[2]-1)/2;
+  sFacReal.resize(nktot);
+  sFacImag.resize(nktot);
+  sFac.resize(nktot);
+  // We want exp(i dot(k,r)) for every k and every r
+  // then sum over atoms, s(k) = sum[exp(i dot(k,r))] and U(k) = s(k) * s*(k)
+  //
+  // To get there, we first invoke that
+  // exp(i dot(k,r)) = exp(i kx rx) exp(i ky ry) exp(i kz rz)
+  // the values of ka (a=x,y,z) will be such that ka = 2 l pi / bs[a]
+  // so ea(l=2) = ea(l=1) ea(l=1)
+  //    ea(l=3) = ea(l=1) ea(l=2)
+  // and so on, where ea(l) = exp(i (2 l pi / bs[a]) ra)
+  // See Allen & Tildesley for more details
+  // https://dx.doi.org/10.1093/oso/9780198803195.001.0001
+  // https://github.com/Allen-Tildesley/examples/blob/master/ewald_module.f90
+  for (int a=0; a<3; a++) {
+    double fac = 2.0*M_PI/bs[a];
+    eik[a].resize(numAtoms*nk[a]);
+    for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+      int idx = iAtom*nk[a];
+      if (a>0) idx += kMax[a];
+      double* ri = box.getAtomPosition(iAtom);
+      eik[a][idx] = 1;
+      eik[a][idx+1] = std::complex<double>(cos(fac*ri[a]), sin(fac*ri[a]));
+      for (int i=2; i<=kMax[a]; i++) {
+        eik[a][idx+i] = eik[a][idx+1] * eik[a][idx+i-1];
+      }
+      if (a==0) continue;
+      for (int i=1; i<=kMax[a]; i++) {
+        eik[a][idx-i] = conj(eik[a][idx+i]);
+      }
+    }
+  }
   double coeff = 4*M_PI/(bs[0]*bs[1]*bs[2]);
+  double fourierSum = 0;
+  int ik = 0;
   for (int ikx=0; ikx<=kxMax; ikx++) {
     double kx = ikx*kBasis[0];
     double kx2 = kx*kx;
@@ -320,34 +358,32 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
       double kxy2 = kx2 + ky*ky;
       int kzMax = (int)(0.5*bs[2]*sqrt(kCut2 - kxy2)/M_PI);
       for (int ikz=-kzMax; ikz<=kzMax; ikz++) {
-        if (ikx==0 && iky==0 && ikz==0) continue;
-        if (!xpositive && !ypositive && ikz<0) continue;
+        if (!xpositive && !ypositive && ikz<=0) continue;
         double kz = ikz*kBasis[2];
         double kxyz2 = kxy2 + kz*kz;
-        double sFacReal = 0;
-        double sFacImag = 0;
+        sFacReal[ik] = 0;
+        sFacImag[ik] = 0;
+        sFac[ik] = 0;
         for (int iAtom=0; iAtom<numAtoms; iAtom++) {
           int iType = box.getAtomType(iAtom);
           double qi = charges[iType];
           if (qi==0) continue;
-          double* ri = box.getAtomPosition(iAtom);
-          double kr = kx*ri[0] + ky*ri[1] + kz*ri[2];
-          cossinkri[iAtom][0] = qi * cos(kr);
-          sFacReal += cossinkri[iAtom][0];
-          cossinkri[iAtom][1] = qi * sin(kr);
-          sFacImag += cossinkri[iAtom][1];
+          sFac[ik] += qi * eik[0][iAtom*nk[0]+ikx]
+                         * eik[1][iAtom*nk[1]+kMax[1]+iky]
+                         * eik[2][iAtom*nk[2]+kMax[2]+ikz];
         }
         double fExp = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
-        fourierSum += fExp * (sFacReal*sFacReal + sFacImag*sFacImag);
+        fourierSum += fExp * (sFac[ik]*conj(sFac[ik])).real();
         if (doForces) {
           double coeffk = coeff * fExp;
           for (int iAtom=0; iAtom<numAtoms; iAtom++) {
-            double coeffki = coeffk * (cossinkri[iAtom][1]*sFacReal - cossinkri[iAtom][0]*sFacImag);
+            double coeffki = coeffk * (cossinkri[iAtom][1]*sFacReal[ik] - cossinkri[iAtom][0]*sFacImag[ik]);
             force[iAtom][0] += coeffki * kx;
             force[iAtom][1] += coeffki * ky;
             force[iAtom][2] += coeffki * kz;
           }
         }
+        ik++;
       }
     }
   }
