@@ -339,9 +339,9 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
           double coeffk = coeff * fExp;
           for (int iAtom=0; iAtom<numAtoms; iAtom++) {
             double coeffki = coeffk * (cossinkri[iAtom][1]*sFacReal - cossinkri[iAtom][0]*sFacImag);
-            force[iAtom][0] -= coeffki * kx;
-            force[iAtom][1] -= coeffki * ky;
-            force[iAtom][2] -= coeffki * kz;
+            force[iAtom][0] += coeffki * kx;
+            force[iAtom][1] += coeffki * ky;
+            force[iAtom][2] += coeffki * kz;
           }
         }
       }
