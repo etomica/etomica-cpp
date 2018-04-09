@@ -365,8 +365,8 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
           double qi = charges[iType];
           if (qi==0) continue;
           sFacAtom[iAtom] = qi * eik[0][iAtom*nk[0]+ikx]
-                                * eik[1][iAtom*nk[1]+kMax[1]+iky]
-                                * eik[2][iAtom*nk[2]+kMax[2]+ikz];
+                               * eik[1][iAtom*nk[1]+kMax[1]+iky]
+                               * eik[2][iAtom*nk[2]+kMax[2]+ikz];
           sFac[ik] += sFacAtom[iAtom];
         }
         double fExp = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
@@ -374,7 +374,8 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
         if (doForces) {
           double coeffk = coeff * fExp;
           for (int iAtom=0; iAtom<numAtoms; iAtom++) {
-            double coeffki = coeffk * (sFacAtom[iAtom] * sFac[ik]).real();
+            double coeffki = coeffk * (sFacAtom[iAtom].imag()*sFac[ik].real()
+                                      -sFacAtom[iAtom].real()*sFac[ik].imag());
             force[iAtom][0] += coeffki * kx;
             force[iAtom][1] += coeffki * ky;
             force[iAtom][2] += coeffki * kz;
