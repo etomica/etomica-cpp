@@ -307,17 +307,21 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
   double fourierSum = 0;
   int kxMax = (int)(0.5*bs[0]/M_PI*kCut);
   double coeff = 4*M_PI/(bs[0]*bs[1]*bs[2]);
-  for (int ikx=-kxMax; ikx<=kxMax; ikx++) {
+  for (int ikx=0; ikx<=kxMax; ikx++) {
     double kx = ikx*kBasis[0];
     double kx2 = kx*kx;
     double kyCut2 = kCut2 - kx2;
+    bool xpositive = ikx>0;
     int kyMax = (int)(0.5*bs[1]*sqrt(kyCut2)/M_PI);
     for (int iky=-kyMax; iky<=kyMax; iky++) {
+      if (!xpositive && iky<0) continue;
+      bool ypositive = iky>0;
       double ky = iky*kBasis[1];
       double kxy2 = kx2 + ky*ky;
       int kzMax = (int)(0.5*bs[2]*sqrt(kCut2 - kxy2)/M_PI);
       for (int ikz=-kzMax; ikz<=kzMax; ikz++) {
         if (ikx==0 && iky==0 && ikz==0) continue;
+        if (!xpositive && !ypositive && ikz<0) continue;
         double kz = ikz*kBasis[2];
         double kxyz2 = kxy2 + kz*kz;
         double sFacReal = 0;
@@ -333,7 +337,7 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
           cossinkri[iAtom][1] = qi * sin(kr);
           sFacImag += cossinkri[iAtom][1];
         }
-        double fExp = exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
+        double fExp = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
         fourierSum += fExp * (sFacReal*sFacReal + sFacImag*sFacImag);
         if (doForces) {
           double coeffk = coeff * fExp;
