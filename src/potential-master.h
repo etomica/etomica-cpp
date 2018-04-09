@@ -156,9 +156,8 @@ class PotentialMaster {
     double* charges;
     double kBasis[3];
     double kCut, alpha;
-    double **cossinkri;
+    complex<double> *sFacAtom;
     vector<complex<double>> sFac;
-    vector<double> sFacReal, sFacImag;
     vector<complex<double>> eik[3];
     bool doEwald;
 

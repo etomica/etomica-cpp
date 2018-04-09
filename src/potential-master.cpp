@@ -6,7 +6,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed), charges(nullptr), cossinkri(nullptr), doEwald(false) {
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed), charges(nullptr), sFacAtom(nullptr), doEwald(false) {
 
   if (embeddingPotentials && !pureAtoms) {
     fprintf(stderr, "Embedding potentials require a purely atomic system");
@@ -114,7 +114,7 @@ void PotentialMaster::setCharge(int iType, double q) {
     doEwald = true;
     charges = new double[numAtomTypes];
     for (int i=0; i<numAtomTypes; i++) charges[i] = 0;
-    cossinkri = (double**)malloc2D(box.getNumAtoms(), 2, sizeof(double));
+    sFacAtom = (complex<double>*)malloc(box.getNumAtoms()*sizeof(complex<double>));
     setEwald(0, 0);
   }
   charges[iType] = q;
@@ -174,7 +174,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
       idf = (double*)realloc(idf, numAtoms*sizeof(double));
     }
     if (doEwald) {
-      cossinkri = (double**)realloc2D((void**)cossinkri, box.getNumAtoms(), 2, sizeof(double));
+      sFacAtom = (complex<double>*)realloc((void**)sFacAtom, box.getNumAtoms()*sizeof(double));
     }
     numForceAtoms = numAtoms;
   }
@@ -309,8 +309,6 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
   // cube instead of sphere, so conservatively big
   int nk[3] = {kMax[0]+1, 2*kMax[1]+1, 2*kMax[2]+1};
   int nktot = ((2*(nk[0]-1)+1)*nk[1]*nk[2]-1)/2;
-  sFacReal.resize(nktot);
-  sFacImag.resize(nktot);
   sFac.resize(nktot);
   // We want exp(i dot(k,r)) for every k and every r
   // then sum over atoms, s(k) = sum[exp(i dot(k,r))] and U(k) = s(k) * s*(k)
@@ -361,23 +359,22 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
         if (!xpositive && !ypositive && ikz<=0) continue;
         double kz = ikz*kBasis[2];
         double kxyz2 = kxy2 + kz*kz;
-        sFacReal[ik] = 0;
-        sFacImag[ik] = 0;
         sFac[ik] = 0;
         for (int iAtom=0; iAtom<numAtoms; iAtom++) {
           int iType = box.getAtomType(iAtom);
           double qi = charges[iType];
           if (qi==0) continue;
-          sFac[ik] += qi * eik[0][iAtom*nk[0]+ikx]
-                         * eik[1][iAtom*nk[1]+kMax[1]+iky]
-                         * eik[2][iAtom*nk[2]+kMax[2]+ikz];
+          sFacAtom[iAtom] = qi * eik[0][iAtom*nk[0]+ikx]
+                                * eik[1][iAtom*nk[1]+kMax[1]+iky]
+                                * eik[2][iAtom*nk[2]+kMax[2]+ikz];
+          sFac[ik] += sFacAtom[iAtom];
         }
         double fExp = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
         fourierSum += fExp * (sFac[ik]*conj(sFac[ik])).real();
         if (doForces) {
           double coeffk = coeff * fExp;
           for (int iAtom=0; iAtom<numAtoms; iAtom++) {
-            double coeffki = coeffk * (cossinkri[iAtom][1]*sFacReal[ik] - cossinkri[iAtom][0]*sFacImag[ik]);
+            double coeffki = coeffk * (sFacAtom[iAtom] * sFac[ik]).real();
             force[iAtom][0] += coeffki * kx;
             force[iAtom][1] += coeffki * ky;
             force[iAtom][2] += coeffki * kz;
