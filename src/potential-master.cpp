@@ -259,6 +259,40 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   }
 }
 
+double PotentialMaster::computeFourierIntramolecular(int iMolecule, bool doForces) {
+  int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+  box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
+  if (iLastAtom==iFirstAtom) return 0;
+  double twoosqrtpi = 2.0/sqrt(M_PI);
+  double uTot = 0;
+  for (int iAtom=iFirstAtom; iAtom<iLastAtom; iAtom++) {
+    double qi = charges[box.getAtomType(iAtom)];
+    if (qi==0) continue;
+    double* ri = box.getAtomPosition(iAtom);
+    for (int jAtom=iAtom+1; jAtom<=iLastAtom; jAtom++) {
+      double qj = charges[box.getAtomType(jAtom)];
+      if (qj==0) continue;
+      double* rj = box.getAtomPosition(jAtom);
+      double dr[3];
+      for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
+      box.nearestImage(dr);
+      double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
+      double r = sqrt(r2);
+      double qiqj = qi*qj;
+      double ec = erfc(alpha*r);
+      uTot -= qiqj*(1-ec)/r;
+      if (doForces) {
+        double du = -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *alpha + (ec-1)/r) / r2;
+        for (int m=0; m<3; m++) {
+          force[iAtom][m] += dr[m]*du;
+          force[jAtom][m] -= dr[m]*du;
+        }
+      }
+    }
+  }
+  return uTot;
+}
+
 void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
   const int numAtoms = box.getNumAtoms();
   double q2sum = 0;
@@ -270,36 +304,8 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
   }
   uTot -= alpha/sqrt(M_PI)*q2sum;
 
-  double twoosqrtpi = 2.0/sqrt(M_PI);
   for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
-    int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
-    box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
-    if (iLastAtom==iFirstAtom) continue;
-    for (int iAtom=iFirstAtom; iAtom<iLastAtom; iAtom++) {
-      double qi = charges[box.getAtomType(iAtom)];
-      if (qi==0) continue;
-      double* ri = box.getAtomPosition(iAtom);
-      for (int jAtom=iAtom+1; jAtom<=iLastAtom; jAtom++) {
-        double qj = charges[box.getAtomType(jAtom)];
-        if (qj==0) continue;
-        double* rj = box.getAtomPosition(jAtom);
-        double dr[3];
-        for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
-        box.nearestImage(dr);
-        double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
-        double r = sqrt(r2);
-        double qiqj = qi*qj;
-        double ec = erfc(alpha*r);
-        uTot -= qiqj*(1-ec)/r;
-        if (doForces) {
-          double du = -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *alpha + (ec-1)/r) / r2;
-          for (int m=0; m<3; m++) {
-            force[iAtom][m] += dr[m]*du;
-            force[jAtom][m] -= dr[m]*du;
-          }
-        }
-      }
-    }
+    uTot += computeFourierIntramolecular(iMolecule, doForces);
   }
 
   const double kCut2 = kCut*kCut;
@@ -326,6 +332,8 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
     double fac = 2.0*M_PI/bs[a];
     eik[a].resize(numAtoms*nk[a]);
     for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+      int iType = box.getAtomType(iAtom);
+      if (charges[iType] == 0) continue;
       int idx = iAtom*nk[a];
       if (a>0) idx += kMax[a];
       double* ri = box.getAtomPosition(iAtom);
@@ -500,6 +508,85 @@ void PotentialMaster::computeOneMoleculeBonds(const int iSpecies, const int iMol
   }
 }
 
+double PotentialMaster::oldFourierEnergy(int iMolecule) {
+  double u = computeFourierIntramolecular(iMolecule, false);
+  int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+  box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
+
+  const double kCut2 = kCut*kCut;
+  const double* bs = box.getBoxSize();
+  int kxMax = (int)(0.5*bs[0]/M_PI*kCut);
+  int kMax[3] = {kxMax, (int)(0.5*bs[1]/M_PI*kCut), (int)(0.5*bs[2]/M_PI*kCut)};
+  // cube instead of sphere, so conservatively big
+  int nk[3] = {kMax[0]+1, 2*kMax[1]+1, 2*kMax[2]+1};
+
+  // we save this too... would need to update after accepted move, revert after rejection
+  double q2Sum = 0;
+  int numAtoms = box.getNumAtoms();
+  for (int a=0; a<3; a++) {
+    double fac = 2.0*M_PI/bs[a];
+    eik[a].resize(numAtoms*nk[a]); // way bigger than we need, but OK
+    for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+      int iType = box.getAtomType(iAtom);
+      double qi = charges[iType];
+      if (qi == 0) continue;
+      if (a==0) q2Sum += qi*qi;
+      int idx = iAtom*nk[a];
+      if (a>0) idx += kMax[a];
+      double* ri = box.getAtomPosition(iAtom);
+      eik[a][idx] = 1;
+      eik[a][idx+1] = std::complex<double>(cos(fac*ri[a]), sin(fac*ri[a]));
+      for (int i=2; i<=kMax[a]; i++) {
+        eik[a][idx+i] = eik[a][idx+1] * eik[a][idx+i-1];
+      }
+      if (a==0) continue;
+      for (int i=1; i<=kMax[a]; i++) {
+        eik[a][idx-i] = conj(eik[a][idx+i]);
+      }
+    }
+  }
+  u -= alpha/sqrt(M_PI)*q2Sum;
+  double coeff = 4*M_PI/(bs[0]*bs[1]*bs[2]);
+  double fourierSum = 0;
+  int ik = 0;
+  for (int ikx=0; ikx<=kxMax; ikx++) {
+    double kx = ikx*kBasis[0];
+    double kx2 = kx*kx;
+    double kyCut2 = kCut2 - kx2;
+    bool xpositive = ikx>0;
+    int kyMax = (int)(0.5*bs[1]*sqrt(kyCut2)/M_PI);
+    for (int iky=-kyMax; iky<=kyMax; iky++) {
+      if (!xpositive && iky<0) continue;
+      bool ypositive = iky>0;
+      double ky = iky*kBasis[1];
+      double kxy2 = kx2 + ky*ky;
+      int kzMax = (int)(0.5*bs[2]*sqrt(kCut2 - kxy2)/M_PI);
+      for (int ikz=-kzMax; ikz<=kzMax; ikz++) {
+        if (!xpositive && !ypositive && ikz<=0) continue;
+        double kz = ikz*kBasis[2];
+        double kxyz2 = kxy2 + kz*kz;
+        complex<double> sFacMolecule = 0;
+        for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+          int iType = box.getAtomType(iAtom);
+          double qi = charges[iType];
+          if (qi==0) continue;
+          sFacAtom[iAtom] = qi * eik[0][iAtom*nk[0]+ikx]
+                               * eik[1][iAtom*nk[1]+kMax[1]+iky]
+                               * eik[2][iAtom*nk[2]+kMax[2]+ikz];
+          sFacMolecule += sFacAtom[iAtom];
+        }
+        complex<double> sFacMinus = sFac[ik] - sFacMolecule;
+        double fExp = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
+        fourierSum += fExp * ((sFac[ik]*conj(sFac[ik])).real()
+                             -(sFacMinus*conj(sFacMinus)).real());
+        ik++;
+      }
+    }
+  }
+  u += 0.5*coeff * fourierSum;
+  return u;
+}
+
 double PotentialMaster::oldEnergy(int iAtom) {
   double u = 2*uAtom[iAtom];
   if (doSingleTruncationCorrection) {
@@ -507,6 +594,9 @@ double PotentialMaster::oldEnergy(int iAtom) {
   }
   if (embeddingPotentials) {
     u += oldEmbeddingEnergy(iAtom);
+  }
+  if (doEwald) {
+    u += oldFourierEnergy(iAtom);
   }
   return u;
 }
@@ -533,7 +623,7 @@ double PotentialMaster::oldEmbeddingEnergy(int iAtom) {
 }
 
 double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
-  // only works for rigid molecules
+  // only works for rigid molecules, handles monatomic EAM
   int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
   double u = 0;
@@ -541,6 +631,12 @@ double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
     u += 2*uAtom[iAtom];
     if (doSingleTruncationCorrection) {
       u += computeOneTruncationCorrection(iAtom);
+    }
+    if (embeddingPotentials) {
+      u += oldEmbeddingEnergy(iAtom);
+    }
+    if (doEwald) {
+      u += oldFourierEnergy(iAtom);
     }
   }
   return u;
