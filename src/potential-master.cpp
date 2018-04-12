@@ -316,6 +316,7 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
   int nk[3] = {kMax[0]+1, 2*kMax[1]+1, 2*kMax[2]+1};
   int nktot = ((2*(nk[0]-1)+1)*nk[1]*nk[2]-1)/2;
   sFac.resize(nktot);
+  fExp.resize(nktot);
   // We want exp(i dot(k,r)) for every k and every r
   // then sum over atoms, s(k) = sum[exp(i dot(k,r))] and U(k) = s(k) * s*(k)
   //
@@ -377,10 +378,11 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
                                * eik[2][iAtom*nk[2]+kMax[2]+ikz];
           sFac[ik] += sFacAtom[iAtom];
         }
-        double fExp = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
-        fourierSum += fExp * (sFac[ik]*conj(sFac[ik])).real();
+        // we could skip this as long as box-length, kCut don't change between calls
+        fExp[ik] = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
+        fourierSum += fExp[ik] * (sFac[ik]*conj(sFac[ik])).real();
         if (doForces) {
-          double coeffk = coeff * fExp;
+          double coeffk = coeff * fExp[ik];
           for (int iAtom=0; iAtom<numAtoms; iAtom++) {
             double coeffki = coeffk * (sFacAtom[iAtom].imag()*sFac[ik].real()
                                       -sFacAtom[iAtom].real()*sFac[ik].imag());
@@ -393,6 +395,8 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
       }
     }
   }
+  fill(fExp.begin()+ik, fExp.end(), 0);
+  fill(sFac.begin()+ik, sFac.end(), 0);
   uTot += 0.5*coeff * fourierSum;
 }
 
@@ -508,7 +512,7 @@ void PotentialMaster::computeOneMoleculeBonds(const int iSpecies, const int iMol
   }
 }
 
-double PotentialMaster::oldFourierEnergy(int iMolecule) {
+double PotentialMaster::oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) {
   double u = computeFourierIntramolecular(iMolecule, false);
   int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
@@ -519,6 +523,8 @@ double PotentialMaster::oldFourierEnergy(int iMolecule) {
   int kMax[3] = {kxMax, (int)(0.5*bs[1]/M_PI*kCut), (int)(0.5*bs[2]/M_PI*kCut)};
   // cube instead of sphere, so conservatively big
   int nk[3] = {kMax[0]+1, 2*kMax[1]+1, 2*kMax[2]+1};
+  int nktot = ((2*(nk[0]-1)+1)*nk[1]*nk[2]-1)/2;
+  dsFacMolecule.resize(nktot);
 
   // we save this too... would need to update after accepted move, revert after rejection
   double q2Sum = 0;
@@ -565,20 +571,34 @@ double PotentialMaster::oldFourierEnergy(int iMolecule) {
         if (!xpositive && !ypositive && ikz<=0) continue;
         double kz = ikz*kBasis[2];
         double kxyz2 = kxy2 + kz*kz;
-        complex<double> sFacMolecule = 0;
+        // when we compute old energy, this will come in as 0
+        // when we compute new energy, this will come in as old fourier sum
+        double fExp = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
+        if (!oldEnergy) {
+          complex<double> sFacMinus = sFac[ik] - dsFacMolecule[ik];
+          // energy without this atom
+          fourierSum -= fExp * (sFacMinus*conj(sFacMinus)).real();
+          dsFacMolecule[ik] = -dsFacMolecule[ik];
+        }
         for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
           int iType = box.getAtomType(iAtom);
           double qi = charges[iType];
           if (qi==0) continue;
-          sFacAtom[iAtom] = qi * eik[0][iAtom*nk[0]+ikx]
-                               * eik[1][iAtom*nk[1]+kMax[1]+iky]
-                               * eik[2][iAtom*nk[2]+kMax[2]+ikz];
-          sFacMolecule += sFacAtom[iAtom];
+          dsFacMolecule[ik] += qi * eik[0][iAtom*nk[0]+ikx]
+                                  * eik[1][iAtom*nk[1]+kMax[1]+iky]
+                                  * eik[2][iAtom*nk[2]+kMax[2]+ikz];
         }
-        complex<double> sFacMinus = sFac[ik] - sFacMolecule;
-        double fExp = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
-        fourierSum += fExp * ((sFac[ik]*conj(sFac[ik])).real()
-                             -(sFacMinus*conj(sFacMinus)).real());
+        
+        if (oldEnergy) {
+          complex<double> sFacMinus = sFac[ik] - dsFacMolecule[ik];
+          // energy with this atom present (as we computed it before) and without
+          fourierSum += fExp * ((sFac[ik]*conj(sFac[ik])).real()
+                               -(sFacMinus*conj(sFacMinus)).real());
+        }
+        else {
+          complex<double> sFacNew = sFac[ik] + dsFacMolecule[ik];
+          fourierSum += fExp * (sFacNew*conj(sFacNew)).real();
+        }
         ik++;
       }
     }
@@ -594,9 +614,6 @@ double PotentialMaster::oldEnergy(int iAtom) {
   }
   if (embeddingPotentials) {
     u += oldEmbeddingEnergy(iAtom);
-  }
-  if (doEwald) {
-    u += oldFourierEnergy(iAtom);
   }
   return u;
 }
@@ -635,9 +652,9 @@ double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
     if (embeddingPotentials) {
       u += oldEmbeddingEnergy(iAtom);
     }
-    if (doEwald) {
-      u += oldFourierEnergy(iAtom);
-    }
+  }
+  if (doEwald) {
+    u += oneMoleculeFourierEnergy(iMolecule, true);
   }
   return u;
 }
@@ -662,6 +679,9 @@ void PotentialMaster::resetAtomDU() {
       drhoSum[iAtom] = 0;
     }
     rhoAtomsChanged.clear();
+  }
+  if (doEwald) {
+    fill(dsFacMolecule.begin(), dsFacMolecule.end(), 0);
   }
 }
 
@@ -700,6 +720,11 @@ void PotentialMaster::processAtomU(int coeff) {
       drhoSum[iAtom] = 0;
     }
     rhoAtomsChanged.clear();
+  }
+  if (doEwald) {
+    for (int i=0; i<(int)sFac.size(); i++) {
+      sFac[i] += dsFacMolecule[i];
+    }
   }
 }
 
@@ -782,6 +807,9 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1) {
   if (!pureAtoms && !rigidMolecules) {
     computeOneMoleculeBonds(iSpecies, iMolecule, u1);
   }
+  if (doEwald) {
+    u1 += oneMoleculeFourierEnergy(iMolecule, false);
+  }
 }
 
 void PotentialMaster::newMolecule(int iSpecies) {
@@ -829,6 +857,28 @@ double PotentialMaster::uTotalFromAtoms() {
       int iType = box.getAtomType(iAtom);
       uTot += embedF[iType]->f(rhoSum[iAtom]);
     }
+  }
+  if (doEwald) {
+    const int numAtoms = box.getNumAtoms();
+    double q2sum = 0;
+    for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+      int iType = box.getAtomType(iAtom);
+      double qi = charges[iType];
+      if (qi==0) continue;
+      q2sum += qi*qi;
+    }
+    uTot -= alpha/sqrt(M_PI)*q2sum;
+
+    for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
+      uTot += computeFourierIntramolecular(iMolecule, false);
+    }
+    double fourierSum = 0;
+    for (int ik=0; ik<(int)sFac.size(); ik++) {
+      fourierSum += fExp[ik] * (sFac[ik]*conj(sFac[ik])).real();
+    }
+    const double* bs = box.getBoxSize();
+    double coeff = 4*M_PI/(bs[0]*bs[1]*bs[2]);
+    uTot += 0.5*coeff * fourierSum;
   }
   double virialTot;
   computeAllTruncationCorrection(uTot, virialTot);

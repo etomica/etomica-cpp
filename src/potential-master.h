@@ -159,6 +159,8 @@ class PotentialMaster {
     complex<double> *sFacAtom;
     vector<complex<double>> sFac;
     vector<complex<double>> eik[3];
+    vector<complex<double>> dsFacMolecule;
+    vector<double> fExp;
     bool doEwald;
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);
@@ -352,7 +354,7 @@ class PotentialMaster {
     virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom);
     virtual double oldEmbeddingEnergy(int iAtom);
     void computeAllFourier(const bool doForces, double &uTot);
-    double oldFourierEnergy(int iAtom);
+    double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy);
     double computeFourierIntramolecular(int iMolecule, bool doForces);
 
   public:
