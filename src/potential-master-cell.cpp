@@ -200,6 +200,9 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   if (!pureAtoms && !rigidMolecules) {
     computeAllBonds(doForces, uTot, virialTot);
   }
+  if (doEwald) {
+    computeAllFourier(doForces, uTot);
+  }
 #ifdef DEBUG
   if (uCheck[0]!=0) {
     bool oops = false;
