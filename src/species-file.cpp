@@ -53,11 +53,16 @@ SpeciesFile::SpeciesFile(const char* filename) : Species(0,0), typeOffset(0) {
     abort();
   }
   // we read the types and encountered an "atoms:" line
+  bool hasOrientation = false;
   while (true) {
     if (!fgets(buf, 510, f)) {
       break;
     }
     if (buf[0] == '#') continue; // comment
+    if (strncmp(buf, "orientation:", 12) == 0) {
+      hasOrientation = true;
+      break;
+    }
     char* c = buf;
     char* atomNumStr = strsep(&c, " ");
     if (!atomNumStr || atomNumStr[0]=='#') continue;
@@ -98,6 +103,53 @@ SpeciesFile::SpeciesFile(const char* filename) : Species(0,0), typeOffset(0) {
   if (types.size() == 0) {
     fprintf(stderr, "Did not find any atoms in file %s\n", filename);
     abort();
+  }
+  if (hasOrientation) {
+    int oCount = 0;
+    while (true) {
+      if (!fgets(buf, 510, f)) {
+        break;
+      }
+      char* c = buf;
+      char* oNumStr = strsep(&c, " ");
+      if (!oNumStr || oNumStr[0]=='#') continue;
+      int oNum = atoi(oNumStr);
+      if (oCount+1 != oNum) {
+        fprintf(stderr, "orientation %d on line %d in file %s\n", oNum, oCount+1, filename);
+        abort();
+      }
+      if (!c) {
+        fprintf(stderr, "Found orientation line, but no atoms in file %s\n", filename);
+        abort();
+      }
+      char* atomStr = strsep(&c, " ");
+      if (!atomStr || !c) {
+        fprintf(stderr, "Could not find first orienation atom in file %s\n", filename);
+        abort();
+      }
+      int atom1 = atoi(atomStr);
+      if (atom1 <= 0 || atom1 > (int)types.size() + 1) {
+        fprintf(stderr, "Invalid atom %d for orientation in file %s\n", atom1, filename);
+        abort();
+      }
+      atomStr = strsep(&c, " ");
+      if (!atomStr) {
+        fprintf(stderr, "Could not find first orienation atom in file %s\n", filename);
+        abort();
+      }
+      int atom2 = atoi(atomStr);
+      if (atom2 <= 0 || atom2 > (int)types.size() + 1) {
+        fprintf(stderr, "Invalid atom %d for orientation in file %s\n", atom2, filename);
+        abort();
+      }
+      if (atom2 == atom1) {
+        fprintf(stderr, "Orientation atoms must be different from file %s\n", filename);
+        abort();
+      }
+      axisAtoms[oCount][0] = atom1;
+      axisAtoms[oCount][1] = atom2;
+      oCount++;
+    }
   }
   fclose(f);
 
