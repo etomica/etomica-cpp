@@ -1,25 +1,31 @@
 #pragma once
 
 #include <vector>
+#include "box.h"
 #include "atom-info.h"
 
 using namespace std;
+
+class Box;
 
 class Species {
   protected:
     int numAtoms, numAtomTypes;
     int* atomTypes;
     double** positions;
+    double com[3];
+    AtomInfo* atomInfo;
     void setup(int numAtoms, int numAtomTypes);
 
   public:
     Species(int numAtoms, int numAtomTypes);
     virtual ~Species();
     // to be called by SpeciesList when Species is added
-    virtual void init(AtomInfo& atomInfo) = 0;
+    virtual void init(AtomInfo& atomInfo);
     int* getAtomTypes();
     int getNumAtoms();
     double* getAtomPosition(int iAtom);
+    double* getMoleculeCOM(Box& box, int iFirstAtom, int iLastAtom);
 };
 
 class SpeciesSimple : public Species {

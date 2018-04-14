@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include "species.h"
 
+class SpeciesList;
+
 class Box {
   protected:
     double boxHalf[3];

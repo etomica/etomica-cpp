@@ -1,7 +1,7 @@
 #include "move.h"
 #include "alloc2d.h"
 
-MCMoveMoleculeRotate::MCMoveMoleculeRotate(AtomInfo& ai, Box& b, PotentialMaster& p, Random& r) : MCMove(b,p,r,0.5), atomInfo(ai), numOldPositions(0), oldPositions(nullptr) {
+MCMoveMoleculeRotate::MCMoveMoleculeRotate(SpeciesList& sl, Box& b, PotentialMaster& p, Random& r) : MCMove(b,p,r,0.5), speciesList(sl), numOldPositions(0), oldPositions(nullptr) {
 }
 
 MCMoveMoleculeRotate::~MCMoveMoleculeRotate() {
@@ -33,26 +33,8 @@ bool MCMoveMoleculeRotate::doTrial() {
   int axis = random.nextInt(3);
   double theta = stepSize*random.nextDouble32();
   mat.setSimpleAxisAngle(axis, theta);
-  double center[3] = {0,0,0};
-  double totMass = 0;
-  double *r0 = box.getAtomPosition(iAtomFirst);
-  for (int i=0; i<na; i++) {
-    int iAtom=iAtomFirst+i;
-    double *ri = box.getAtomPosition(iAtom);
-    int iType = box.getAtomType(iAtom);
-    double mass = atomInfo.getMass(iType);
-    totMass += mass;
-    if (i==0) {
-      for (int k=0; k<3; k++) center[k] = mass*ri[k];
-    }
-    else {
-      double dr[3];
-      for (int k=0; k<3; k++) dr[k] = ri[k] - r0[k];
-      box.nearestImage(dr);
-      for (int k=0; k<3; k++) center[k] += mass*(r0[k] + dr[k]);
-    }
-  }
-  for (int k=0; k<3; k++) center[k] /= totMass;
+  Species* species = speciesList.get(iSpecies);
+  double* center = species->getMoleculeCOM(box, iAtomFirst, iAtomLast);
   for (int i=0; i<na; i++) {
     int iAtom=iAtomFirst+i;
     double *ri = box.getAtomPosition(iAtom);

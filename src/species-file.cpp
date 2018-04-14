@@ -107,10 +107,11 @@ SpeciesFile::~SpeciesFile() {
   }
 }
 
-void SpeciesFile::init(AtomInfo& atomInfo) {
+void SpeciesFile::init(AtomInfo& ai) {
+  Species::init(ai);
   typeOffset = 0;
   for (int i=0; i<numAtomTypes; i++) {
-    int myType = atomInfo.addAtomType(typeMass[i]);
+    int myType = ai.addAtomType(typeMass[i]);
     typeOffset = myType-i;
   }
   for (int i=0; i<numAtoms; i++) {
