@@ -59,8 +59,18 @@ SpeciesFile::SpeciesFile(const char* filename) : Species(0,0), typeOffset(0) {
     }
     if (buf[0] == '#') continue; // comment
     char* c = buf;
+    char* atomNumStr = strsep(&c, " ");
+    if (!atomNumStr || atomNumStr[0]=='#') continue;
+    int atomNum = atoi(atomNumStr);
+    if (atomNum != (int)types.size()+1) {
+      fprintf(stderr, "atom %d on line %lu!\n", atomNum, types.size()+1);
+      abort();
+    }
+    if (!c) {
+      fprintf(stderr, "Found atom #, but no symbol in file %s\n", filename);
+      abort();
+    }
     char* symbol = strsep(&c, " ");
-    if (!symbol || symbol[0]=='#') continue;
     int iType = -1;
     for (int i=0; i<(int)typeSymbols.size(); i++) {
       if (strcmp(typeSymbols[i], symbol) == 0) {
