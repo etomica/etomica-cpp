@@ -723,7 +723,12 @@ void PotentialMaster::processAtomU(int coeff) {
   }
   if (doEwald) {
     for (int i=0; i<(int)sFac.size(); i++) {
-      sFac[i] += dsFacMolecule[i];
+      // by the time we get to processAtom(+1), we have
+      // the difference.  just use that
+      if (coeff==1) {
+        sFac[i] += dsFacMolecule[i];
+      }
+      dsFacMolecule[i] = 0;
     }
   }
 }
