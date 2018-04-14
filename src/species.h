@@ -15,6 +15,7 @@ class Species {
     double** positions;
     double com[3];
     AtomInfo* atomInfo;
+    int axisAtoms[2][2];
     void setup(int numAtoms, int numAtomTypes);
 
   public:
@@ -26,6 +27,7 @@ class Species {
     int getNumAtoms();
     double* getAtomPosition(int iAtom);
     double* getMoleculeCOM(Box& box, int iFirstAtom, int iLastAtom);
+    void getMoleculeOrientation(Box& box, int iFirstAtom, double* direction1, double* direction2);
 };
 
 class SpeciesSimple : public Species {
