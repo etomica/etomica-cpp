@@ -103,6 +103,7 @@ class MCMoveMoleculeDisplacement : public MCMove {
 
 class MCMoveMoleculeRotate : public MCMove {
   private:
+    AtomInfo& atomInfo;
     double numOldPositions;
     double **oldPositions;
     RotationMatrix mat;
@@ -112,7 +113,7 @@ class MCMoveMoleculeRotate : public MCMove {
 
   public:
 
-    MCMoveMoleculeRotate(Box& box, PotentialMaster& potentialMaster, Random& random);
+    MCMoveMoleculeRotate(AtomInfo& atomInfo, Box& box, PotentialMaster& potentialMaster, Random& random);
     ~MCMoveMoleculeRotate();
 
     virtual bool doTrial();
