@@ -162,6 +162,7 @@ class PotentialMaster {
     vector<complex<double>> dsFacMolecule;
     vector<double> fExp;
     bool doEwald;
+    double minR2;
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);
     void computeAllBonds(bool doForces, double &uTot, double &virialTot);
@@ -174,13 +175,13 @@ class PotentialMaster {
       if (rigidMolecules) return iSpecies==jSpecies && iMolecule == jMolecule;
       return binary_search(iBondedAtoms->begin(), iBondedAtoms->end(), jAtom-jFirstAtom);
     }
-    void handleComputeAll(int iAtom, int jAtom, const double *ri, const double *rj, const double *jbo, Potential* pij, double &ui, double &uj, double* fi, double* fj, double& uTot, double& virialTot, const double rc2, Potential* iRhoPotential, const double iRhoCutoff, const int iType, const int jType, const bool doForces) {
+    void handleComputeAll(int iAtom, int jAtom, const double *ri, const double *rj, const double *jbo, Potential* pij, double &ui, double &uj, double* fi, double* fj, double& uTot, double& virialTot, const double rc2, Potential* iRhoPotential, const double iRhoCutoff, const int iType, const int jType, const bool doForces, const bool skipIntra) {
       double dr[3];
       dr[0] = (rj[0]+jbo[0])-ri[0];
       dr[1] = (rj[1]+jbo[1])-ri[1];
       dr[2] = (rj[2]+jbo[2])-ri[2];
       double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
-      if (r2 < rc2) {
+      if (r2 < rc2 && (!skipIntra || r2 > minR2)) {
         double u, du, d2u;
         pij->u012(r2, u, du, d2u);
         ui += 0.5*u;

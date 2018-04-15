@@ -127,7 +127,7 @@ resetStart:
 
   double rc2 = nbrRange*nbrRange;
   const double *bs = box.getBoxSize();
-  double minR2 = 0.5*bs[0];
+  minR2 = 0.5*bs[0];
   for (int k=1; k<3; k++) minR2 = bs[k]<minR2 ? 0.5*bs[k] : minR2;
   minR2 *= minR2;
   for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) {
@@ -238,7 +238,7 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
       Potential* pij = iPotentials[jType];
       double *rj = box.getAtomPosition(jAtom);
       double *jbo = iNbrBoxOffsets[j];
-      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, iRhoPotential, iRhoCutoff, iType, jType, doForces);
+      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, iRhoPotential, iRhoCutoff, iType, jType, doForces, false);
     }
   }
   if (embeddingPotentials) {

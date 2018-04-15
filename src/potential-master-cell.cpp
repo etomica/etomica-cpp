@@ -77,6 +77,10 @@ double PotentialMasterCell::oldEmbeddingEnergy(int iAtom) {
 }
 
 void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
+  const double *bs = box.getBoxSize();
+  minR2 = 0.5*bs[0];
+  for (int k=1; k<3; k++) minR2 = bs[k]<minR2 ? 0.5*bs[k] : minR2;
+  minR2 *= minR2;
   pairCallbacks.resize(0);
   bool doForces = false;
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
@@ -141,7 +145,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
       Potential* pij = iPotentials[jType];
       if (!pij) continue;
       const double *rj = box.getAtomPosition(jAtom);
-      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
+      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces, false);
     }
     const int iCell = atomCell[iAtom];
     for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
@@ -149,12 +153,12 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
       jbo = boxOffsets[jCell];
       jCell = wrapMap[jCell];
       for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
-        if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
+        bool skipIntra = checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms);
         const int jType = box.getAtomType(jAtom);
         Potential* pij = iPotentials[jType];
         if (!pij) continue;
         const double *rj = box.getAtomPosition(jAtom);
-        handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces);
+        handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces, skipIntra);
       }
     }
   }
