@@ -778,7 +778,7 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
     double dr[3];
     for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
     box.nearestImage(dr);
-    handleComputeOne(pij, zero, dr, zero, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
+    handleComputeOne(pij, zero, dr, zero, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType, false);
   }
   if (embeddingPotentials) {
     // we just computed new rhoSum[iAtom].  now subtract the old one

@@ -254,7 +254,7 @@ void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, 
       Potential* pij = iPotentials[jType];
       if (!pij) continue;
       const double *rj = box.getAtomPosition(jAtom);
-      handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
+      handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType, false);
     }
   }
 
@@ -263,23 +263,23 @@ void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, 
     jbo = boxOffsets[jCell];
     jCell = wrapMap[jCell];
     for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
-      if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
+      bool skipIntra = checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms);
       const int jType = box.getAtomType(jAtom);
       Potential* pij = iPotentials[jType];
       if (!pij) continue;
       const double *rj = box.getAtomPosition(jAtom);
-      handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
+      handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType, skipIntra);
     }
     jCell = iCell - *it;
     jbo = boxOffsets[jCell];
     jCell = wrapMap[jCell];
     for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
-      if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
+      bool skipIntra = checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms);
       const int jType = box.getAtomType(jAtom);
       Potential* pij = iPotentials[jType];
       if (!pij) continue;
       const double *rj = box.getAtomPosition(jAtom);
-      handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType);
+      handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType, skipIntra);
     }
   }
   if (embeddingPotentials) {

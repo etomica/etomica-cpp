@@ -297,26 +297,27 @@ class PotentialMaster {
         //printf("%d %d %f  %e %e   %e %e  %e\n", iAtom, jAtom, r2, rhoSum[jAtom], rho, embedF[jType]->f(rhoSum[jAtom]), embedF[jType]->f(rhoSum[jAtom]-rho), embedF[jType]->f(rhoSum[jAtom])-embedF[jType]->f(rhoSum[jAtom]-rho));
       }
     }
-    void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int iAtom, const int jAtom, double& uTot, double rc2, const double iRhoCutoff, Potential* iRhoPotential, const int iType, const int jType) {
+    void handleComputeOne(Potential* pij, const double *ri, const double *rj, const double* jbo, const int iAtom, const int jAtom, double& uTot, double rc2, const double iRhoCutoff, Potential* iRhoPotential, const int iType, const int jType, const bool skipIntra) {
       double dx = ri[0]-(rj[0]+jbo[0]);
       double dy = ri[1]-(rj[1]+jbo[1]);
       double dz = ri[2]-(rj[2]+jbo[2]);
       double r2 = dx*dx + dy*dy + dz*dz;
-      if (r2 > rc2) return;
-      double uij = pij->u(r2);
-      if (duAtomSingle) {
-        uAtomsChanged.push_back(jAtom);
-        duAtom[0] += 0.5*uij;
-        duAtom.push_back(0.5*uij);
-      }
-      else {
-        if (duAtom[jAtom] == 0) {
+      if (r2 < rc2 && (!skipIntra || r2 > minR2)) {
+        double uij = pij->u(r2);
+        if (duAtomSingle) {
           uAtomsChanged.push_back(jAtom);
+          duAtom[0] += 0.5*uij;
+          duAtom.push_back(0.5*uij);
         }
-        duAtom[iAtom] += 0.5*uij;
-        duAtom[jAtom] += 0.5*uij;
+        else {
+          if (duAtom[jAtom] == 0) {
+            uAtomsChanged.push_back(jAtom);
+          }
+          duAtom[iAtom] += 0.5*uij;
+          duAtom[jAtom] += 0.5*uij;
+        }
+        uTot += uij;
       }
-      uTot += uij;
       if (embeddingPotentials) {
         if (r2 < iRhoCutoff) {
           double rho = iRhoPotential->u(r2);
