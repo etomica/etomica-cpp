@@ -14,7 +14,10 @@ void RotationMatrix::setSimpleAxisAngle(int iAxis, double theta) {
   for (int i=0; i<3; i++) {
     matrix[i][i] = i==iAxis ? 1 : ct;
     for (int j=i+1; j<3; j++) {
-      if (i==iAxis || j==iAxis) matrix[i][j] = matrix[j][i] = 0;
+      if (i==iAxis || j==iAxis) {
+        matrix[i][j] = matrix[j][i] = 0;
+        continue;
+      }
       matrix[i][j] = st;
       matrix[j][i] = -st;
     }
