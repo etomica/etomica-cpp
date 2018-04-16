@@ -146,8 +146,8 @@ SpeciesFile::SpeciesFile(const char* filename) : Species(0,0), typeOffset(0) {
         fprintf(stderr, "Orientation atoms must be different from file %s\n", filename);
         abort();
       }
-      axisAtoms[oCount][0] = atom1;
-      axisAtoms[oCount][1] = atom2;
+      axisAtoms[oCount][0] = atom1-1;
+      axisAtoms[oCount][1] = atom2-1;
       oCount++;
     }
   }
