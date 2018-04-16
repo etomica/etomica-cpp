@@ -372,7 +372,10 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot) {
         for (int iAtom=0; iAtom<numAtoms; iAtom++) {
           int iType = box.getAtomType(iAtom);
           double qi = charges[iType];
-          if (qi==0) continue;
+          if (qi==0) {
+            sFacAtom[iAtom] = 0;
+            continue;
+          }
           sFacAtom[iAtom] = qi * eik[0][iAtom*nk[0]+ikx]
                                * eik[1][iAtom*nk[1]+kMax[1]+iky]
                                * eik[2][iAtom*nk[2]+kMax[2]+ikz];
