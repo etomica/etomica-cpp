@@ -32,7 +32,6 @@ bool MCMoveMoleculeDisplacement::doTrial() {
   for (int i=0; i<na; i++) {
     int iAtom = iAtomFirst + i;
     double *ri = box.getAtomPosition(iAtom);
-
     for (int j=0; j<3; j++) {
       oldPositions[i][j] = ri[j];
       ri[j] += deltaR[j];

@@ -110,6 +110,7 @@ class MCMoveMoleculeRotate : public MCMove {
     double uOld, uNew;
     int iMolecule;
     int iAtomFirst, iAtomLast;
+    int iSpecies;
 
   public:
 

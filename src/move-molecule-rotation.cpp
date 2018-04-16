@@ -18,13 +18,22 @@ bool MCMoveMoleculeRotate::doTrial() {
     return false;
   }
   iMolecule = random.nextInt(nm);
-  int iSpecies, iMoleculeInSpecies;
+  int iMoleculeInSpecies;
   box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iAtomFirst, iAtomLast);
   if (iAtomFirst==iAtomLast) {
     iMolecule = -1;
     return false;
   }
   uOld = potentialMaster.oldMoleculeEnergy(iMolecule);
+  if (false) {
+    // see if we can recompute the molecule energy and get the same result
+    // this messes up future computation, so abort afterwards
+    printf("got old, now recompute\n");
+    double uTmp = 0;
+    potentialMaster.computeOneMolecule(iMolecule, uTmp);
+    printf("%d uOlds %f %f\n", iMolecule, uTmp, uOld);
+    abort();
+  }
   int na = iAtomLast-iAtomFirst+1;
   if (na>numOldPositions) {
     oldPositions = (double**)realloc2D((void**)oldPositions, na, 3, sizeof(double));
@@ -36,7 +45,7 @@ bool MCMoveMoleculeRotate::doTrial() {
   Species* species = speciesList.get(iSpecies);
   double* center = species->getMoleculeCOM(box, iAtomFirst, iAtomLast);
   for (int i=0; i<na; i++) {
-    int iAtom=iAtomFirst+i;
+    int iAtom = iAtomFirst + i;
     double *ri = box.getAtomPosition(iAtom);
     for (int j=0; j<3; j++) {
       oldPositions[i][j] = ri[j];
@@ -52,7 +61,7 @@ double MCMoveMoleculeRotate::getChi(double T) {
   uNew = 0;
   potentialMaster.computeOneMolecule(iMolecule, uNew);
   double chi = uNew<uOld ? 1 : exp(-(uNew-uOld)/T);
-  chi = 0;
+  //printf("%f => %f  ==>  %f\n", uOld, uNew, uNew-uOld);
   chiSum += chi;
   return chi;
 }
@@ -62,21 +71,21 @@ void MCMoveMoleculeRotate::acceptNotify() {
   potentialMaster.processAtomU(1);
   int na = iAtomLast-iAtomFirst+1;
   for (int i=0; i<na; i++) {
-    int iAtom=iAtomFirst+i;
+    int iAtom = iAtomFirst + i;
     double *ri = box.getAtomPosition(iAtom);
-    for (int j=0; j<3; j++) {
-      ri[j] = oldPositions[i][j];
-    }
+    for (int j=0; j<3; j++) ri[j] = oldPositions[i][j];
     potentialMaster.updateAtom(iAtom);
   }
   double uTmp = 0;
   potentialMaster.computeOneMolecule(iMolecule, uTmp);
+  // this call is designed to set up the next call.  uTmp won't necessarily be correct
   potentialMaster.processAtomU(-1);
-  double *r0 = box.getAtomPosition(iAtomFirst);
+  Species* species = speciesList.get(iSpecies);
+  double* center = species->getMoleculeCOM(box, iAtomFirst, iAtomLast);
   for (int i=0; i<na; i++) {
-    int iAtom=iAtomFirst+i;
+    int iAtom = iAtomFirst + i;
     double *ri = box.getAtomPosition(iAtom);
-    mat.transformAbout(ri, r0, box);
+    mat.transformAbout(ri, center, box);
     potentialMaster.updateAtom(iAtom);
   }
   numAccepted++;
@@ -87,11 +96,9 @@ void MCMoveMoleculeRotate::rejectNotify() {
   if (iMolecule < 0) return;
   int na = iAtomLast-iAtomFirst+1;
   for (int i=0; i<na; i++) {
-    int iAtom=iAtomFirst+i;
+    int iAtom = iAtomFirst + i;
     double *ri = box.getAtomPosition(iAtom);
-    for (int j=0; j<3; j++) {
-      ri[j] = oldPositions[i][j];
-    }
+    for (int j=0; j<3; j++) ri[j] = oldPositions[i][j];
     potentialMaster.updateAtom(iAtom);
   }
   uNew = uOld;
