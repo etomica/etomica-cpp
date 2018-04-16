@@ -4,15 +4,15 @@
 #include "random.h"
 
 class RotationMatrix {
-  private:
-    double matrix[3][3];
-
   public:
+    double matrix[3][3];
     RotationMatrix() {}
     ~RotationMatrix() {}
     void setSimpleAxisAngle(int iAxis, double theta);
-    void invert();
+    void setRows(double* row0, double* row1, double* row2);
+    void transpose();
     void transform(double* vec);
     void transformAbout(double* vec, double *center, Box& box);
     void randomize(Random &random);
+    void TE(RotationMatrix& m);
 };

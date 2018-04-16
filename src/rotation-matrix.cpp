@@ -2,6 +2,12 @@
 #include "rotation-matrix.h"
 #include "vector.h"
 
+void RotationMatrix::setRows(double* row0, double* row1, double* row2) {
+  matrix[0][0] = row0[0]; matrix[0][1] = row0[1]; matrix[0][2] = row0[2];
+  matrix[1][0] = row1[0]; matrix[1][1] = row1[1]; matrix[1][2] = row1[2];
+  matrix[2][0] = row2[0]; matrix[2][1] = row2[1]; matrix[2][2] = row2[2];
+}
+
 void RotationMatrix::setSimpleAxisAngle(int iAxis, double theta) {
   double st = sin(theta);
   double ct = cos(theta);
@@ -40,7 +46,7 @@ void RotationMatrix::transformAbout(double* vec, double* center, Box& box) {
   box.nearestImage(vec);
 }
 
-void RotationMatrix::invert() {
+void RotationMatrix::transpose() {
   for (int i=0; i<2; i++) {
     for (int j=i+1; j<3; j++) {
       double t = matrix[i][j];
@@ -66,4 +72,21 @@ void RotationMatrix::randomize(Random &random) {
   v[1] /= vNorm;
   v[2] /= vNorm;
   Vector::cross(u, v, w);
+}
+
+void RotationMatrix::TE(RotationMatrix& m) {
+  for (int i=0; i<3; i++) {
+    double x = matrix[i][0] * m.matrix[0][0]
+             + matrix[i][1] * m.matrix[1][0]
+             + matrix[i][2] * m.matrix[2][0];
+    double y = matrix[i][0] * m.matrix[0][1]
+             + matrix[i][1] * m.matrix[1][1]
+             + matrix[i][2] * m.matrix[2][1];
+    double z = matrix[i][0] * m.matrix[0][2]
+             + matrix[i][1] * m.matrix[1][2]
+             + matrix[i][2] * m.matrix[2][2];
+    matrix[i][0] = x;
+    matrix[i][1] = y;
+    matrix[i][2] = z;
+  }
 }
