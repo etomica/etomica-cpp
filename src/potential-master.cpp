@@ -652,6 +652,11 @@ double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
     if (embeddingPotentials) {
       u += oldEmbeddingEnergy(iAtom);
     }
+    // we'll double count any interactions between this atom and image of
+    // another atom in the same molecule (we count it now, we'll count it
+    // again for that other atom).  this method computes only "up", so
+    // subtracting will give us the right result
+    u -= oldIntraMoleculeEnergyLS(iAtom, iLastAtom);
   }
   if (doEwald) {
     u += oneMoleculeFourierEnergy(iMolecule, true);
@@ -749,13 +754,13 @@ void PotentialMaster::computeOne(const int iAtom, double &u1) {
     box.getMoleculeInfoAtom(iAtom, iMolecule, iSpecies, iFirstAtom);
   }
   const double *ri = box.getAtomPosition(iAtom);
-  computeOneInternal(iAtom, ri, u1, iSpecies, iMolecule, iFirstAtom);
+  computeOneInternal(iAtom, ri, u1, iSpecies, iMolecule, iFirstAtom, true);
   if (doSingleTruncationCorrection) {
     u1 += computeOneTruncationCorrection(iAtom);
   }
 }
 
-void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom) {
+void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom, const bool onlyAtom) {
   vector<int> *iBondedAtoms = nullptr;
   if (!pureAtoms && !rigidMolecules) {
     iBondedAtoms = &bondedAtoms[iSpecies][iAtom-iFirstAtom];
@@ -804,7 +809,7 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1) {
       uAtomsChanged.push_back(iAtom);
     }
     double *ri = box.getAtomPosition(iAtom);
-    computeOneInternal(iAtom, ri, u1, iSpecies, iMolecule, firstAtom);
+    computeOneInternal(iAtom, ri, u1, iSpecies, iMolecule, firstAtom, false);
     if (doSingleTruncationCorrection) {
       u1 += computeOneTruncationCorrection(iAtom);
     }

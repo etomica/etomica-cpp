@@ -114,6 +114,7 @@ void CellManager::init() {
   int ny = (2*yboRange+1);
   int nz = (2*zboRange+1);
   rawBoxOffsets = (double**)realloc2D((void**)rawBoxOffsets, nx*ny*nz, 3, sizeof(double));
+  numRawBoxOffsets = nx*ny*nz;
   for (int ix=-xboRange; ix<=xboRange; ix++) {
     for (int iy=-yboRange; iy<=yboRange; iy++) {
       for (int iz=-zboRange; iz<=zboRange; iz++) {

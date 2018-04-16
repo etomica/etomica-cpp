@@ -105,6 +105,7 @@ class CellManager {
     vector<int> cellOffsets;
     vector<int> wrapMap;
     double** rawBoxOffsets;
+    int numRawBoxOffsets;
     vector<double*> boxOffsets;
     int wrappedIndex(int i, int nc);
     void moveAtomIndex(int oldIndex, int newIndex);
@@ -353,7 +354,7 @@ class PotentialMaster {
         }
       }
     }
-    virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom);
+    virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom, const bool onlyAtom);
     virtual double oldEmbeddingEnergy(int iAtom);
     void computeAllFourier(const bool doForces, double &uTot);
     double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy);
@@ -380,6 +381,7 @@ class PotentialMaster {
     virtual void removeMolecule(int iSpecies, int iMolecule);
     double oldEnergy(int iAtom);
     double oldMoleculeEnergy(int iAtom);
+    virtual double oldIntraMoleculeEnergyLS(int iAtom, int iLastAtom) {return 0;}
     void resetAtomDU();
     void processAtomU(int coeff);
     void addCallback(PotentialCallback* pcb);
@@ -400,7 +402,7 @@ class PotentialMasterCell : public PotentialMaster {
     const vector<double*> &boxOffsets;
     bool lsNeeded;
 
-    virtual void computeOneInternal(const int iAtom, const double *ri, double &energy, const int iSpecies, const int iMolecule, const int iFirstAtom);
+    virtual void computeOneInternal(const int iAtom, const double *ri, double &energy, const int iSpecies, const int iMolecule, const int iFirstAtom, const bool onlyAtom);
     virtual double oldEmbeddingEnergy(int iAtom);
 
   public:
@@ -415,6 +417,7 @@ class PotentialMasterCell : public PotentialMaster {
     virtual void newMolecule(int iSpecies);
     virtual void removeAtom(int iAtom);
     virtual void removeMolecule(int iSpecies, int iMolecule);
+    virtual double oldIntraMoleculeEnergyLS(int iAtom, int iLastAtom);
     int* getNumCells();
 };
 

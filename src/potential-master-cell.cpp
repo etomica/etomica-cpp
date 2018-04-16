@@ -233,7 +233,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   }
 }
 
-void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom) {
+void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom, const bool onlyAtom) {
   const int iType = box.getAtomType(iAtom);
   const double *iCutoffs = pairCutoffs[iType];
   Potential** iPotentials = pairPotentials[iType];
@@ -270,11 +270,13 @@ void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, 
       const double *rj = box.getAtomPosition(jAtom);
       handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType, skipIntra);
     }
+    // now down
     jCell = iCell - *it;
     jbo = boxOffsets[jCell];
     jCell = wrapMap[jCell];
     for (int jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
       bool skipIntra = checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms);
+      if (skipIntra && !onlyAtom) continue;
       const int jType = box.getAtomType(jAtom);
       Potential* pij = iPotentials[jType];
       if (!pij) continue;
@@ -287,6 +289,40 @@ void PotentialMasterCell::computeOneInternal(const int iAtom, const double *ri, 
     drhoSum[iAtom] -= rhoSum[iAtom];
     u1 += embedF[iType]->f(rhoSum[iAtom] + drhoSum[iAtom]);
   }
+}
+
+double PotentialMasterCell::oldIntraMoleculeEnergyLS(int iAtom, int iLastAtom) {
+  // pretend we're doing computeOne... handleComputeOne expects this stuff to exist
+  duAtomSingle = true;
+  uAtomsChanged.resize(1);
+  duAtom.resize(1);
+  uAtomsChanged[0] = iAtom;
+  duAtom[0] = 0;
+
+  const int iType = box.getAtomType(iAtom);
+  const double *iCutoffs = pairCutoffs[iType];
+  Potential** iPotentials = pairPotentials[iType];
+  double* ri = box.getAtomPosition(iAtom);
+
+  double** rawBoxOffsets = cellManager.rawBoxOffsets;
+  int numRawBoxOffsets = cellManager.numRawBoxOffsets;
+  double u = 0;
+  for (int jAtom=iAtom; jAtom<=iLastAtom; jAtom++) {
+    const int jType = box.getAtomType(jAtom);
+    Potential* pij = iPotentials[jType];
+    if (!pij) continue;
+    double rc2 = iCutoffs[jType];
+    if (rc2 < minR2) continue;
+    const double *rj = box.getAtomPosition(jAtom);
+    for (int ijbo=0; ijbo<numRawBoxOffsets; ijbo++) {
+      double* jbo = rawBoxOffsets[ijbo];
+      handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u, rc2, 0, nullptr, iType, jType, true);
+    }
+  }
+  duAtomSingle = false;
+  uAtomsChanged.clear();
+  duAtom.clear();
+  return u;
 }
 
 void PotentialMasterCell::removeAtom(int iAtom) {
