@@ -25,6 +25,7 @@ Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpe
     atomTypes[i] = firstAtom[i] = nullptr;
     speciesNumAtoms[i] = speciesList.get(i)->getNumAtoms();
   }
+  periodic[0] = periodic[1] = periodic[2] = true;
 }
 
 Box::~Box() {
@@ -226,9 +227,18 @@ void Box::boxSizeUpdated() {
 
 void Box::nearestImage(double *dr) {
   for (int i=0; i<3; i++) {
+    if (!periodic[i]) continue;
     while (dr[i] > boxHalf[i]) dr[i] -= boxSize[i];
     while (dr[i] < -boxHalf[i]) dr[i] += boxSize[i];
   }
+}
+
+const bool* Box::getPeriodic() {
+  return periodic;
+}
+
+void Box::setPeriodic(const bool* newPeriodic) {
+  for (int i=0; i<3; i++) periodic[i] = newPeriodic[i];
 }
 
 void Box::setBoxSize(double x, double y, double z) {

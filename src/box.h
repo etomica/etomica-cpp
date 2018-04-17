@@ -10,6 +10,7 @@ class Box {
   protected:
     double boxHalf[3];
     double boxSize[3];
+    bool periodic[3];
 
     double ***positions, ***velocities;
 
@@ -77,4 +78,6 @@ class Box {
     // gives species index, first and last atom indicies for molecule with global index iMolecule
     void getMoleculeInfo(int iMolecule, int &iSpecies, int &iMoleculeInSpecies, int &firstAtom, int &lastAtom);
     void getMoleculeInfoAtom(int iAtom, int &iMolecule, int &iSpecies, int &firstAtom);
+    const bool* getPeriodic();
+    void setPeriodic(const bool* newPeriodic);
 };
