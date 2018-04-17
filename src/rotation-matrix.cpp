@@ -18,8 +18,8 @@ void RotationMatrix::setSimpleAxisAngle(int iAxis, double theta) {
         matrix[i][j] = matrix[j][i] = 0;
         continue;
       }
-      matrix[i][j] = st;
-      matrix[j][i] = -st;
+      matrix[i][j] = -st;
+      matrix[j][i] = st;
     }
   }
 }
@@ -36,9 +36,7 @@ void RotationMatrix::transform(double* vec) {
 
 void RotationMatrix::transformAbout(double* vec, double* center, Box& box) {
   double dr[3];
-  for (int i=0; i<3; i++) {
-    dr[i] = vec[i] - center[i];
-  }
+  for (int i=0; i<3; i++) dr[i] = vec[i] - center[i];
   box.nearestImage(dr);
   for (int i=0; i<3; i++) {
     vec[i] = center[i];
