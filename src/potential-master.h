@@ -90,6 +90,22 @@ class PotentialCallbackHMA : public PotentialCallback {
     virtual double* getData();
 };
 
+class PotentialCallbackMoleculeHMA : public PotentialCallback {
+  protected:
+    Box& box;
+    SpeciesList& speciesList;
+    double temperature;
+    double data[1];
+    double** latticePositions;
+    double** latticeOrientations;
+  public:
+    PotentialCallbackMoleculeHMA(Box& box, SpeciesList& speciesList, double temperature);
+    ~PotentialCallbackMoleculeHMA();
+    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual int getNumData();
+    virtual double* getData();
+};
+
 class CellManager {
   public:
     Box &box;
