@@ -40,7 +40,7 @@ bool MCMoveMoleculeRotate::doTrial() {
     numOldPositions = na;
   }
   int axis = random.nextInt(3);
-  double theta = stepSize*random.nextDouble32();
+  double theta = stepSize*2*(random.nextDouble32()-0.5);
   mat.setSimpleAxisAngle(axis, theta);
   Species* species = speciesList.get(iSpecies);
   double* center = species->getMoleculeCOM(box, iAtomFirst, iAtomLast);
