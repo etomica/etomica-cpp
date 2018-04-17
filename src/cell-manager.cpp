@@ -20,9 +20,11 @@ int* CellManager::getNumCells() {
 int CellManager::cellForCoord(const double *r) {
   int cellNum = 0;
   const double* bs = box.getBoxSize();
+  const bool* periodic = box.getPeriodic();
   for (int i=0; i<3; i++) {
     const double x = (r[i] + boxHalf[i])/bs[i];
-    cellNum += ((int)(cellRange + x*(numCells[i]-2*cellRange)))*jump[i];
+    if (periodic[i]) cellNum += ((int)(cellRange + x*(numCells[i]-2*cellRange)))*jump[i];
+    else cellNum += ((int)(x*numCells[i]))*jump[i];
   }
   return cellNum;
 }
@@ -43,6 +45,7 @@ void CellManager::init() {
   double minCellSize = range/cellRange;
   int totalCells = 1;
   const double* bs = box.getBoxSize();
+  const bool* periodic = box.getPeriodic();
   for (int i=0; i<3; i++) {
     // with cell lists, we can accommodate rc>L/2
     // we need the box to be at least the size of a cell.
@@ -52,7 +55,8 @@ void CellManager::init() {
       exit(1);
     }
     // include cellRange of padding on each side of the box
-    numCells[i] = ((int)floor(bs[i]/minCellSize)) + cellRange*2;
+    numCells[i] = ((int)floor(bs[i]/minCellSize));
+    if (periodic[i]) numCells[i] += cellRange*2;
     totalCells *= numCells[i];
   }
   cellLastAtom.resize(totalCells);
@@ -107,9 +111,9 @@ void CellManager::init() {
     lastCellCount = dCell;
   }
 
-  int xboRange = (numCells[0] - cellRange - 1)/(numCells[0] - 2*cellRange);
-  int yboRange = (numCells[1] - cellRange - 1)/(numCells[1] - 2*cellRange);
-  int zboRange = (numCells[2] - cellRange - 1)/(numCells[2] - 2*cellRange);
+  int xboRange = periodic[0] ? (numCells[0] - cellRange - 1)/(numCells[0] - 2*cellRange) : 0;
+  int yboRange = periodic[1] ? (numCells[1] - cellRange - 1)/(numCells[1] - 2*cellRange) : 0;
+  int zboRange = periodic[2] ? (numCells[2] - cellRange - 1)/(numCells[2] - 2*cellRange) : 0;
   int nx = (2*xboRange+1);
   int ny = (2*yboRange+1);
   int nz = (2*zboRange+1);
@@ -127,14 +131,14 @@ void CellManager::init() {
   }
 
   for (int ix=0; ix<numCells[0]; ix++) {
-    int x2 = wrappedIndex(ix, numCells[0]);
-    int xbo = (ix-x2)/(numCells[0]-2*cellRange);
+    int x2 = periodic[0] ? wrappedIndex(ix, numCells[0]) : ix;
+    int xbo = periodic[0] ? (ix-x2)/(numCells[0]-2*cellRange) : 0;
     for (int iy=0; iy<numCells[1]; iy++) {
-      int y2 = wrappedIndex(iy, numCells[1]);
-      int ybo = (iy-y2)/(numCells[1]-2*cellRange);
-      for (int iz=0; iz<numCells[1]; iz++) {
-        int z2 = wrappedIndex(iz, numCells[2]);
-        int zbo = (iz-z2)/(numCells[2]-2*cellRange);
+      int y2 = periodic[1] ? wrappedIndex(iy, numCells[1]) : iy;
+      int ybo = periodic[1] ? (iy-y2)/(numCells[1]-2*cellRange) : 0;
+      for (int iz=0; iz<numCells[2]; iz++) {
+        int z2 = periodic[2] ? wrappedIndex(iz, numCells[2]) : iz;
+        int zbo = periodic[2] ? (iz-z2)/(numCells[2]-2*cellRange) : 0;
         int iMap = i_cell(ix, iy, iz);
         int dCell = i_cell(x2, y2, z2);
         wrapMap[iMap] = dCell;
