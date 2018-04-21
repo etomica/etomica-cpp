@@ -4,10 +4,12 @@
 #include "integrator.h"
 #include "potential.h"
 #include "move.h"
+#include "move-volume.h"
 #include "box.h"
 #include "meter.h"
 #include "data-sink.h"
 #include "random.h"
+#include "data-pump.h"
 #include "util.h"
 
 int main(int argc, char** argv) {
@@ -16,13 +18,14 @@ int main(int argc, char** argv) {
   double density = 1.0;
   long steps = 1000000;
   double mu = -3.5;
+  double pressure = 3.7;
   bool doData = true;
-  bool doHMA = false, doP = false;
-  bool doGC = false;
+  bool doHMA = false, doP = true;
+  bool doGC = false, constPressure = true;
 
   if (doHMA && !doP) fprintf(stderr, "not doing HMA without P\n");
 
-  Random rand;
+  Random rand(6);
   printf("random seed: %d\n", rand.getSeed());
 
   PotentialLJ plj(1,1,TRUNC_SIMPLE, 3.0);
@@ -47,12 +50,16 @@ int main(int argc, char** argv) {
   if (doGC) {
     integrator.addMove(&moveID, 1);
   }
+  MeterPotentialEnergy meterPE(integrator);
+  MCMoveVolume moveVolume(box, potentialMaster, rand, pressure, 0.1, speciesList, meterPE);
+  if (constPressure) {
+    integrator.addMove(&moveVolume, 1.0/numAtoms);
+  }
   integrator.setTemperature(temperature);
   integrator.reset();
   PotentialCallbackHMA pcHMA(box, temperature, 9.550752245164025e+00);
   printf("u: %f\n", integrator.getPotentialEnergy());
   if (doData) integrator.doSteps(steps/10);
-  MeterPotentialEnergy meterPE(integrator);
   DataPump pumpPE(meterPE, 10);
   MeterFullCompute meterFull(potentialMaster);
   PotentialCallbackPressure pcp(box, temperature, false);
@@ -61,10 +68,13 @@ int main(int argc, char** argv) {
   DataPump pumpFull(meterFull, 4*numAtoms);
   MeterNumAtoms meterNA(box);
   DataPump pumpNA(meterNA, 10);
+  MeterDensity meterDensity(box);
+  DataPump pumpDensity(meterDensity, 10);
   if (doData) {
     integrator.addListener(&pumpPE);
     if (doP) integrator.addListener(&pumpFull);
     if (doGC) integrator.addListener(&pumpNA);
+    if (constPressure) integrator.addListener(&pumpDensity);
   }
 
   double t1 = getTime();
@@ -93,6 +103,10 @@ int main(int argc, char** argv) {
     if (doGC) {
       double* statsNA = ((Average*)pumpNA.getDataSink(0))->getStatistics()[0];
       printf("N avg: %f  err: %f  cor: %f\n", statsNA[AVG_AVG], statsNA[AVG_ERR], statsNA[AVG_ACOR]);
+    }
+    if (constPressure) {
+      double* statsDensity = ((Average*)pumpDensity.getDataSink(0))->getStatistics()[0];
+      printf("density avg: %f  err: %f  cor: %f\n", statsDensity[AVG_AVG], statsDensity[AVG_ERR], statsDensity[AVG_ACOR]);
     }
   }
   printf("time: %4.3f\n", t2-t1);

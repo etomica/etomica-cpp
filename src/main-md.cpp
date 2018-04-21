@@ -7,6 +7,7 @@
 #include "box.h"
 #include "meter.h"
 #include "data-sink.h"
+#include "data-pump.h"
 #include "random.h"
 #include "util.h"
 

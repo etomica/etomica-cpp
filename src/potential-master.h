@@ -404,6 +404,7 @@ class PotentialMaster {
     virtual double uTotalFromAtoms();
     void setCharge(int iType, double charge);
     void setEwald(double kCut, double alpha);
+    virtual void updateVolume() {}
 };
 
 class PotentialMasterCell : public PotentialMaster {
@@ -435,6 +436,7 @@ class PotentialMasterCell : public PotentialMaster {
     virtual void removeMolecule(int iSpecies, int iMolecule);
     virtual double oldIntraMoleculeEnergyLS(int iAtom, int iLastAtom);
     int* getNumCells();
+    virtual void updateVolume();
 };
 
 class PotentialMasterList : public PotentialMasterCell {

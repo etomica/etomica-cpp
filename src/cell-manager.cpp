@@ -175,7 +175,7 @@ void CellManager::assignCells() {
     for (int i=0; i<3; i++) {
       double x = (r[i] + boxHalf[i])/bs[i];
       int y = ((int)(cellRange + x*(numCells[i]-2*cellRange)));
-      if (y==numCells[i]+2*cellRange) y--;
+      if (y==numCells[i]-cellRange) y--;
       cellNum += y*jump[i];
     }
     atomCell[iAtom] = cellNum;

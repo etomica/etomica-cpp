@@ -3,6 +3,7 @@
 #include "cluster.h"
 #include "meter-virial.h"
 #include "integrator.h"
+#include "data-pump.h"
 
 class VirialAlpha {
   protected:

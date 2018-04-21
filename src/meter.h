@@ -3,6 +3,9 @@
 #include "data-sink.h"
 #include "integrator.h"
 
+class Integrator;
+class IntegratorMD;
+
 class Meter {
   protected:
     int nData;
@@ -66,20 +69,4 @@ class MeterFullCompute : public Meter {
     double* getData();
     void addCallback(PotentialCallback* pcb);
     void setDoCompute(bool doCompute);
-};
-
-class DataPump : public IntegratorListener {
-  private:
-    Meter& meter;
-    int interval;
-    int intervalCountdown;
-    vector<DataSink*> sinks;
-    const bool dataSink1isMine;
-  public:
-    DataPump(Meter& meter, int interval);
-    DataPump(Meter& meter, int interval, DataSink* sink);
-    ~DataPump();
-    void stepFinished();
-    DataSink* getDataSink(int i);
-    void addDataSink(DataSink* sink);
 };

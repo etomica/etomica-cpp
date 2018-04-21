@@ -1,4 +1,4 @@
-#include "meter.h"
+#include "data-pump.h"
 
 DataPump::DataPump(Meter& m, int i) : IntegratorListener(), meter(m), interval(i), intervalCountdown(i), dataSink1isMine(true) {
   callFinished = true;
