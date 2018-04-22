@@ -161,6 +161,34 @@ void PotentialMaster::setBondPotential(int iSpecies, vector<int*> &bp, Potential
   }
 }
 
+void PotentialMaster::setBondAnglePotential(int iSpecies, vector<int*> &bt, PotentialAngle *p) {
+  if (pureAtoms) {
+    fprintf(stderr, "Potential master was configured for purely atomic interactions\n");
+    abort();
+  }
+  rigidMolecules = false;
+  bondAngleTriplets[iSpecies].push_back(bt);
+  bondAnglePotentials[iSpecies].push_back(p);
+  Species* s = speciesList.get(iSpecies);
+  // bondedAtoms keeps track of all atoms bonded to a given atom, so that they can be
+  // excluded as a pair for standard (LJ) interactions
+  bondedAtoms[iSpecies] = new vector<int>[s->getNumAtoms()];
+  vector<int> *&myBA = bondedAtoms[iSpecies];
+  for (int i=0; i<(int)bt.size(); i++) {
+    for (int j=0; j<3; j++) {
+      int aj = bt[i][j];
+      for (int k=j+1; k<3; k++) {
+        int ak = bt[i][k];
+        if (!binary_search(myBA[aj].begin(), myBA[aj].end(), ak)) myBA[aj].push_back(ak);
+        if (!binary_search(myBA[ak].begin(), myBA[ak].end(), aj)) myBA[ak].push_back(aj);
+      }
+    }
+  }
+  for (int i=0; i<s->getNumAtoms(); i++) {
+    sort(myBA[i].begin(), myBA[i].end());
+  }
+}
+
 Box& PotentialMaster::getBox() {
   return box;
 }

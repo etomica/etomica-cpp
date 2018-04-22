@@ -391,6 +391,7 @@ class PotentialMaster {
     virtual void setRhoPotential(int jType, Potential* rhoj);
     virtual void setEmbedF(int iType, EmbedF* Fi);
     void setBondPotential(int iSpecies, vector<int*> &bondedPairs, Potential *pBond);
+    void setBondAnglePotential(int iSpecies, vector<int*> &bondedTriplets, PotentialAngle *pBondAngle);
     // compute for the whole box
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
     // energy of one atom with the whole box
