@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   int numAtoms = 500;
   double temperature = 1.0;
   double density = 1.0;
-  long steps = 1000000;
+  long steps = 10000000;
   double mu = -3.5;
   double pressure = 3.7;
   bool doData = true;
@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
 
   if (doHMA && !doP) fprintf(stderr, "not doing HMA without P\n");
 
-  Random rand(6);
+  Random rand;
   printf("random seed: %d\n", rand.getSeed());
 
   PotentialLJ plj(1,1,TRUNC_SIMPLE, 3.0);
