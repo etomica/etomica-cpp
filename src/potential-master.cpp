@@ -496,11 +496,68 @@ void PotentialMaster::handleOneBondPair(bool doForces, double &uTot, int iAtom, 
   }
 }
 
+void PotentialMaster::handleOneBondAngleTriplet(bool doForces, double &uTot, int iAtom, int jAtom, int kAtom, PotentialAngle* p) {
+  double *ri = box.getAtomPosition(iAtom);
+  double *rj = box.getAtomPosition(jAtom);
+  double *rk = box.getAtomPosition(kAtom);
+  double drji[3], drjk[3];
+  for (int l=0; l<3; l++) {
+    drji[l] = ri[l]-rj[l];
+    drjk[l] = rk[l]-rj[l];
+  }
+  box.nearestImage(drji);
+  box.nearestImage(drjk);
+  double rji2 = 0, rjk2 = 0;
+  for (int l=0; l<3; l++) {
+    rji2 += drji[l]*drji[l];
+    rjk2 += drjk[l]*drjk[l];
+  }
+  double jidotjk = 0;
+  for (int l=0; l<3; l++) {
+    jidotjk += drji[l]*drjk[l];
+  }
+  double rji1rjk1 = sqrt(rji2*rjk2);
+  double costheta = jidotjk/rji1rjk1;
+  if (costheta<-1) costheta=-1;
+  else if (costheta>1) costheta=1;
+  double u, du, d2u;
+  p->u012(costheta, u, du, d2u);
+  uAtom[iAtom] += 0.3333333333333333333*u;
+  uAtom[jAtom] += 0.3333333333333333333*u;
+  uAtom[kAtom] += 0.3333333333333333333*u;
+  uTot += u;
+  for (vector<PotentialCallback*>::iterator it = pairCallbacks.begin(); it!=pairCallbacks.end(); it++) {
+    //(*it)->Compute(iAtom, jAtom, dr, u, du, d2u);
+  }
+  if (!doForces || fabs(costheta) > 0.9999999999) return;
+
+  // each end atom has a force perpendicular to its bond and
+  // inversely proportional to its bond length
+  // central atom has a force to conteract the forces on the end atoms
+  double rji1 = sqrt(rji2);
+  double rjk1 = rji1rjk1 / rji1;
+  double fi[3], fk[3];
+  double fi2 = 0, fk2 = 0;
+  for (int l=0; l<3; l++) {
+    fi[l] = drjk[l] - jidotjk/rji1;
+    fi2 += fi[l]*fi[l];
+    fk[l] = drji[l] - jidotjk/rjk1;
+    fk2 += fk[l]*fk[l];
+  }
+  double fi1 = sqrt(fi2), fk1 = sqrt(fk2);
+  for  (int l=0; l<3; l++) {
+    fi[l] *= du/(fi1*rji1);
+    force[iAtom][l] += fi[l];
+    fk[l] *= du/(fk1*rjk1);
+    force[kAtom][l] += fk[l];
+    force[jAtom][l] = -(fi[l] + fk[l]);
+  }
+}
+
 void PotentialMaster::computeAllBonds(bool doForces, double &uTot) {
   int numSpecies = speciesList.size();
   for (int iSpecies=0; iSpecies<numSpecies; iSpecies++) {
     vector<Potential*> &iBondedPotentials = bondedPotentials[iSpecies];
-    if (iBondedPotentials.size() == 0) continue;
     int sna = speciesList.get(iSpecies)->getNumAtoms();
     vector<vector<int*> > iBondedPairs = bondedPairs[iSpecies];
     for (int j=0; j<(int)iBondedPotentials.size(); j++) {
@@ -513,6 +570,24 @@ void PotentialMaster::computeAllBonds(bool doForces, double &uTot) {
           int iAtom = firstAtom + lBondedPair[0];
           int jAtom = firstAtom + lBondedPair[1];
           handleOneBondPair(doForces, uTot, iAtom, jAtom, p);
+        }
+        firstAtom += sna;
+      }
+    }
+
+    vector<PotentialAngle*> &iBondAnglePotentials = bondAnglePotentials[iSpecies];
+    vector<vector<int*> > iBondAngleTriplets = bondAngleTriplets[iSpecies];
+    for (int j=0; j<(int)iBondAnglePotentials.size(); j++) {
+      PotentialAngle* p = iBondAnglePotentials[j];
+      vector<int*> jBondAngleTriplets = iBondAngleTriplets[j];
+      int firstAtom = box.getFirstAtom(iSpecies, 0);
+      for (int kMolecule=0; kMolecule<box.getNumMolecules(iSpecies); kMolecule++) {
+        for (int l=0; l<(int)jBondAngleTriplets.size(); l++) {
+          int* lBondAngleTriplets = jBondAngleTriplets[l];
+          int iAtom = firstAtom + lBondAngleTriplets[0];
+          int jAtom = firstAtom + lBondAngleTriplets[1];
+          int kAtom = firstAtom + lBondAngleTriplets[2];
+          handleOneBondAngleTriplet(doForces, uTot, iAtom, jAtom, kAtom, p);
         }
         firstAtom += sna;
       }

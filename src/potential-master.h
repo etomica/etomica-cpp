@@ -188,6 +188,7 @@ class PotentialMaster {
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);
     void handleOneBondPair(bool doForces, double &uTot, int iAtom, int jAtom, Potential* p);
+    void handleOneBondAngleTriplet(bool doForces, double &uTot, int iAtom, int jAtom, int kATom, PotentialAngle* p);
     void computeAllBonds(bool doForces, double &uTot);
     void computeAllTruncationCorrection(double &uTot, double &virialTot);
     double computeOneTruncationCorrection(const int iAtom);
