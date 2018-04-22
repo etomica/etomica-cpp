@@ -162,10 +162,6 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
       handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces, false);
     }
     const int iCell = atomCell[iAtom];
-    int* nc = cellManager.numCells;
-    if (iCell > (nc[0]*nc[1]*(nc[2]-2))) {
-      printf("%d appears to be too big for atom %d (%d cells)\n", iCell, iAtom, nc[0]);
-    }
     for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
       int jCell = iCell + *it;
       jbo = boxOffsets[jCell];
