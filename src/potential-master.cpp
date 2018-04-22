@@ -44,6 +44,8 @@ PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : 
   bondedPairs = new vector<vector<int*> >[sl.size()];
   bondedPotentials = new vector<Potential*>[sl.size()];
   bondedAtoms = new vector<int>*[sl.size()];
+  bondAngleTriplets = new vector<vector<int*> >[sl.size()];
+  bondAnglePotentials = new vector<PotentialAngle*>[sl.size()];
 
   numAtomsByType = new int[numAtomTypes];
   for (int i=0; i<numAtomTypes; i++) {
@@ -71,6 +73,9 @@ PotentialMaster::~PotentialMaster() {
   free(idf);
   delete[] bondedPairs;
   delete[] bondedPotentials;
+  delete[] bondedAtoms;
+  delete[] bondAngleTriplets;
+  delete[] bondAnglePotentials;
   delete[] bondedAtoms;
   delete[] numAtomsByType;
   delete[] charges;

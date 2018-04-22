@@ -8,6 +8,7 @@
 #include <complex>
 #include "box.h"
 #include "potential.h"
+#include "potential-angle.h"
 #include "potential-molecular.h"
 
 using namespace std;
@@ -163,9 +164,13 @@ class PotentialMaster {
 
     vector<PotentialCallback*> pairCallbacks;
     const int numAtomTypes;
+    // one vector<vector<int*>> for each species
+    // each species has a list of bonded pairs for each potential
     vector<vector<int*> > *bondedPairs;
     vector<int> **bondedAtoms;
     vector<Potential*> *bondedPotentials;
+    vector<vector<int*> > *bondAngleTriplets;
+    vector<PotentialAngle*> *bondAnglePotentials;
     const bool pureAtoms;
     bool rigidMolecules;
     bool doTruncationCorrection, doSingleTruncationCorrection;
