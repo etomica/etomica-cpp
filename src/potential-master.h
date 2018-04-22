@@ -187,7 +187,8 @@ class PotentialMaster {
     double minR2;
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);
-    void computeAllBonds(bool doForces, double &uTot, double &virialTot);
+    void handleOneBondPair(bool doForces, double &uTot, int iAtom, int jAtom, Potential* p);
+    void computeAllBonds(bool doForces, double &uTot);
     void computeAllTruncationCorrection(double &uTot, double &virialTot);
     double computeOneTruncationCorrection(const int iAtom);
     inline bool checkSkip(int jAtom, int iSpecies, int iMolecule, vector<int> *iBondedAtoms) {

@@ -220,7 +220,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     }
   }
   if (!pureAtoms && !rigidMolecules) {
-    computeAllBonds(doForces, uTot, virialTot);
+    computeAllBonds(doForces, uTot);
   }
   if (doEwald) {
     computeAllFourier(doForces, uTot);

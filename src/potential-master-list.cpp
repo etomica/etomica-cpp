@@ -282,7 +282,7 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
   }
   computeAllTruncationCorrection(uTot, virialTot);
   if (!pureAtoms && !rigidMolecules) {
-    computeAllBonds(doForces, uTot, virialTot);
+    computeAllBonds(doForces, uTot);
   }
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);

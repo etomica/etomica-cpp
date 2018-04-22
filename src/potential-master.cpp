@@ -284,7 +284,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
     computeAllFourier(doForces, uTot);
   }
   if (!pureAtoms && !rigidMolecules) {
-    computeAllBonds(doForces, uTot, virialTot);
+    computeAllBonds(doForces, uTot);
   }
   computeAllTruncationCorrection(uTot, virialTot);
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
@@ -470,7 +470,33 @@ double PotentialMaster::computeOneTruncationCorrection(int iAtom) {
   return uTot;
 }
 
-void PotentialMaster::computeAllBonds(bool doForces, double &uTot, double &virialTot) {
+void PotentialMaster::handleOneBondPair(bool doForces, double &uTot, int iAtom, int jAtom, Potential* p) {
+  double *ri = box.getAtomPosition(iAtom);
+  double *rj = box.getAtomPosition(jAtom);
+  double dr[3];
+  for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
+  box.nearestImage(dr);
+  double r2 = 0;
+  for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
+  double u, du, d2u;
+  p->u012(r2, u, du, d2u);
+  uAtom[iAtom] += 0.5*u;
+  uAtom[jAtom] += 0.5*u;
+  uTot += u;
+  for (vector<PotentialCallback*>::iterator it = pairCallbacks.begin(); it!=pairCallbacks.end(); it++) {
+    (*it)->pairCompute(iAtom, jAtom, dr, u, du, d2u);
+  }
+  if (!doForces) return;
+
+  // f0 = dr du / r^2
+  du /= r2;
+  for (int m=0; m<3; m++) {
+    force[iAtom][m] += dr[m]*du;
+    force[jAtom][m] -= dr[m]*du;
+  }
+}
+
+void PotentialMaster::computeAllBonds(bool doForces, double &uTot) {
   int numSpecies = speciesList.size();
   for (int iSpecies=0; iSpecies<numSpecies; iSpecies++) {
     vector<Potential*> &iBondedPotentials = bondedPotentials[iSpecies];
@@ -486,31 +512,7 @@ void PotentialMaster::computeAllBonds(bool doForces, double &uTot, double &viria
           int* lBondedPair = jBondedPairs[l];
           int iAtom = firstAtom + lBondedPair[0];
           int jAtom = firstAtom + lBondedPair[1];
-
-          double *ri = box.getAtomPosition(iAtom);
-          double *rj = box.getAtomPosition(jAtom);
-          double dr[3];
-          for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
-          box.nearestImage(dr);
-          double r2 = 0;
-          for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
-          double u, du, d2u;
-          p->u012(r2, u, du, d2u);
-          uAtom[iAtom] += 0.5*u;
-          uAtom[jAtom] += 0.5*u;
-          uTot += u;
-          virialTot += du;
-          for (vector<PotentialCallback*>::iterator it = pairCallbacks.begin(); it!=pairCallbacks.end(); it++) {
-            (*it)->pairCompute(iAtom, jAtom, dr, u, du, d2u);
-          }
-
-          // f0 = dr du / r^2
-          if (!doForces) continue;
-          du /= r2;
-          for (int m=0; m<3; m++) {
-            force[iAtom][m] += dr[m]*du;
-            force[jAtom][m] -= dr[m]*du;
-          }
+          handleOneBondPair(doForces, uTot, iAtom, jAtom, p);
         }
         firstAtom += sna;
       }
