@@ -16,12 +16,12 @@ int main(int argc, char** argv) {
   int numAtoms = 500;
   double temperature = 1.0;
   double density = 1.0;
-  long steps = 10000000;
+  long steps = 1000000;
   double mu = -3.5;
   double pressure = 3.7;
   bool doData = true;
-  bool doHMA = false, doP = true;
-  bool doGC = false, constPressure = true;
+  bool doHMA = false, doP = false;
+  bool doGC = false, constPressure = false;
 
   if (doHMA && !doP) fprintf(stderr, "not doing HMA without P\n");
 
