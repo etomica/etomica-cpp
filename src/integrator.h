@@ -7,11 +7,12 @@
 
 class IntegratorListener {
   public:
-    bool callFinished;
+    bool callFinished, callPreForce;
     bool callAccept, callReject;
     IntegratorListener();
     virtual ~IntegratorListener() {}
     virtual void stepFinished() {}
+    virtual void preForce() {}
     virtual void moveAccepted(MCMove& move, double chi) {}
     virtual void moveRejected(MCMove& move, double chi) {}
 };
@@ -23,6 +24,7 @@ class Integrator : public PotentialCallback {
     double energy;
     long stepCount;
     vector<IntegratorListener*> listenersStepFinished;
+    vector<IntegratorListener*> listenersPreForce;
     vector<PotentialCallback*> selfPotentialCallbackVec;
   public:
     Integrator(PotentialMaster& potentialMaster);

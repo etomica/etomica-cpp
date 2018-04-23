@@ -23,6 +23,10 @@ void IntegratorNVE::doStep() {
     }
   }
 
+  for (vector<IntegratorListener*>::iterator it = listenersPreForce.begin(); it!=listenersPreForce.end(); it++) {
+    (*it)->preForce();
+  }
+
   computeForces();
 
   kineticEnergy = 0;

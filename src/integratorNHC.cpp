@@ -33,6 +33,10 @@ void IntegratorNHC::doStep() {
   propagatorU2(tStep/2);
   propagatorU1(tStep);
 
+  for (vector<IntegratorListener*>::iterator it = listenersPreForce.begin(); it!=listenersPreForce.end(); it++) {
+    (*it)->preForce();
+  }
+
   computeForces();
 
   propagatorU2(tStep/2);
