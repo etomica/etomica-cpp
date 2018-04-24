@@ -76,7 +76,6 @@ PotentialMaster::~PotentialMaster() {
   delete[] bondedAtoms;
   delete[] bondAngleTriplets;
   delete[] bondAnglePotentials;
-  delete[] bondedAtoms;
   delete[] numAtomsByType;
   delete[] charges;
 }
