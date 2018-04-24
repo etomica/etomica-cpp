@@ -1,8 +1,9 @@
 #pragma once
 
+#include <stdio.h>
 #include <vector>
-#include "box.h"
 #include "atom-info.h"
+#include "rigid-constraint.h"
 
 using namespace std;
 
@@ -16,6 +17,7 @@ class Species {
     double com[3];
     AtomInfo* atomInfo;
     int axisAtoms[2][2];
+    vector<RigidConstraint> rigidConstraints;
     void setup(int numAtoms, int numAtomTypes);
 
   public:
@@ -28,6 +30,7 @@ class Species {
     double* getAtomPosition(int iAtom);
     double* getMoleculeCOM(Box& box, int iFirstAtom, int iLastAtom);
     void getMoleculeOrientation(Box& box, int iFirstAtom, double* direction1, double* direction2);
+    virtual vector<RigidConstraint> getRigidConstraints();
 };
 
 class SpeciesSimple : public Species {
@@ -47,6 +50,13 @@ class SpeciesFile : public Species {
     vector<int> types;
     vector<char*> typeSymbols;
     int typeOffset;
+    vector<RigidConstraint> rigidConstraints;
+
+    void readAtomTypes(FILE* f, const char* filename);
+    char* readAtoms(FILE* f, const char* filename, vector<double*> &tmpPositions);
+    char* readOrientations(FILE* f, const char* filename);
+    char* readConstraints(FILE* f, const char* filename);
+    char* trim(char* s);
 
   public:
     SpeciesFile(const char *filename);

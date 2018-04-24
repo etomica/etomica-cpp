@@ -5,6 +5,9 @@
 #include "random.h"
 #include "rotation-matrix.h"
 
+class PotentialMaster;
+class SpeciesList;
+
 class MCMove {
   protected:
     Box& box;

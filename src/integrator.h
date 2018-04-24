@@ -1,9 +1,16 @@
 #pragma once
 
-#include "move.h"
-#include "box.h"
+#include <vector>
+#include "potential-callback.h"
 #include "random.h"
 #include "SFMT.h"
+
+using namespace std;
+
+class AtomInfo;
+class MCMove;
+class PotentialMaster;
+class Box;
 
 class IntegratorListener {
   public:

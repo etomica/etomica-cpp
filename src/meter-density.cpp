@@ -1,4 +1,5 @@
 #include "meter.h"
+#include "box.h"
 
 MeterDensity::MeterDensity(Box& b) : Meter(1), box(b) { }
 

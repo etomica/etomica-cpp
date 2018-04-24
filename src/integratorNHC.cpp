@@ -1,4 +1,7 @@
+#include <math.h>
 #include "integrator.h"
+#include "box.h"
+#include "potential-master.h"
 
 /**
  * Nose-Hoover chains molecular dynamics integrator

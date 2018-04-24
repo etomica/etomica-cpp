@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <math.h>
+#include "box.h"
 #include "species.h"
+#include "rigid-listener.h"
 #include "alloc2d.h"
 
 Species::Species(int na, int nat) : numAtoms(na), numAtomTypes(nat), atomTypes(nullptr), positions(nullptr) {
@@ -91,4 +93,8 @@ void Species::getMoleculeOrientation(Box& box, int iFirstAtom, double* direction
   for (int k=0; k<3; k++) r2 += direction2[k]*direction2[k];
   r = sqrt(r2);
   for (int k=0; k<3; k++) direction2[k] /= r;
+}
+
+vector<RigidConstraint> Species::getRigidConstraints() {
+  return rigidConstraints;
 }

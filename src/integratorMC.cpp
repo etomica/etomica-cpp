@@ -1,4 +1,5 @@
 #include "integrator.h"
+#include "move.h"
 
 IntegratorMC::IntegratorMC(PotentialMaster& p, Random& r) : Integrator(p), random(r), pMoveSum(0), lastMove(NULL) {
 }

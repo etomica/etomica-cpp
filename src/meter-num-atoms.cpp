@@ -1,4 +1,5 @@
 #include "meter.h"
+#include "box.h"
 
 MeterNumAtoms::MeterNumAtoms(Box& b) : Meter(1), box(b) { }
 

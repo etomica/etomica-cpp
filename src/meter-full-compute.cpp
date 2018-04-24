@@ -1,4 +1,5 @@
 #include "meter.h"
+#include "potential-master.h"
 
 MeterFullCompute::MeterFullCompute(PotentialMaster& p) : Meter(0), potentialMaster(p), data(nullptr), doCompute(true) {}
 

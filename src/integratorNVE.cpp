@@ -1,4 +1,5 @@
 #include "integrator.h"
+#include "potential-master.h"
 
 IntegratorNVE::IntegratorNVE(AtomInfo& ai, PotentialMaster& p, Random& r, Box& b) : IntegratorMD(ai, p, r, b) {
 }

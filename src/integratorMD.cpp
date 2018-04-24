@@ -1,4 +1,5 @@
 #include "integrator.h"
+#include "potential-master.h"
 
 IntegratorMD::IntegratorMD(AtomInfo& ai, PotentialMaster& p, Random& r, Box& b) : Integrator(p), atomInfo(ai), random(r), box(b), forces(NULL), tStep(0.01), thermostat(THERMOSTAT_NONE), nbrCheckInterval(-1), nbrCheckCountdown(-1) {
   takesForces = true;

@@ -3,6 +3,8 @@
 #include "box.h"
 #include "random.h"
 
+class Box;
+
 class RotationMatrix {
   public:
     double matrix[3][3];

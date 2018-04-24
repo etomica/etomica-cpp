@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "species.h"
+#include "rigid-constraint.h"
 
 SpeciesFile::SpeciesFile(const char* filename) : Species(0,0), typeOffset(0) {
   FILE* f;
@@ -9,7 +11,32 @@ SpeciesFile::SpeciesFile(const char* filename) : Species(0,0), typeOffset(0) {
     fprintf(stderr, "Unable to open species file '%s'\n", filename);
     abort();
   }
+  readAtomTypes(f, filename);
   vector<double*> tmpPositions;
+  char* nextSection = readAtoms(f, filename, tmpPositions);
+  while (nextSection) {
+    if (!strcmp(nextSection, "orientation")) {
+      free(nextSection);
+      nextSection = readOrientations(f, filename);
+    }
+    else if (!strcmp(nextSection, "constraints")) {
+      free(nextSection);
+      nextSection = readConstraints(f, filename);
+    }
+  }
+  fclose(f);
+
+  // allocate positions, atomTypes
+  setup(types.size(), typeSymbols.size());
+  // now copy over positions
+  for (int i=0; i<numAtoms; i++) {
+    double* ri = tmpPositions[i];
+    for (int j=0; j<3; j++) positions[i][j] = ri[j];
+    delete[] ri;
+  }
+}
+
+void SpeciesFile::readAtomTypes(FILE* f, const char* filename) {
   char buf[512];
   while (true) {
     if (!fgets(buf, 510, f)) {
@@ -52,18 +79,30 @@ SpeciesFile::SpeciesFile(const char* filename) : Species(0,0), typeOffset(0) {
     fprintf(stderr, "Did not find any atom types in file %s\n", filename);
     abort();
   }
-  // we read the types and encountered an "atoms:" line
-  bool hasOrientation = false;
+}
+
+char* SpeciesFile::trim(char* s) {
+  while (*s && isspace(*s)) s++;
+  char* end = s + strlen(s) - 1;
+  while (end > s && isspace(*end)) end--;
+  *(end+1) = '\0';
+  return s;
+}
+
+char* SpeciesFile::readAtoms(FILE* f, const char* filename, vector<double*> &tmpPositions) {
+  char buf[512];
+  char* nextSection = nullptr;
   while (true) {
-    if (!fgets(buf, 510, f)) {
+    if (!fgets(buf, 511, f)) {
       break;
     }
     if (buf[0] == '#') continue; // comment
-    if (strncmp(buf, "orientation:", 12) == 0) {
-      hasOrientation = true;
+    char* c = trim(buf);
+    if (c[strlen(c)-1] == ':') {
+      c[strlen(c)-1] = '\0';
+      nextSection = strdup(c);
       break;
     }
-    char* c = buf;
     char* atomNumStr = strsep(&c, " ");
     if (!atomNumStr || atomNumStr[0]=='#') continue;
     int atomNum = atoi(atomNumStr);
@@ -104,62 +143,67 @@ SpeciesFile::SpeciesFile(const char* filename) : Species(0,0), typeOffset(0) {
     fprintf(stderr, "Did not find any atoms in file %s\n", filename);
     abort();
   }
-  if (hasOrientation) {
-    int oCount = 0;
-    while (true) {
-      if (!fgets(buf, 510, f)) {
-        break;
-      }
-      char* c = buf;
-      char* oNumStr = strsep(&c, " ");
-      if (!oNumStr || oNumStr[0]=='#') continue;
-      int oNum = atoi(oNumStr);
-      if (oCount+1 != oNum) {
-        fprintf(stderr, "orientation %d on line %d in file %s\n", oNum, oCount+1, filename);
-        abort();
-      }
-      if (!c) {
-        fprintf(stderr, "Found orientation line, but no atoms in file %s\n", filename);
-        abort();
-      }
-      char* atomStr = strsep(&c, " ");
-      if (!atomStr || !c) {
-        fprintf(stderr, "Could not find first orienation atom in file %s\n", filename);
-        abort();
-      }
-      int atom1 = atoi(atomStr);
-      if (atom1 <= 0 || atom1 > (int)types.size() + 1) {
-        fprintf(stderr, "Invalid atom %d for orientation in file %s\n", atom1, filename);
-        abort();
-      }
-      atomStr = strsep(&c, " ");
-      if (!atomStr) {
-        fprintf(stderr, "Could not find first orienation atom in file %s\n", filename);
-        abort();
-      }
-      int atom2 = atoi(atomStr);
-      if (atom2 <= 0 || atom2 > (int)types.size() + 1) {
-        fprintf(stderr, "Invalid atom %d for orientation in file %s\n", atom2, filename);
-        abort();
-      }
-      if (atom2 == atom1) {
-        fprintf(stderr, "Orientation atoms must be different from file %s\n", filename);
-        abort();
-      }
-      axisAtoms[oCount][0] = atom1-1;
-      axisAtoms[oCount][1] = atom2-1;
-      oCount++;
-    }
-  }
-  fclose(f);
+  return nextSection;
+}
 
-  setup(types.size(), typeSymbols.size());
-  // now copy over positions
-  for (int i=0; i<numAtoms; i++) {
-    double* ri = tmpPositions[i];
-    for (int j=0; j<3; j++) positions[i][j] = ri[j];
-    delete[] ri;
+char* SpeciesFile::readOrientations(FILE* f, const char* filename) {
+  int oCount = 0;
+  char* nextSection = nullptr;
+  char buf[512];
+  while (true) {
+    if (!fgets(buf, 510, f)) {
+      break;
+    }
+    char* c = trim(buf);
+    if (c[strlen(c)-1] == ':') {
+      c[strlen(c)-1] = '\0';
+      nextSection = strdup(c);
+      break;
+    }
+    char* oNumStr = strsep(&c, " ");
+    if (!oNumStr || oNumStr[0]=='#') continue;
+    int oNum = atoi(oNumStr);
+    if (oCount+1 != oNum) {
+      fprintf(stderr, "orientation %d on line %d in file %s\n", oNum, oCount+1, filename);
+      abort();
+    }
+    if (!c) {
+      fprintf(stderr, "Found orientation line, but no atoms in file %s\n", filename);
+      abort();
+    }
+    char* atomStr = strsep(&c, " ");
+    if (!atomStr || !c) {
+      fprintf(stderr, "Could not find first orienation atom in file %s\n", filename);
+      abort();
+    }
+    int atom1 = atoi(atomStr);
+    if (atom1 <= 0 || atom1 > (int)types.size() + 1) {
+      fprintf(stderr, "Invalid atom %d for orientation in file %s\n", atom1, filename);
+      abort();
+    }
+    atomStr = strsep(&c, " ");
+    if (!atomStr) {
+      fprintf(stderr, "Could not find first orienation atom in file %s\n", filename);
+      abort();
+    }
+    int atom2 = atoi(atomStr);
+    if (atom2 <= 0 || atom2 > (int)types.size() + 1) {
+      fprintf(stderr, "Invalid atom %d for orientation in file %s\n", atom2, filename);
+      abort();
+    }
+    if (atom2 == atom1) {
+      fprintf(stderr, "Orientation atoms must be different from file %s\n", filename);
+      abort();
+    }
+    axisAtoms[oCount][0] = atom1-1;
+    axisAtoms[oCount][1] = atom2-1;
+    oCount++;
   }
+  return nextSection;
+}
+
+char* SpeciesFile::readConstraints(FILE* f, const char* filename) {
+  return nullptr;
 }
 
 SpeciesFile::~SpeciesFile() {
