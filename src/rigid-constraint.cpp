@@ -139,6 +139,16 @@ void RigidConstraint::sumToCOM(Box& box, int iAtom, double* r0, double com[3], d
   }
 }
 
+void RigidConstraint::sumToMoment(Box& box, int iAtom, double com[3], RotationMatrix moment, double mass) {
+  if (mass==0) return;
+  double *ri = box.getAtomPosition(iAtom);
+  double r2 = Vector::dot(ri,ri);
+  for (int k=0; k<3; k++) moment.matrix[k][k] += r2*mass;
+  for (int k=0; k<3; k++) {
+    for (int l=0; l<3; l++) if (k!=l) moment.matrix[k][l] -= ri[k]*ri[l]*mass;
+  }
+}
+
 #define sgn(x) ((x>0) - (x<0))
 
 // redistribute forces from implicitly constrained atoms
@@ -148,10 +158,10 @@ void RigidConstraint::redistributeForces(Box& box, int iFirstAtom, double** forc
   double totMass = 0;
   double *r0 = box.getAtomPosition(iFirstAtom);
   for (int i=0; i<(int)rigidAtoms.size(); i++) {
-    sumToCOM(box, iFirstAtom+rigidAtoms[i], r0, com, species.getMass(i), totMass);
+    sumToCOM(box, iFirstAtom+rigidAtoms[i], r0, com, species.getMass(rigidAtoms[i]), totMass);
   }
   for (int i=0; i<(int)extraAtoms.size(); i++) {
-    sumToCOM(box, iFirstAtom+rigidAtoms[i], r0, com, species.getMass(i), totMass);
+    sumToCOM(box, iFirstAtom+extraAtoms[i], r0, com, species.getMass(extraAtoms[i]), totMass);
   }
   for (int k=0; k<3; k++) com[k] /= totMass;
   double torque[3] = {0.0,0.0,0.0};
@@ -180,34 +190,29 @@ void RigidConstraint::redistributeForces(Box& box, int iFirstAtom, double** forc
     }
     box.nearestImage(dr[i]);
   }
-  if (rigidAtoms.size() == 2) {
-    double ri0 = sqrt(Vector::dot(dr[0], dr[0]));
-    double ri1 = sqrt(Vector::dot(dr[1], dr[1]));
-    double fd0[3]; // direction force on 0 needs to be to positively contribute to torque 
-    Vector::cross(torque, dr[0], fd0);
-    double tMag = 0;
-    double fd02 = 0;
-    for (int k=0; k<3; k++) {
-      tMag += torque[k]*torque[k];
-      fd02 += fd0[k]*fd0[k];
-    }
-    tMag = sqrt(tMag);
-    double fd02sqrt = sqrt(fd02);
-    for (int k=0; k<3; k++) fd0[k] /= fd02sqrt;
-    // take f to be in direction of fd0
-    // f ri0 - f sgn(dr[0] dot dr[1]) ri1 = torque
-    // f = torque / (ri0 - sgn(dr[0] dot dr[1]) ri1)
-    // f0 = f, f1 = - sgn(dr[0] dot dr[1]) f
-    double s = sgn(Vector::dot(dr[0], dr[1]));
-    double x = ri0 - s*ri1;
-    for (int k=0; k<3; k++) {
-      force[iFirstAtom+rigidAtoms[0]][k] += fd0[k]*tMag/x;
-      force[iFirstAtom+rigidAtoms[1]][k] -= fd0[k]*tMag/x;
-    }
+  // calculate angular acceleration due to torque
+  // J alpha = torque
+  // https://en.wikipedia.org/wiki/Angular_acceleration
+  // https://en.wikipedia.org/wiki/Moment_of_inertia#Inertia_tensor
+  // calculate linear acceleration for each atom, apply force to achieve that
+  // ai = alpha cross ri = Fi/mi
+  RotationMatrix moment;
+  for (int i=0; i<(int)rigidAtoms.size(); i++) {
+    sumToMoment(box, iFirstAtom+rigidAtoms[i], com, moment, species.getMass(rigidAtoms[i]));
   }
-  else if (rigidAtoms.size() == 3) {
+  for (int i=0; i<(int)extraAtoms.size(); i++) {
+    sumToMoment(box, iFirstAtom+extraAtoms[i], com, moment, species.getMass(extraAtoms[i]));
   }
-  else if (rigidAtoms.size() == 4) {
+  moment.invert();
+  double alpha[3];
+  for (int k=0; k<3; k++) alpha[k] = torque[k];
+  moment.transform(alpha);
+  for (int i=0; i<(int)rigidAtoms.size(); i++) {
+    double fi[3];
+    int iAtom = iFirstAtom+rigidAtoms[i];
+    double *ri = box.getAtomPosition(iAtom);
+    Vector::cross(alpha, ri, fi);
+    for (int k=0; k<3; k++) force[iAtom][k] += species.getMass(rigidAtoms[i])*fi[k];
   }
 }
 
