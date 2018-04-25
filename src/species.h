@@ -31,6 +31,7 @@ class Species {
     double* getMoleculeCOM(Box& box, int iFirstAtom, int iLastAtom);
     void getMoleculeOrientation(Box& box, int iFirstAtom, double* direction1, double* direction2);
     virtual vector<RigidConstraint> getRigidConstraints();
+    double getMass(int iAtom);
 };
 
 class SpeciesSimple : public Species {

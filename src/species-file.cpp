@@ -225,7 +225,6 @@ void SpeciesFile::init(AtomInfo& ai) {
   }
 }
 
-
 int SpeciesFile::getTypeForSymbol(const char* symbol) {
   for (int i=0; i<numAtomTypes; i++) {
     if (strcmp(typeSymbols[i], symbol) == 0) return i + typeOffset;

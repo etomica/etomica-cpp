@@ -98,3 +98,8 @@ void Species::getMoleculeOrientation(Box& box, int iFirstAtom, double* direction
 vector<RigidConstraint> Species::getRigidConstraints() {
   return rigidConstraints;
 }
+
+double Species::getMass(int iAtom) {
+  int iType = atomTypes[iAtom];
+  return atomInfo->getMass(iType);
+}
