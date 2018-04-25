@@ -32,6 +32,7 @@ void RotationMatrix::transform(double* vec) {
       newVec[i] += matrix[i][j]*vec[j];
     }
   }
+  for (int i=0; i<3; i++) vec[i] = newVec[i];
 }
 
 void RotationMatrix::transformAbout(double* vec, double* center, Box& box) {
@@ -90,4 +91,29 @@ void RotationMatrix::TE(RotationMatrix& m) {
     matrix[i][1] = y;
     matrix[i][2] = z;
   }
+}
+
+double RotationMatrix::determinant() {
+  return matrix[0][0]*matrix[1][1]*matrix[2][2]
+        -matrix[0][0]*matrix[1][2]*matrix[2][1]
+        -matrix[0][1]*matrix[1][0]*matrix[2][2]
+        +matrix[0][2]*matrix[1][2]*matrix[2][1]
+        +matrix[0][1]*matrix[1][2]*matrix[2][0]
+        -matrix[0][2]*matrix[1][1]*matrix[2][1];
+}
+
+void RotationMatrix::invert() {
+  double t00 = matrix[0][0], t01 = matrix[0][1], t02 = matrix[0][2];
+  double t10 = matrix[1][0], t11 = matrix[1][1], t12 = matrix[1][2];
+  double t20 = matrix[2][0], t21 = matrix[2][1], t22 = matrix[2][2];
+  double det = determinant();
+  matrix[0][0] = (t11*t22-t12*t21)/det; 
+  matrix[0][1] = -(t01*t22-t02*t21)/det;
+  matrix[0][2] = (t01*t12-t02*t11)/det;
+  matrix[1][0] = -(t10*t22-t12*t20)/det; 
+  matrix[1][1] = (t00*t22-t02*t20)/det;
+  matrix[1][2] = -(t00*t12-t02*t10)/det;
+  matrix[2][0] = (t10*t21-t11*t20)/det;
+  matrix[2][1] = -(t00*t21-t01*t20)/det;
+  matrix[2][2] = (t00*t11-t01*t10)/det; 
 }

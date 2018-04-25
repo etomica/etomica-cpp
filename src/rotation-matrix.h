@@ -17,4 +17,6 @@ class RotationMatrix {
     void transformAbout(double* vec, double *center, Box& box);
     void randomize(Random &random);
     void TE(RotationMatrix& m);
+    double determinant();
+    void invert();
 };
