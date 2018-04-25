@@ -5,13 +5,30 @@
 using namespace std;
 
 class Box;
+class Species;
 
 class RigidConstraint {
-  public:
-    vector<int*> pairs;
-    vector<int> atoms;
+  protected:
+    Species& species;
+    const vector<int>& rigidAtoms;
+    const vector<double>& bondLengths;
+    const vector<int>& extraAtoms;
+    vector<double*> extraAtomCoeff;
+    bool fullRigid;
 
-    RigidConstraint(vector<int*>& pairs, vector<int>& atoms);
+    void sumToCOM(Box& box, int iAtom, double* r0, double com[3], double mass, double &totMass);
+
+  public:
+    //                     rigidAtoms      bondLengths
+    // simple pair             2                1
+    // 3-atom chain            3                2
+    // 3-atom ring             3                3
+    // 4-atom chain            4                3
+    // 4-atom ring             4                4
+    // tetrahedron             4                6
+    // n-atom chain            n               n-1
+    // n-atom ring             n                n
+    RigidConstraint(Species& species, const vector<int>& rigidAtoms, const vector<double>& bondLengths, const vector<int>& atoms);
     ~RigidConstraint();
 
     // redistribute forces from implicitly constrained atoms
