@@ -2,6 +2,12 @@
 #include "rotation-matrix.h"
 #include "vector.h"
 
+RotationMatrix::RotationMatrix() {
+  matrix[0][0] = matrix[0][1] = matrix[0][2] = 
+  matrix[1][0] = matrix[1][1] = matrix[1][2] = 
+  matrix[2][0] = matrix[2][1] = matrix[2][2] = 0;
+}
+
 void RotationMatrix::setRows(double* row0, double* row1, double* row2) {
   matrix[0][0] = row0[0]; matrix[0][1] = row0[1]; matrix[0][2] = row0[2];
   matrix[1][0] = row1[0]; matrix[1][1] = row1[1]; matrix[1][2] = row1[2];

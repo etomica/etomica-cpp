@@ -8,7 +8,7 @@ class Box;
 class RotationMatrix {
   public:
     double matrix[3][3];
-    RotationMatrix() {}
+    RotationMatrix();
     ~RotationMatrix() {}
     void setSimpleAxisAngle(int iAxis, double theta);
     void setRows(double* row0, double* row1, double* row2);
