@@ -14,7 +14,8 @@
 
 int main(int argc, char** argv) {
   int numMolecules = 46;
-  double temperature = 130;
+  double K = 0.8314459861448581;
+  double temperature = 120*K;
   long steps = 10000000;
   bool doData = true;
   bool doHMA = true;
