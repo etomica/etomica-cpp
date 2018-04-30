@@ -30,6 +30,10 @@ void IntegratorNVE::doStep() {
 
   computeForces();
 
+  for (vector<IntegratorListener*>::iterator it = listenersPostForce.begin(); it!=listenersPostForce.end(); it++) {
+    (*it)->postForce();
+  }
+
   kineticEnergy = 0;
   for (int iAtom=0; iAtom<n; iAtom++) {
     int iType = box.getAtomType(iAtom);

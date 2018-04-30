@@ -91,3 +91,10 @@ void IntegratorMD::computeForces() {
   potentialMaster.computeAll(selfPotentialCallbackVec);
 }
 
+double** IntegratorMD::getForces() {
+  return forces;
+}
+
+double IntegratorMD::getTimeStep() {
+  return tStep;
+}

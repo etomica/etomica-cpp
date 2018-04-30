@@ -29,11 +29,18 @@ class RigidConstraint {
     // n-atom chain            n               n-1
     // n-atom ring             n                n
     RigidConstraint(Species& species, const vector<int>& rigidAtoms, const vector<double>& bondLengths, const vector<int>& atoms);
-    ~RigidConstraint();
+    virtual ~RigidConstraint();
 
     // redistribute forces from implicitly constrained atoms
-    virtual void redistributeForces(Box& box, int iFirstAtom, double** force);
+    void redistributeForces(Box& box, int iFirstAtom, double** force);
     // place implicitly constrained atoms based on constrained ones
-    virtual void relaxMolecules(Box& box, int iFirstAtom);
+    void relaxMolecule(Box& box, int iFirstAtom);
+
+    virtual void adjustPositions(Box& box, int iFirstAtom, double dt) {}
+    virtual void adjustVelocities(Box& box, int iFirstAtom, double dt) {}
+
+    bool getFullRigid();
+    const vector<int>& getRigidAtoms();
+    const vector<double>& getBondLengths();
 }; 
 

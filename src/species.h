@@ -17,7 +17,7 @@ class Species {
     double com[3];
     AtomInfo* atomInfo;
     int axisAtoms[2][2];
-    vector<RigidConstraint> rigidConstraints;
+    vector<RigidConstraint*> rigidConstraints;
     void setup(int numAtoms, int numAtomTypes);
 
   public:
@@ -30,7 +30,7 @@ class Species {
     double* getAtomPosition(int iAtom);
     double* getMoleculeCOM(Box& box, int iFirstAtom, int iLastAtom);
     void getMoleculeOrientation(Box& box, int iFirstAtom, double* direction1, double* direction2);
-    virtual vector<RigidConstraint> getRigidConstraints();
+    virtual vector<RigidConstraint*> getRigidConstraints();
     double getMass(int iAtom);
 };
 

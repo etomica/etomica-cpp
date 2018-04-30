@@ -14,12 +14,13 @@ class Box;
 
 class IntegratorListener {
   public:
-    bool callFinished, callPreForce;
+    bool callFinished, callPreForce, callPostForce;
     bool callAccept, callReject;
     IntegratorListener();
     virtual ~IntegratorListener() {}
     virtual void stepFinished() {}
     virtual void preForce() {}
+    virtual void postForce() {}
     virtual void moveAccepted(MCMove& move, double chi) {}
     virtual void moveRejected(MCMove& move, double chi) {}
 };
@@ -32,6 +33,7 @@ class Integrator : public PotentialCallback {
     long stepCount;
     vector<IntegratorListener*> listenersStepFinished;
     vector<IntegratorListener*> listenersPreForce;
+    vector<IntegratorListener*> listenersPostForce;
     vector<PotentialCallback*> selfPotentialCallbackVec;
   public:
     Integrator(PotentialMaster& potentialMaster);
@@ -97,12 +99,14 @@ class IntegratorMD : public Integrator {
     IntegratorMD(AtomInfo& atomInfo, PotentialMaster& potentialMaster, Random& random, Box& box);
     virtual ~IntegratorMD();
     void setTimeStep(double tStep);
+    double getTimeStep();
     void setNbrCheckInterval(int interval);
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
     virtual void doStep() = 0;
     virtual void reset();
     void addPotentialCallback(PotentialCallback* callback, int interval=1);
     double getKineticEnergy();
+    double** getForces();
 };
 
 class IntegratorNVE : public IntegratorMD {

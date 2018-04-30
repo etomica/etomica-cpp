@@ -95,7 +95,7 @@ void Species::getMoleculeOrientation(Box& box, int iFirstAtom, double* direction
   for (int k=0; k<3; k++) direction2[k] /= r;
 }
 
-vector<RigidConstraint> Species::getRigidConstraints() {
+vector<RigidConstraint*> Species::getRigidConstraints() {
   return rigidConstraints;
 }
 

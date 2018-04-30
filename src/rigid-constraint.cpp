@@ -255,7 +255,7 @@ void RigidConstraint::redistributeForces(Box& box, int iFirstAtom, double** forc
 }
 
 // place implicitly constrained atoms based on constrained ones
-void RigidConstraint::relaxMolecules(Box& box, int iFirstAtom) {
+void RigidConstraint::relaxMolecule(Box& box, int iFirstAtom) {
   for (int i=0; i<(int)extraAtoms.size(); i++) {
     double* ri = box.getAtomPosition(iFirstAtom + extraAtoms[i]);
     ri[0] = ri[1] = ri[2] = 0;
@@ -265,4 +265,12 @@ void RigidConstraint::relaxMolecules(Box& box, int iFirstAtom) {
       for (int k=0; k<3; k++) ri[k] += c[j]*rj[k];
     }
   }
+}
+
+const vector<int>& RigidConstraint::getRigidAtoms() {
+  return rigidAtoms;
+}
+
+const vector<double>& RigidConstraint::getBondLengths() {
+  return bondLengths;
 }
