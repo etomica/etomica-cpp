@@ -1,5 +1,7 @@
 #include <math.h>
 #include "rotation-matrix.h"
+#include "box.h"
+#include "random.h"
 #include "vector.h"
 
 RotationMatrix::RotationMatrix() {

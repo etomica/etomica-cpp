@@ -1,8 +1,6 @@
 #pragma once
 
-#include "box.h"
-#include "random.h"
-
+class Random;
 class Box;
 
 class RotationMatrix {
