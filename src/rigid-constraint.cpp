@@ -4,7 +4,10 @@
 #include "rigid-constraint.h"
 #include "species.h"
 #include "rotation-matrix.h"
+#include "matrix.h"
 #include "vector.h"
+#include "box.h"
+#include "alloc2d.h"
 
 RigidConstraint::RigidConstraint(Species& s, const vector<int>& ra, const vector<double>& bl, const vector<int>& ea) : species(s), rigidAtoms(ra), bondLengths(bl), extraAtoms(ea) {
   if (rigidAtoms.size() < 2) {
@@ -46,6 +49,13 @@ RigidConstraint::RigidConstraint(Species& s, const vector<int>& ra, const vector
       fprintf(stderr, "Extra atoms are only possible if rigid atoms are fully rigid\n");
       abort();
     }
+    for (int i=0; i<(int)extraAtoms.size(); i++) {
+      if (species.getMass(extraAtoms[i]) != 0) {
+        fprintf(stderr, "Extra atoms in rigid constraint must have no mass!\n");
+        abort();
+      }
+    }
+      
     double dr[rigidAtoms.size()-1][3];
     double* r0 = species.getAtomPosition(rigidAtoms[0]);
     for (int i=1; i<(int)rigidAtoms.size(); i++) {
@@ -139,16 +149,6 @@ void RigidConstraint::sumToCOM(Box& box, int iAtom, double* r0, double com[3], d
   }
 }
 
-void RigidConstraint::sumToMoment(Box& box, int iAtom, double com[3], RotationMatrix moment, double mass) {
-  if (mass==0) return;
-  double *ri = box.getAtomPosition(iAtom);
-  double r2 = Vector::dot(ri,ri);
-  for (int k=0; k<3; k++) moment.matrix[k][k] += r2*mass;
-  for (int k=0; k<3; k++) {
-    for (int l=0; l<3; l++) if (k!=l) moment.matrix[k][l] -= ri[k]*ri[l]*mass;
-  }
-}
-
 #define sgn(x) ((x>0) - (x<0))
 
 // redistribute forces from implicitly constrained atoms
@@ -190,29 +190,67 @@ void RigidConstraint::redistributeForces(Box& box, int iFirstAtom, double** forc
     }
     box.nearestImage(dr[i]);
   }
-  // calculate angular acceleration due to torque
-  // J alpha = torque
-  // https://en.wikipedia.org/wiki/Angular_acceleration
-  // https://en.wikipedia.org/wiki/Moment_of_inertia#Inertia_tensor
-  // calculate linear acceleration for each atom, apply force to achieve that
-  // ai = alpha cross ri = Fi/mi
-  RotationMatrix moment;
-  for (int i=0; i<(int)rigidAtoms.size(); i++) {
-    sumToMoment(box, iFirstAtom+rigidAtoms[i], com, moment, species.getMass(rigidAtoms[i]));
+  if (rigidAtoms.size() == 2) {
+    double ri0 = sqrt(Vector::dot(dr[0], dr[0]));
+    double ri1 = sqrt(Vector::dot(dr[1], dr[1]));
+    double fd0[3]; // direction force on 0 needs to be to positively contribute to torque 
+    Vector::cross(torque, dr[0], fd0);
+    double tMag = 0;
+    double fd02 = 0;
+    for (int k=0; k<3; k++) {
+      tMag += torque[k]*torque[k];
+      fd02 += fd0[k]*fd0[k];
+    }
+    tMag = sqrt(tMag);
+    double fd02sqrt = sqrt(fd02);
+    for (int k=0; k<3; k++) fd0[k] /= fd02sqrt;
+    // take f to be in direction of fd0
+    // f ri0 - f sgn(dr[0] dot dr[1]) ri1 = torque
+    // f = torque / (ri0 - sgn(dr[0] dot dr[1]) ri1)
+    // f0 = f, f1 = - sgn(dr[0] dot dr[1]) f
+    double s = sgn(Vector::dot(dr[0], dr[1]));
+    double x = ri0 - s*ri1;
+    for (int k=0; k<3; k++) {
+      force[iFirstAtom+rigidAtoms[0]][k] += fd0[k]*tMag/x;
+      force[iFirstAtom+rigidAtoms[1]][k] -= fd0[k]*tMag/x;
+    }
   }
-  for (int i=0; i<(int)extraAtoms.size(); i++) {
-    sumToMoment(box, iFirstAtom+extraAtoms[i], com, moment, species.getMass(extraAtoms[i]));
-  }
-  moment.invert();
-  double alpha[3];
-  for (int k=0; k<3; k++) alpha[k] = torque[k];
-  moment.transform(alpha);
-  for (int i=0; i<(int)rigidAtoms.size(); i++) {
-    double fi[3];
-    int iAtom = iFirstAtom+rigidAtoms[i];
-    double *ri = box.getAtomPosition(iAtom);
-    Vector::cross(alpha, ri, fi);
-    for (int k=0; k<3; k++) force[iAtom][k] += species.getMass(rigidAtoms[i])*fi[k];
+  else if (rigidAtoms.size() == 3 || rigidAtoms.size() == 4) {
+    // even if we have 4 rigid atoms, redistribute the forces to the first 3
+    /**
+     * tx = sum[mi (ry Fz - Fy rz)]
+     * ty = sum[mi (rz Fx - Fz rx)]
+     * tz = sum[mi (rx Fy - Fx ry)]
+     *
+     * sum[Fx] = 0
+     * sum[Fy] = 0
+     * sum[Fz] = 0
+     *
+     * ri dot Fi = 0
+     */
+    // rows of m correspond to F1x, F1y, F1z, F2x, F2y, F2z, etc.
+    Matrix m(9,9);
+    double b[9] = {torque[0],torque[1],torque[2],0,0,0,0,0,0};
+    for (int i=0; i<3; i++) {
+      double* ri = box.getAtomPosition(rigidAtoms[i]);
+      m.matrix[0][3*i+1] -= ri[2];
+      m.matrix[0][3*i+2] += ri[1];
+      m.matrix[1][3*i] += ri[2];
+      m.matrix[1][3*i+2] -= ri[0];
+      m.matrix[2][3*i] -= ri[1];
+      m.matrix[2][3*i+1] += ri[0];
+      m.matrix[3][3*i] = 1;
+      m.matrix[4][3*i+1] = 1;
+      m.matrix[5][3*i+2] = 1;
+      m.matrix[6+i][3*i] = ri[0];
+      m.matrix[6+i][3*i+1] = ri[1];
+      m.matrix[6+i][3*i+2] = ri[2];
+    }
+    m.transform(b);
+    for (int i=0; i<3; i++) {
+      double *f = force[rigidAtoms[i]];
+      for (int k=0; k<3; k++) f[k] += b[3*i+k];
+    }
   }
 }
 

@@ -6,7 +6,6 @@ using namespace std;
 
 class Box;
 class Species;
-class RotationMatrix;
 
 class RigidConstraint {
   protected:
@@ -18,7 +17,6 @@ class RigidConstraint {
     bool fullRigid;
 
     void sumToCOM(Box& box, int iAtom, double* r0, double com[3], double mass, double &totMass);
-    void sumToMoment(Box& box, int iAtom, double com[3], RotationMatrix moment, double mass);
 
   public:
     //                     rigidAtoms      bondLengths
