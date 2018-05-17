@@ -30,6 +30,10 @@ void IntegratorNHC::setTemperature(double newTemperature) {
 
 void IntegratorNHC::doStep() {
   stepCount++;
+  for (vector<IntegratorListener*>::iterator it = listenersStepStarted.begin(); it!=listenersStepStarted.end(); it++) {
+    (*it)->stepStarted();
+  }
+
   propagatorU4(tStep/4, -1);
   propagatorU3(tStep/2);
   propagatorU4(tStep/4, +1);

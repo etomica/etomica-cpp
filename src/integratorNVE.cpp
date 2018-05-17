@@ -12,6 +12,9 @@ void IntegratorNVE::doStep() {
     nbrCheckCountdown = nbrCheckInterval;
   }
   stepCount++;
+  for (vector<IntegratorListener*>::iterator it = listenersStepStarted.begin(); it!=listenersStepStarted.end(); it++) {
+    (*it)->stepStarted();
+  }
   int n = box.getNumAtoms();
   for (int iAtom=0; iAtom<n; iAtom++) {
     int iType = box.getAtomType(iAtom);

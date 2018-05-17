@@ -35,6 +35,9 @@ void IntegratorMC::setTuning(bool doTune) {
 
 void IntegratorMC::doStep() {
   stepCount++;
+  for (vector<IntegratorListener*>::iterator it = listenersStepStarted.begin(); it!=listenersStepStarted.end(); it++) {
+    (*it)->stepStarted();
+  }
   MCMove* m = nullptr;
   int nm = moves.size();
   if (nm>1) {

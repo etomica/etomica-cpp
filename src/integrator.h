@@ -14,10 +14,12 @@ class Box;
 
 class IntegratorListener {
   public:
-    bool callFinished, callPreForce, callPostForce;
+    bool callStepStarted, callStepFinished;
+    bool callPreForce, callPostForce;
     bool callAccept, callReject;
     IntegratorListener();
     virtual ~IntegratorListener() {}
+    virtual void stepStarted() {}
     virtual void stepFinished() {}
     virtual void preForce() {}
     virtual void postForce() {}
@@ -31,6 +33,7 @@ class Integrator : public PotentialCallback {
     double temperature;
     double energy;
     long stepCount;
+    vector<IntegratorListener*> listenersStepStarted;
     vector<IntegratorListener*> listenersStepFinished;
     vector<IntegratorListener*> listenersPreForce;
     vector<IntegratorListener*> listenersPostForce;

@@ -1,13 +1,13 @@
 #include "data-pump.h"
 
 DataPump::DataPump(Meter& m, int i) : IntegratorListener(), meter(m), interval(i), intervalCountdown(i), dataSink1isMine(true) {
-  callFinished = true;
+  callStepFinished = true;
   DataSink *s = new Average(m.getNumData(),1,100,true);
   addDataSink(s);
 }
 
 DataPump::DataPump(Meter& m, int i, DataSink* s) : IntegratorListener(), meter(m), interval(i), intervalCountdown(i), dataSink1isMine(false) {
-  callFinished = true;
+  callStepFinished = true;
   addDataSink(s);
 }
 

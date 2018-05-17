@@ -37,13 +37,14 @@ double Integrator::getPotentialEnergy() {
 }
 
 void Integrator::addListener(IntegratorListener* listener) {
-  if (listener->callFinished) listenersStepFinished.push_back(listener);
+  if (listener->callStepStarted) listenersStepStarted.push_back(listener);
+  if (listener->callStepFinished) listenersStepFinished.push_back(listener);
   if (listener->callPreForce) listenersPreForce.push_back(listener);
   if (listener->callPostForce) listenersPostForce.push_back(listener);
 }
 
 void Integrator::removeListener(IntegratorListener* listener) {
-  if (listener->callFinished) {
+  if (listener->callStepFinished) {
     std::vector<IntegratorListener*>::iterator it = find (listenersStepFinished.begin(), listenersStepFinished.end(), listener);
     listenersStepFinished.erase(it);
   }
@@ -58,5 +59,5 @@ void Integrator::removeListener(IntegratorListener* listener) {
 }
 
 IntegratorListener::IntegratorListener() {
-  callFinished = callAccept = callReject = false;
+  callStepStarted = callStepFinished = callAccept = callReject = false;
 }
