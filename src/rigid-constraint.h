@@ -37,7 +37,6 @@ class RigidConstraint {
     void relaxMolecule(Box& box, int iFirstAtom);
 
     virtual void adjustPositions(Box& box, int iFirstAtom, double dt) {}
-    virtual void adjustVelocities(Box& box, int iFirstAtom, double dt) {}
 
     bool getFullRigid();
     const vector<int>& getRigidAtoms();
