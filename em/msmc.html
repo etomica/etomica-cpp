@@ -492,7 +492,7 @@ function updateProduction(forced) {
   document.getElementById("prodSpeed").textContent = speed ? (speed.toPrecision(5)+" million steps/s") : "";
   var blockSize = virialProduction.getTargetAverage().getBlockSize();
   document.getElementById("prodBlockSize").textContent = blockSize;
-  if (nDer==0) return;
+  if (nDer==0) return true;
   var fullRatioBCStats = showDCor ? new ArrayUtil(virialProduction.getFullBCStats()) : null;
   for (var m=0; m<=nDer; m++) {
     if (showDCor) {
@@ -522,57 +522,6 @@ function updateProduction(forced) {
     e = fullStats.x2d(m,1);
     document.getElementById("fullD"+m+"RatioAvg").textContent = formatFloatForErr(a,e);
     document.getElementById("fullD"+m+"RatioErr").textContent = e.toPrecision(3);
-  }
-  return true;
-  var sys = ['ref','target','full'];
-  var stats = ['Avg','Err','AC','OverAvg','OverErr','OverAC','RatioAvg','RatioErr','RatioCor'];
-  var HSB = Module.ccall('getHSB', 'number', null, null);
-  var prevValueSpan = null;
-  var prevValue = NaN;
-  for (var is=0; is<sys.length; is++) {
-    for (var m=0; m<=nDer; m++) {
-      for (var ist=0; ist<stats.length; ist++) {
-        var name = sys[is]+(m==0?"":("D"+m))+stats[ist];
-        var span = document.getElementById(name);
-        if (!span) continue;
-        var v = Module.ccall('getResult', 'number', ['number','number','number'], [is,m,ist]);
-        if (is==2) {
-          v *= HSB;
-          if (/Err/.test(stats[ist])) v = Math.abs(v);
-        }
-        if (prevValueSpan) {
-          prevValueSpan.textContent = formatFloatForErr(prevValue, v);
-          prevValueSpan = null;
-        }
-        if (/(Err|Cor|AC)/.test(stats[ist])) v = v.toPrecision(3);
-        else if (/Avg/.test(stats[ist])) {
-          prevValue = v;
-          prevValueSpan = span;
-          continue;
-        }
-        span.textContent = v;
-      }
-    }
-  }
-  var prodAlpha = Module.ccall('getProdAlpha', 'number', null, null);
-  var prodAlphaErr = Module.ccall('getProdAlphaErr', 'number', null, null);
-  var speed = now>startTime ? (s/(now-startTime)/1000) : "";
-  document.getElementById("prodAlpha").textContent = formatFloatForErr(prodAlpha, prodAlphaErr);
-  document.getElementById("prodAlphaErr").textContent = '\u00B1 '+prodAlphaErr.toPrecision(3);
-  document.getElementById("prodSpeed").textContent = speed ? (speed.toPrecision(5)+" million steps/s") : "";
-  var prodBlockSize = Module.ccall('getBlockSize', 'number', null, null);
-  document.getElementById("prodBlockSize").textContent = prodBlockSize;
-  if (showDCor) {
-    var bits = ['Raw','Full'];
-    for (var i=0; i<bits.length; i++) {
-      for (var j=0; j<=nDer; j++) {
-        for (var k=j+1; k<=nDer; k++) {
-          var c = Module.ccall('getDCorrelation', 'number',['number','number','number'],[i, j, k]);
-          document.getElementById("dCor"+j+""+k+bits[i]).textContent = c.toPrecision(4);
-          document.getElementById("dCor"+k+""+j+bits[i]).textContent = c.toPrecision(4);
-        }
-      }
-    }
   }
   return true;
 }
