@@ -13,13 +13,16 @@ Cluster::~Cluster() {
 }
 
 void Cluster::moveRejected(MCMove& move, double chi) {
-  if (!useCache) return;
+  if (!useCache || !inTrial) return;
   trialRejected();
 }
 
 void Cluster::moveAccepted(MCMove& move, double chi) {
   if (!useCache) return;
-  if (!inTrial) trialNotify();
+  if (!inTrial) {
+    cacheDirty = true;
+    return;
+  }
   inTrial = false;
 }
 
