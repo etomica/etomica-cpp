@@ -1,9 +1,14 @@
 #pragma once
 
-#include "rigid-listener.h"
+#include "integrator.h"
+class RigidConstraint;
 
-class ShakeListener : public RigidListener {
+class ShakeListener : public IntegratorListener {
   protected:
+    SpeciesList& speciesList;
+    Box& box;
+    IntegratorMD& integrator;
+    vector<RigidConstraint*> *constraints;
     double tol;
     int maxIterations;
     int maxNumAtoms, maxNumBonds;

@@ -1,15 +1,18 @@
 #include <math.h>
 #include "shake-listener.h"
+#include "rigid-constraint.h"
 #include "species.h"
 #include "box.h"
 #include "species.h"
 #include "alloc2d.h"
 
-ShakeListener::ShakeListener(SpeciesList& sl, Box& b, IntegratorMD& i) : RigidListener(sl,b,i), tol(1e-9), maxIterations(500), maxNumAtoms(0), maxNumBonds(0) {
+ShakeListener::ShakeListener(SpeciesList& sl, Box& b, IntegratorMD& i) : speciesList(sl), box(b), integrator(i), tol(1e-9), maxIterations(500), maxNumAtoms(0), maxNumBonds(0) {
   rOld = rNew = rijOld = rijNew = nullptr;
   rhs = rhsOld = dl = dd = du = dl0 = dd0 = du0 = nullptr;
   lambda = nullptr;
   callStepStarted = callPreForce = callStepFinished = true;
+
+  constraints = new vector<RigidConstraint*>[speciesList.size()];
 }
 
 ShakeListener::~ShakeListener() {
@@ -25,6 +28,7 @@ ShakeListener::~ShakeListener() {
   free(du0);
   free(rhs);
   free(rhsOld);
+  delete[] constraints;
 }
 
 void ShakeListener::init() {
@@ -225,7 +229,6 @@ void ShakeListener::preForce() {
       oldOffset += na;
     }
   }
-  RigidListener::preForce();
 }
 
 void ShakeListener::stepFinished() {

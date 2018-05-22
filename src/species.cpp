@@ -2,7 +2,7 @@
 #include <math.h>
 #include "box.h"
 #include "species.h"
-#include "rigid-listener.h"
+#include "rigid-constraint.h"
 #include "alloc2d.h"
 
 Species::Species(int na, int nat) : numAtoms(na), numAtomTypes(nat), atomTypes(nullptr), positions(nullptr) {
