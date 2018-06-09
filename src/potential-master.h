@@ -386,7 +386,6 @@ class PotentialMasterList : public PotentialMasterCell {
     int nbrsNumAtoms;
     int maxNab;
     double ***nbrBoxOffsets;
-    bool forceReallocNbrs;
     double **oldAtomPositions;
     double safetyFac;
     double *maxR2, *maxR2Unsafe;

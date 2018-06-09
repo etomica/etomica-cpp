@@ -2,7 +2,7 @@
 #include "potential-master.h"
 #include "alloc2d.h"
 
-PotentialMasterList::PotentialMasterList(const SpeciesList& sl, Box& box, bool doEmbed, int cellRange, double nRange) : PotentialMasterCell(sl, box, doEmbed, cellRange), nbrRange(nRange), nbrs(nullptr), onlyUpNbrs(true), numAtomNbrsUp(nullptr), numAtomNbrsDn(nullptr), nbrsNumAtoms(0), maxNab(0), nbrBoxOffsets(nullptr), forceReallocNbrs(false), oldAtomPositions(nullptr), safetyFac(0.1) {
+PotentialMasterList::PotentialMasterList(const SpeciesList& sl, Box& box, bool doEmbed, int cellRange, double nRange) : PotentialMasterCell(sl, box, doEmbed, cellRange), nbrRange(nRange), nbrs(nullptr), onlyUpNbrs(true), numAtomNbrsUp(nullptr), numAtomNbrsDn(nullptr), nbrsNumAtoms(0), maxNab(0), nbrBoxOffsets(nullptr), oldAtomPositions(nullptr), safetyFac(0.1) {
   maxR2 = (double*)malloc(numAtomTypes*sizeof(double));
   maxR2Unsafe = (double*)malloc(numAtomTypes*sizeof(double));
 }
@@ -109,6 +109,7 @@ void PotentialMasterList::reset() {
 
 // if an atom has more neighbors than we've allocated space for, then
 // maxNab will be increased and execution will return to this point
+  bool forceReallocNbrs = false;
 resetStart:
   if ((!numAtomNbrsUp || moreAtoms) && boxNumAtoms>0)  {
     numAtomNbrsUp = (int*)realloc(numAtomNbrsUp, boxNumAtoms*sizeof(int));
