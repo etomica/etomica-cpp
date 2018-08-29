@@ -2,7 +2,9 @@
 #include <iostream>
 #include "alloc2d.h"
 #include "potential-master.h"
+#ifdef VALGRIND_CHECKS
 #include "valgrind/memcheck.h"
+#endif
 
 PotentialMasterCell::PotentialMasterCell(const SpeciesList& sl, Box& box, bool doEmbed, int cRange) : PotentialMaster(sl, box, doEmbed), cellManager(sl, box, cRange), cellRange(cRange), cellNextAtom(cellManager.cellNextAtom), atomCell(cellManager.atomCell), cellLastAtom(cellManager.cellLastAtom), cellOffsets(cellManager.cellOffsets), wrapMap(cellManager.wrapMap), boxOffsets(cellManager.boxOffsets), lsNeeded(false) {
 }
@@ -150,9 +152,11 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     double iRhoCutoff = embeddingPotentials ? rhoCutoffs[iType] : 0;
     int jAtom=iAtom;
     const double *jbo = boxOffsets[atomCell[iAtom]];
+#ifdef VALGRIND_CHECKS
     if (VALGRIND_CHECK_MEM_IS_ADDRESSABLE(jbo, 24)) {
       printf("oops 0 not addressable for %d %d\n", iAtom, atomCell[iAtom]);
     }
+#endif
     while ((jAtom = cellNextAtom[jAtom]) > -1) {
       if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
       const int jType = box.getAtomType(jAtom);
@@ -165,10 +169,12 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
       int jCell = iCell + *it;
       jbo = boxOffsets[jCell];
-    if (VALGRIND_CHECK_MEM_IS_ADDRESSABLE(jbo, 24)) {
-      printf("oops up not addressable for iCell %d offset %d jCell %d\n", iCell, *it, jCell);
-      abort();
-    }
+#ifdef VALGRIND_CHECKS
+      if (VALGRIND_CHECK_MEM_IS_ADDRESSABLE(jbo, 24)) {
+        printf("oops up not addressable for iCell %d offset %d jCell %d\n", iCell, *it, jCell);
+        abort();
+      }
+#endif
       jCell = wrapMap[jCell];
       for (jAtom = cellLastAtom[jCell]; jAtom>-1; jAtom = cellNextAtom[jAtom]) {
         bool skipIntra = checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms);
