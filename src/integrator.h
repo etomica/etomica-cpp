@@ -93,7 +93,6 @@ class IntegratorMD : public Integrator {
     double tStep;
     int thermostat;
     int nbrCheckInterval, nbrCheckCountdown;
-    void randomizeVelocities(bool zeroMomentum);
     vector<struct PotentialCallbackInfo> allPotentialCallbacks;
     double kineticEnergy;
 
@@ -101,6 +100,7 @@ class IntegratorMD : public Integrator {
   public:
     IntegratorMD(AtomInfo& atomInfo, PotentialMaster& potentialMaster, Random& random, Box& box);
     virtual ~IntegratorMD();
+    Box& getBox() {return box;}
     void setTimeStep(double tStep);
     double getTimeStep();
     void setNbrCheckInterval(int interval);
@@ -110,6 +110,8 @@ class IntegratorMD : public Integrator {
     void addPotentialCallback(PotentialCallback* callback, int interval=1);
     double getKineticEnergy();
     double** getForces();
+    void randomizeVelocities(bool zeroMomentum);
+    void randomizeVelocity(int iAtom);
 };
 
 class IntegratorNVE : public IntegratorMD {
@@ -139,3 +141,27 @@ class IntegratorNHC : public IntegratorMD {
     virtual void reset();
 };
 
+#define ANDERSEN_DISABLED 0
+#define ANDERSEN_SINGLE 1
+#define ANDERSEN_FULL 2
+#define ANDERSEN_PARTIAL 3
+class AndersenThermostat : public IntegratorListener {
+  private:
+    IntegratorMD& integratorMD;
+    Random& random;
+    int mode;
+    int interval;
+    int intervalCountdown;
+    double pRandomize;
+    bool zeroMomentum;
+  public:
+    AndersenThermostat(IntegratorMD& integratorMD, Random& random);
+    virtual ~AndersenThermostat();
+    void setSingle(int interval);
+    void setPartial(double pRandomize);
+    void setFull(int interval, bool zeroMomentum);
+    void stepFinished();
+    double getTermperature();
+    int getMode();
+    void setTemperature(double temperature);
+};

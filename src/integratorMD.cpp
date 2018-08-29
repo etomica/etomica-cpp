@@ -20,6 +20,18 @@ void IntegratorMD::setTimeStep(double t) {
   tStep = t;
 }
 
+void IntegratorMD::randomizeVelocity(int iAtom) {
+  int iType = box.getAtomType(iAtom);
+  double m = atomInfo.getMass(iType);
+  double sqrtTM = sqrt(temperature/m);
+  double* vi = box.getAtomVelocity(iAtom);
+  for (int j=0; j<3; j++) {
+    kineticEnergy -= 0.5*m*vi[j]*vi[j];
+    vi[j] = random.nextGaussian()*sqrtTM;
+    kineticEnergy += 0.5*m*vi[j]*vi[j];
+  }
+}
+
 void IntegratorMD::randomizeVelocities(bool zeroMomentum) {
   double momentum[3];
   double totalMass = 0;
