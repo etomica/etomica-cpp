@@ -210,12 +210,12 @@ void PotentialSS::u012TC(double &u, double &du, double &d2u) {
     return;
   }
   double rc3 = rCut*rCut*rCut;
-  double x = epsilon*epsrpow(rCut*rCut);
+  double x = epsrpow(rCut*rCut);
   // correction due to shift and force-shift
   du = M_PI*rc3*rCut*ufShift;
   u = 4*M_PI*uShift*rc3/3 + du;
   // correction due to truncation
-  double y = 4*M_PI*epsilon*x/(exponent-3);
+  double y = 4*M_PI*x/(exponent-3)*rc3;
   u += y;
   y *= exponent;
   du -= y;
