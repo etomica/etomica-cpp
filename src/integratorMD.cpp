@@ -38,6 +38,8 @@ void IntegratorMD::randomizeVelocities(bool zeroMomentum) {
       if (zeroMomentum) {
         momentum[j] += vi[j]*imass[iType];
         totalMass += imass[iType];
+      }
+      else {
         kineticEnergy += 0.5*imass[iType]*vi[j]*vi[j];
       }
     }
