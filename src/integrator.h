@@ -165,3 +165,18 @@ class AndersenThermostat : public IntegratorListener {
     int getMode();
     void setTemperature(double temperature);
 };
+
+class IntegratorMulti : public Integrator {
+  protected:
+    vector<Integrator*> integrators;
+    vector<long> steps;
+
+  public:
+    IntegratorMulti(PotentialMaster& potentialMasterDummy);
+    virtual ~IntegratorMulti();
+    void addIntegrator(Integrator* integrator, long steps);
+    void setSteps(Integrator* integrator, long steps);
+    Integrator* getIntegrator(int j);
+    virtual void doStep() = 0;
+    virtual void reset();
+};
