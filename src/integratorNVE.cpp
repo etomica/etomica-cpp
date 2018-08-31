@@ -1,12 +1,18 @@
 #include "integrator.h"
 #include "potential-master.h"
 
-IntegratorNVE::IntegratorNVE(AtomInfo& ai, PotentialMaster& p, Random& r, Box& b) : IntegratorMD(ai, p, r, b) {
+/**
+ * IntegratorMDVelocityVerlet implements velocity-verlet integration for
+ * molecular dynamics.  On its own, this class samples NVE.  This class can
+ * handle as NVT by adding an AndersenThermostat listener.
+ */
+
+IntegratorMDVelocityVerlet::IntegratorMDVelocityVerlet(AtomInfo& ai, PotentialMaster& p, Random& r, Box& b) : IntegratorMD(ai, p, r, b) {
 }
 
-IntegratorNVE::~IntegratorNVE(){}
+IntegratorMDVelocityVerlet::~IntegratorMDVelocityVerlet(){}
 
-void IntegratorNVE::doStep() {
+void IntegratorMDVelocityVerlet::doStep() {
   if (nbrCheckCountdown==0) {
     static_cast<PotentialMasterList&>(potentialMaster).checkUpdateNbrs();
     nbrCheckCountdown = nbrCheckInterval;
@@ -56,7 +62,7 @@ void IntegratorNVE::doStep() {
 #endif
 }
 
-void IntegratorNVE::reset() {
+void IntegratorMDVelocityVerlet::reset() {
   IntegratorMD::reset();
   randomizeVelocities(false);
 }

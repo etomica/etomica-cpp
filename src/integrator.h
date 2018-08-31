@@ -114,11 +114,11 @@ class IntegratorMD : public Integrator {
     void randomizeVelocity(int iAtom);
 };
 
-class IntegratorNVE : public IntegratorMD {
+class IntegratorMDVelocityVerlet : public IntegratorMD {
   protected:
   public:
-    IntegratorNVE(AtomInfo& atomInfo, PotentialMaster& potentialMaster, Random& random, Box& box);
-    virtual ~IntegratorNVE();
+    IntegratorMDVelocityVerlet(AtomInfo& atomInfo, PotentialMaster& potentialMaster, Random& random, Box& box);
+    virtual ~IntegratorMDVelocityVerlet();
     virtual void doStep();
     virtual void reset();
 };
