@@ -597,12 +597,11 @@ void PotentialMaster::computeAllBonds(bool doForces, double &uTot) {
 void PotentialMaster::computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1) {
   vector<Potential*> &iBondedPotentials = bondedPotentials[iSpecies];
   if (iBondedPotentials.size() == 0) return;
-  int sna = speciesList.get(iSpecies)->getNumAtoms();
   vector<vector<int*> > iBondedPairs = bondedPairs[iSpecies];
+  int firstAtom = box.getFirstAtom(iSpecies, iMolecule);
   for (int j=0; j<(int)iBondedPotentials.size(); j++) {
     Potential* p = iBondedPotentials[j];
     vector<int*> jBondedPairs = iBondedPairs[j];
-    int firstAtom = box.getFirstAtom(iSpecies, iMolecule);
     for (int l=0; l<(int)jBondedPairs.size(); l++) {
       int* lBondedPair = jBondedPairs[l];
       int iAtom = firstAtom + lBondedPair[0];
@@ -620,7 +619,6 @@ void PotentialMaster::computeOneMoleculeBonds(const int iSpecies, const int iMol
       uAtom[jAtom] += 0.5*u;
       u1 += u;
     }
-    firstAtom += sna;
   }
 }
 
