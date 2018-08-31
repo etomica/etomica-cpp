@@ -126,7 +126,8 @@ class PotentialMaster {
       if (pureAtoms) return false;
       int jMolecule, jFirstAtom, jSpecies;
       box.getMoleculeInfoAtom(jAtom, jMolecule, jSpecies, jFirstAtom);
-      if (rigidMolecules) return iSpecies==jSpecies && iMolecule == jMolecule;
+      if (iSpecies != jSpecies || iMolecule != jMolecule) return false;
+      if (rigidMolecules) return true;
       return binary_search(iBondedAtoms->begin(), iBondedAtoms->end(), jAtom-jFirstAtom);
     }
     void handleComputeAll(int iAtom, int jAtom, const double *ri, const double *rj, const double *jbo, Potential* pij, double &ui, double &uj, double* fi, double* fj, double& uTot, double& virialTot, const double rc2, Potential* iRhoPotential, const double iRhoCutoff, const int iType, const int jType, const bool doForces, const bool skipIntra) {
