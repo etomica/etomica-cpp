@@ -236,6 +236,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     bool oops = false;
     for (int i=0; i<numAtoms; i++) {
       if (fabs(uCheck[i]-uAtom[i]) > 1e-7) {
+        // we've recomputed the energy for this atom and our previous estimate was wrong
         fprintf(stderr, "PMC uAtomCheck oops %d %f %f %f\n", i, uCheck[i], uAtom[i], uCheck[i]-uAtom[i]);
         oops=true;
       }
