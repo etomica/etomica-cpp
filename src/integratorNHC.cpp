@@ -135,5 +135,8 @@ void IntegratorNHC::propagatorU4(double dt, int direction) {
 
 void IntegratorNHC::reset() {
   IntegratorMD::reset();
-  randomizeVelocities(true);
+  double sqrtT = sqrt(temperature);
+  for (int i=0; i<numChains; i++) {
+    etaP[i] = random.nextGaussian()*sqrtT;
+  }
 }
