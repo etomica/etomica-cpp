@@ -47,11 +47,15 @@ class PotentialCallbackHMA : public PotentialCallback {
     Box& box;
     double temperature;
     double Pharm;
-    double data[2];
+    double* data;
     double** latticePositions;
+    double phiSum;
+    bool doD2;
+    double dr0[3];
   public:
-    PotentialCallbackHMA(Box& box, double temperature, double Pharm);
+    PotentialCallbackHMA(Box& box, double temperature, double Pharm, bool doD2);
     ~PotentialCallbackHMA();
+    virtual void pairCompute(int iAtom, int jAtom, double* dr, double u, double du, double d2u);
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
     virtual int getNumData();
     virtual double* getData();

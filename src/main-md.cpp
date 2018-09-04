@@ -12,17 +12,17 @@
 #include "util.h"
 
 int main(int argc, char** argv) {
-  int numAtoms = 32000;
-  double temperature = 0.69;
-  double density = 0.8442;
-  long steps = 2000;
+  int numAtoms = 864;
+  double temperature = 1;
+  double density = 1.0;
+  long steps = 20000;
   bool doData = true;
-  bool doHMA = true;
+  bool doHMA = false, doHMA2 = false;
 
   Random rand;
   printf("random seed: %d\n", rand.getSeed());
 
-  PotentialLJ plj(1,1,TRUNC_SHIFT, 2.5);
+  PotentialLJ plj(1,1,TRUNC_FORCE_SHIFT, 3.0);
   SpeciesList speciesList;
   speciesList.add(new SpeciesSimple(1,1));
   Box box(speciesList);
@@ -36,7 +36,8 @@ int main(int argc, char** argv) {
   potentialMaster.init();
   int* numCells = potentialMaster.getNumCells();
   printf("cells: %d %d %d\n", numCells[0], numCells[1], numCells[2]);*/
-  PotentialMasterList potentialMaster(speciesList, box, false, 2, 2.8);
+  PotentialMasterList potentialMaster(speciesList, box, false, 2, 3.5);
+  potentialMaster.setDoTruncationCorrection(false);
   potentialMaster.setPairPotential(0, 0, &plj);
   potentialMaster.init();
   //PotentialMaster potentialMaster(plj, box);
@@ -45,28 +46,37 @@ int main(int argc, char** argv) {
   integrator.setTimeStep(0.005);
   integrator.setTemperature(temperature);
   integrator.setNbrCheckInterval(20);
+  integrator.randomizeVelocities(true);
   integrator.reset();
-  PotentialCallbackHMA pcHMA(box, temperature, 9.550752245164025e+00);
-  printf("u: %f\n", integrator.getPotentialEnergy());
+  PotentialCallbackHMA pcHMA(box, temperature, 9, doHMA2);
+  double uLat = integrator.getPotentialEnergy();
+  printf("u: %f\n", uLat);
   if (doData) integrator.doSteps(steps/10);
   MeterPotentialEnergy meterPE(integrator);
   DataPump pumpPE(meterPE, 1);
   MeterFullCompute meterFull(potentialMaster);
   meterFull.setDoCompute(false);
   PotentialCallbackPressure pcp(box, temperature, true);
-  meterFull.addCallback(&pcp);
-  integrator.addPotentialCallback(&pcp);
   if (doHMA) {
     meterFull.addCallback(&pcHMA);
-    integrator.addPotentialCallback(&pcHMA);
   }
-  DataPump pumpFull(meterFull, 1);
+  else {
+    meterFull.addCallback(&pcp);
+  }
+  DataPump pumpFull(meterFull, 10);
   MeterKineticEnergy meterKE;
   meterKE.setIntegrator(&integrator);
   DataPump pumpKE(meterKE, 10);
   if (doData) {
     integrator.addListener(&pumpPE);
-    if (doHMA) integrator.addListener(&pumpFull);
+    if (doHMA) {
+      integrator.addListener(&pumpFull);
+      integrator.addPotentialCallback(&pcHMA, 10);
+    }
+    else {
+      integrator.addPotentialCallback(&pcp);
+    }
+
     integrator.addListener(&pumpKE);
   }
 
@@ -87,14 +97,43 @@ int main(int argc, char** argv) {
     statsE[AVG_AVG] /= numAtoms;
     statsE[AVG_ERR] /= numAtoms;
     printf("E avg: %f  err: %f  cor: %f\n", statsE[AVG_AVG], statsE[AVG_ERR], statsE[AVG_ACOR]);
-    if (doHMA) {
+    if (!doHMA) {
       double** statsFull = ((Average*)pumpFull.getDataSink(0))->getStatistics();
       double* statsP = statsFull[0];
       printf("p avg: %f  err: %f  cor: %f\n", statsP[AVG_AVG], statsP[AVG_ERR], statsP[AVG_ACOR]);
-      double* statsUHMA = statsFull[1];
+    }
+    else {
+      double** statsFull = ((Average*)pumpFull.getDataSink(0))->getStatistics();
+      double* statsP = statsFull[1];
+      printf("p avg: %f  err: %f  cor: %f\n", statsP[AVG_AVG], statsP[AVG_ERR], statsP[AVG_ACOR]);
+      if (doHMA2) {
+        double* statsU = statsFull[0];
+        double* statsU2 = statsFull[4];
+        double u0 = 1.5*(numAtoms-1)*temperature + uLat;
+        double uvar = statsU2[AVG_AVG] - (statsU[AVG_AVG]-u0)*(statsU[AVG_AVG]-u0);
+        double Cv = uvar/(temperature*temperature);
+        double** cor = ((Average*)pumpFull.getDataSink(0))->getBlockCorrelation();
+        double x = statsU[AVG_AVG] - u0;
+        double ex = statsU[AVG_ERR];
+        double eCv = sqrt(statsU2[AVG_ERR]*statsU2[AVG_ERR] + 4*x*x*ex*ex
+                        - 4 * x*ex*statsU2[AVG_ERR]*cor[0][4])/(temperature*temperature);
+        printf("Cv avg: %f  err: %f  cor: %f\n", Cv/numAtoms, eCv/numAtoms, statsU2[AVG_ACOR]);
+      }
+      double* statsUHMA = statsFull[2];
       printf("uHMA avg: %f  err: %f  cor: %f\n", statsUHMA[AVG_AVG]/numAtoms, statsUHMA[AVG_ERR]/numAtoms, statsUHMA[AVG_ACOR]);
-      double* statsPHMA = statsFull[2];
+      double* statsPHMA = statsFull[3];
       printf("pHMA avg: %f  err: %f  cor: %f\n", statsPHMA[AVG_AVG], statsPHMA[AVG_ERR], statsPHMA[AVG_ACOR]);
+      if (doHMA2) {
+        double* statsCvHMA = statsFull[5];
+        double u0 = 1.5*(numAtoms-1)*temperature + uLat;
+        double x = (statsUHMA[AVG_AVG] - u0)/temperature;
+        double Cv = statsCvHMA[AVG_AVG] - x*x;
+        double** cor = ((Average*)pumpFull.getDataSink(0))->getBlockCorrelation();
+        double ex = statsUHMA[AVG_ERR]/temperature;
+        double eCv = sqrt(statsCvHMA[AVG_ERR]*statsCvHMA[AVG_ERR] + 4*x*x*ex*ex
+                        - 4 * x*ex*statsCvHMA[AVG_ERR]*cor[2][5]);
+        printf("CvHMA avg: %f  err: %f  cor: %f\n", Cv/numAtoms, eCv/numAtoms, statsCvHMA[AVG_ACOR]);
+      }
     }
   }
   printf("time: %4.3f\n", t2-t1);

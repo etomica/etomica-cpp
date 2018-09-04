@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
   integrator.reset();
   MCMoveDisplacement move(box, potentialMaster, rand, 0.2);
   integrator.addMove(&move, 1);
-  PotentialCallbackHMA pcHMA(box, temperature, 9.550752245164025e+00);
+  PotentialCallbackHMA pcHMA(box, temperature, 9.550752245164025e+00, false);
   printf("u: %f  %f\n", integrator.getPotentialEnergy()/numAtoms, integrator.getPotentialEnergy());
   if (doData) integrator.doSteps(steps/10);
   MeterPotentialEnergy meterPE(integrator);

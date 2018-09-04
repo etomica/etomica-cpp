@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
   integrator.setTemperature(temperature);
   integrator.setNbrCheckInterval(1);
   integrator.reset();
-  PotentialCallbackHMA pcHMA(box, temperature, 9.550752245164025e+00);
+  PotentialCallbackHMA pcHMA(box, temperature, 9.550752245164025e+00, false);
   printf("u: %f\n", integrator.getPotentialEnergy()/numAtoms);
   if (doData) integrator.doSteps(steps/10);
   MeterPotentialEnergy meterPE(integrator);
