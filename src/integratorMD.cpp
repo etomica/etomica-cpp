@@ -33,7 +33,7 @@ void IntegratorMD::randomizeVelocity(int iAtom) {
 }
 
 void IntegratorMD::randomizeVelocities(bool zeroMomentum) {
-  double momentum[3];
+  double momentum[3] = {0};
   double totalMass = 0;
   int numAtoms = box.getNumAtoms();
   double sqrtTM[atomInfo.getNumTypes()], imass[atomInfo.getNumTypes()];
@@ -78,6 +78,20 @@ void IntegratorMD::reset() {
     nbrCheckCountdown = nbrCheckInterval;
   }
   Integrator::reset();
+
+  kineticEnergy = 0;
+  int numAtoms = box.getNumAtoms();
+  double imass[atomInfo.getNumTypes()];
+  for (int i=0; i<atomInfo.getNumTypes(); i++) {
+    imass[i] = atomInfo.getMass(i);
+  }
+  for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+    int iType = box.getAtomType(iAtom);
+    double* vi = box.getAtomVelocity(iAtom);
+    for (int j=0; j<3; j++) {
+      kineticEnergy += 0.5*imass[iType]*vi[j]*vi[j];
+    }
+  }
 }
 
 double IntegratorMD::getKineticEnergy() {
