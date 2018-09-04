@@ -3,8 +3,15 @@ CFLAGS = -DSFMT_MEXP=19937 -DHAVE_SSE2 -msse2
 FLAGS = -std=c++11 -Wall
 ifdef DEBUG
 FLAGS += -O0 -g -DDEBUG
+ifdef VALGRIND
+FLAGS += -DVALGRIND_CHECKS
+endif
+else
+ifdef PROFILE
+FLAGS += -O1 -pg
 else
 FLAGS += -O3
+endif
 endif
 
 OBJDIR = build
