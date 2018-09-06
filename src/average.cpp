@@ -56,6 +56,23 @@ int Average::getNumData() {
   return nData;
 }
 
+void Average::setBlockSize(long bs) {
+  defaultBlockSize = blockSize = bs;
+  maxBlockCount = -1;
+  reset();
+}
+
+void Average::setMaxBlockCount(long mBC) {
+  if (mBC < 4) {
+    fprintf(stderr, "Max block count needs to be at least 3!\n");
+    abort();
+  }
+  while (blockCount >= mBC) {
+    collapseBlocks();
+  }
+  blockSums = (double**)realloc2D((void**)blockSums, nData, maxBlockCount, sizeof(double));
+}
+
 void Average::reset() {
   blockCount = 0;
   blockSize = defaultBlockSize;
