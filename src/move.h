@@ -66,7 +66,7 @@ class MCMoveInsertDelete : public MCMove {
     int firstAtom;
     bool doInsert;
     double mu;
-    int iSpecies;
+    const int iSpecies;
     const int numAtoms;
     RotationMatrix rotMat;
 
@@ -91,6 +91,7 @@ class MCMoveMoleculeDisplacement : public MCMove {
     double uOld, uNew;
     int iMolecule;
     int iAtomFirst, iAtomLast;
+    int iSpecies;
 
   public:
 
@@ -102,18 +103,19 @@ class MCMoveMoleculeDisplacement : public MCMove {
     virtual void acceptNotify();
     virtual void rejectNotify();
     virtual double energyChange();
+    virtual void setSpecies(int iSpecies);
 };
 
 class MCMoveMoleculeRotate : public MCMove {
   private:
     SpeciesList& speciesList;
-    double numOldPositions;
+    int numOldPositions;
     double **oldPositions;
     RotationMatrix mat;
     double uOld, uNew;
     int iMolecule;
     int iAtomFirst, iAtomLast;
-    int iSpecies;
+    int iSpecies, mySpecies;
 
   public:
 
@@ -125,5 +127,6 @@ class MCMoveMoleculeRotate : public MCMove {
     virtual void acceptNotify();
     virtual void rejectNotify();
     virtual double energyChange();
+    virtual void setSpecies(int iSpecies);
 };
 

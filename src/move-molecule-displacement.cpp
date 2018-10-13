@@ -1,7 +1,7 @@
 #include "move.h"
 #include "alloc2d.h"
 
-MCMoveMoleculeDisplacement::MCMoveMoleculeDisplacement(Box& b, PotentialMaster& p, Random& r, double ss) : MCMove(b,p,r,ss), numOldPositions(0), oldPositions(nullptr) {
+MCMoveMoleculeDisplacement::MCMoveMoleculeDisplacement(Box& b, PotentialMaster& p, Random& r, double ss) : MCMove(b,p,r,ss), numOldPositions(0), oldPositions(nullptr), iSpecies(-1) {
 }
 
 MCMoveMoleculeDisplacement::~MCMoveMoleculeDisplacement() {
@@ -12,22 +12,34 @@ bool MCMoveMoleculeDisplacement::doTrial() {
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
   }
-  int nm = box.getTotalNumMolecules();
+  int nm = iSpecies<0 ? box.getTotalNumMolecules() : box.getNumMolecules(iSpecies);
   if (nm==0) {
     iMolecule = -1;
     return false;
   }
   iMolecule = random.nextInt(nm);
+  int iMoleculeInSpecies;
+  if (iSpecies>=0) {
+    iMoleculeInSpecies = iMolecule;
+    iMolecule = box.getGlobalMoleculeIndex(iSpecies, iMolecule);
+  }
   uOld = potentialMaster.oldMoleculeEnergy(iMolecule);
   deltaR[0] = 2*stepSize*(random.nextDouble32()-0.5);
   deltaR[1] = 2*stepSize*(random.nextDouble32()-0.5);
   deltaR[2] = 2*stepSize*(random.nextDouble32()-0.5);
-  int iSpecies, iMoleculeInSpecies;
-  box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iAtomFirst, iAtomLast);
-  int na = iAtomLast-iAtomFirst+1;
-  if (na>numOldPositions) {
-    oldPositions = (double**)realloc2D((void**)oldPositions, na, 3, sizeof(double));
-    numOldPositions = na;
+  int na = numOldPositions;
+  if (iSpecies < 0) {
+    int mySpecies;
+    box.getMoleculeInfo(iMolecule, mySpecies, iMoleculeInSpecies, iAtomFirst, iAtomLast);
+    na = iAtomLast-iAtomFirst+1;
+    if (na>numOldPositions) {
+      oldPositions = (double**)realloc2D((void**)oldPositions, na, 3, sizeof(double));
+      numOldPositions = na;
+    }
+  }
+  else {
+    iAtomFirst = box.getFirstAtom(iSpecies, iMoleculeInSpecies);
+    iAtomLast = iAtomFirst + na - 1;
   }
   for (int i=0; i<na; i++) {
     int iAtom = iAtomFirst + i;
@@ -90,4 +102,12 @@ void MCMoveMoleculeDisplacement::rejectNotify() {
 
 double MCMoveMoleculeDisplacement::energyChange() {
   return uNew-uOld;
+}
+
+void MCMoveMoleculeDisplacement::setSpecies(int s) {
+  iSpecies = s;
+  if (s<0) return;
+  int numAtoms = box.getSpeciesList().get(s)->getNumAtoms();
+  oldPositions = (double**)realloc2D((void**)oldPositions, numAtoms, 3, sizeof(double));
+  numOldPositions = numAtoms;
 }

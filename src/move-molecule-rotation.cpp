@@ -1,7 +1,7 @@
 #include "move.h"
 #include "alloc2d.h"
 
-MCMoveMoleculeRotate::MCMoveMoleculeRotate(SpeciesList& sl, Box& b, PotentialMaster& p, Random& r) : MCMove(b,p,r,0.5), speciesList(sl), numOldPositions(0), oldPositions(nullptr) {
+MCMoveMoleculeRotate::MCMoveMoleculeRotate(SpeciesList& sl, Box& b, PotentialMaster& p, Random& r) : MCMove(b,p,r,0.5), speciesList(sl), numOldPositions(0), oldPositions(nullptr), iSpecies(-1) {
 }
 
 MCMoveMoleculeRotate::~MCMoveMoleculeRotate() {
@@ -12,17 +12,16 @@ bool MCMoveMoleculeRotate::doTrial() {
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
   }
-  int nm = box.getTotalNumMolecules();
+  int nm = iSpecies<0 ? box.getTotalNumMolecules() : box.getNumMolecules(iSpecies);
   if (nm==0) {
     iMolecule = -1;
     return false;
   }
   iMolecule = random.nextInt(nm);
   int iMoleculeInSpecies;
-  box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iAtomFirst, iAtomLast);
-  if (iAtomFirst==iAtomLast) {
-    iMolecule = -1;
-    return false;
+  if (iSpecies>=0) {
+    iMoleculeInSpecies = iMolecule;
+    iMolecule = box.getGlobalMoleculeIndex(iSpecies, iMolecule);
   }
   uOld = potentialMaster.oldMoleculeEnergy(iMolecule);
   if (false) {
@@ -34,15 +33,28 @@ bool MCMoveMoleculeRotate::doTrial() {
     printf("%d uOlds %f %f\n", iMolecule, uTmp, uOld);
     abort();
   }
-  int na = iAtomLast-iAtomFirst+1;
-  if (na>numOldPositions) {
-    oldPositions = (double**)realloc2D((void**)oldPositions, na, 3, sizeof(double));
-    numOldPositions = na;
+  int na = numOldPositions;
+  mySpecies = iSpecies;
+  if (iSpecies<0) {
+    box.getMoleculeInfo(iMolecule, mySpecies, iMoleculeInSpecies, iAtomFirst, iAtomLast);
+    na = iAtomLast-iAtomFirst+1;
+    if (na==1) {
+      iMolecule = -1;
+      return false;
+    }
+    if (na>numOldPositions) {
+      oldPositions = (double**)realloc2D((void**)oldPositions, na, 3, sizeof(double));
+      numOldPositions = na;
+    }
+  }
+  else {
+    iAtomFirst = box.getFirstAtom(mySpecies, iMoleculeInSpecies);
+    iAtomLast = iAtomFirst + na - 1;
   }
   int axis = random.nextInt(3);
   double theta = stepSize*2*(random.nextDouble32()-0.5);
   mat.setSimpleAxisAngle(axis, theta);
-  Species* species = speciesList.get(iSpecies);
+  Species* species = speciesList.get(mySpecies);
   double* center = species->getMoleculeCOM(box, iAtomFirst, iAtomLast);
   for (int i=0; i<na; i++) {
     int iAtom = iAtomFirst + i;
@@ -80,7 +92,7 @@ void MCMoveMoleculeRotate::acceptNotify() {
   potentialMaster.computeOneMolecule(iMolecule, uTmp);
   // this call is designed to set up the next call.  uTmp won't necessarily be correct
   potentialMaster.processAtomU(-1);
-  Species* species = speciesList.get(iSpecies);
+  Species* species = speciesList.get(mySpecies);
   double* center = species->getMoleculeCOM(box, iAtomFirst, iAtomLast);
   for (int i=0; i<na; i++) {
     int iAtom = iAtomFirst + i;
@@ -107,4 +119,16 @@ void MCMoveMoleculeRotate::rejectNotify() {
 
 double MCMoveMoleculeRotate::energyChange() {
   return uNew-uOld;
+}
+
+void MCMoveMoleculeRotate::setSpecies(int s) {
+  iSpecies = s;
+  if (s<0) return;
+  int numAtoms = box.getSpeciesList().get(s)->getNumAtoms();
+  if (numAtoms < 2) {
+    fprintf(stderr, "Need at least 2 atoms in a molecule for rotation!\n");
+    abort();
+  }
+  oldPositions = (double**)realloc2D((void**)oldPositions, numAtoms, 3, sizeof(double));
+  numOldPositions = numAtoms;
 }

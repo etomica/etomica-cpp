@@ -1,6 +1,6 @@
 #include "move.h"
 
-MCMoveInsertDelete::MCMoveInsertDelete(Box& b, PotentialMaster& p, Random& r, double m, int s) : MCMove(b,p,r,0), mu(m), iSpecies(s), numAtoms(box.getSpeciesList().get(iSpecies)->getNumAtoms()) {
+MCMoveInsertDelete::MCMoveInsertDelete(Box& b, PotentialMaster& p, Random& r, double m, int s) : MCMove(b,p,r,0), mu(m), iSpecies(s), numAtoms(box.getSpeciesList().get(s)->getNumAtoms()) {
   tunable = false;
 }
 
