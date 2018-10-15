@@ -8,7 +8,7 @@ PotentialCallbackHMA::PotentialCallbackHMA(Box& b, double T, double Ph, bool d2)
   callFinished = true;
   takesForces = true;
   callPair = d2;
-  data = (double*) malloc((d2 ? 7 : 4)*sizeof(double));
+  data = (double*) malloc((d2 ? 6 : 4)*sizeof(double));
   int N = box.getNumAtoms();
   latticePositions = (double**)malloc2D(N, 3, sizeof(double));
   // let's pretend we can't just copy the whole thing at once
@@ -23,7 +23,7 @@ PotentialCallbackHMA::~PotentialCallbackHMA() {
   free(data);
 }
 
-int PotentialCallbackHMA::getNumData() {return doD2 ? 7 : 4;}
+int PotentialCallbackHMA::getNumData() {return doD2 ? 6 : 4;}
 
 void PotentialCallbackHMA::pairCompute(int iAtom, int jAtom, double* drij, double u, double du, double d2u) {
   double dri[3], drj[3];
@@ -46,10 +46,9 @@ void PotentialCallbackHMA::pairCompute(int iAtom, int jAtom, double* drij, doubl
 
   double dfac = (du - d2u) / (r2*r2);
   for (int k=0; k<3; k++) {
-    for (int l=k; l<3; l++) {
+    for (int l=0; l<3; l++) {
       double der2 = drij[k]*drij[l]*dfac;
       if (k==l) der2 -= du/r2;
-      else der2 *= 2;
       phiSum += (2*dri[k]*drj[l] - dri[k]*dri[l] - drj[k]*drj[l])*der2;
     }
   }
