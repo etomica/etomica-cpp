@@ -69,8 +69,8 @@ int main(int argc, char** argv) {
   DataPump pumpKE(meterKE, 10);
   if (doData) {
     integrator.addListener(&pumpPE);
+    integrator.addListener(&pumpFull);
     if (doHMA) {
-      integrator.addListener(&pumpFull);
       integrator.addPotentialCallback(&pcHMA, 10);
     }
     else {
@@ -109,30 +109,29 @@ int main(int argc, char** argv) {
       if (doHMA2) {
         double* statsU = statsFull[0];
         double* statsU2 = statsFull[4];
-        double u0 = 1.5*(numAtoms-1)*temperature + uLat;
-        double uvar = statsU2[AVG_AVG] - (statsU[AVG_AVG]-u0)*(statsU[AVG_AVG]-u0);
+        double uvar = statsU2[AVG_AVG] - statsU[AVG_AVG]*statsU[AVG_AVG];
         double Cv = uvar/(temperature*temperature);
         double** cor = ((Average*)pumpFull.getDataSink(0))->getBlockCorrelation();
-        double x = statsU[AVG_AVG] - u0;
+        double x = statsU[AVG_AVG];
         double ex = statsU[AVG_ERR];
         double eCv = sqrt(statsU2[AVG_ERR]*statsU2[AVG_ERR] + 4*x*x*ex*ex
                         - 4 * x*ex*statsU2[AVG_ERR]*cor[0][4])/(temperature*temperature);
         printf("Cv avg: %f  err: %f  cor: %f\n", Cv/numAtoms, eCv/numAtoms, statsU2[AVG_ACOR]);
       }
       double* statsUHMA = statsFull[2];
-      printf("uHMA avg: %f  err: %f  cor: %f\n", statsUHMA[AVG_AVG]/numAtoms, statsUHMA[AVG_ERR]/numAtoms, statsUHMA[AVG_ACOR]);
+      printf("uHMA avg: %17.10e  err: %10.4e  cor: %f\n", statsUHMA[AVG_AVG]/numAtoms, statsUHMA[AVG_ERR]/numAtoms, statsUHMA[AVG_ACOR]);
       double* statsPHMA = statsFull[3];
-      printf("pHMA avg: %f  err: %f  cor: %f\n", statsPHMA[AVG_AVG], statsPHMA[AVG_ERR], statsPHMA[AVG_ACOR]);
+      printf("pHMA avg: %17.10e  err: %10.4e  cor: %f\n", statsPHMA[AVG_AVG], statsPHMA[AVG_ERR], statsPHMA[AVG_ACOR]);
       if (doHMA2) {
         double* statsCvHMA = statsFull[5];
-        double u0 = 1.5*(numAtoms-1)*temperature + uLat;
-        double x = (statsUHMA[AVG_AVG] - u0)/temperature;
+        printf("CvHMAraw: %20.15e  err: %10.4e  cor: %f\n", statsCvHMA[AVG_AVG]/numAtoms, statsCvHMA[AVG_ERR]/numAtoms, statsCvHMA[AVG_ACOR]);
+        double x = statsUHMA[AVG_AVG]/temperature;
         double Cv = statsCvHMA[AVG_AVG] - x*x;
         double** cor = ((Average*)pumpFull.getDataSink(0))->getBlockCorrelation();
         double ex = statsUHMA[AVG_ERR]/temperature;
         double eCv = sqrt(statsCvHMA[AVG_ERR]*statsCvHMA[AVG_ERR] + 4*x*x*ex*ex
                         - 4 * x*ex*statsCvHMA[AVG_ERR]*cor[2][5]);
-        printf("CvHMA avg: %f  err: %f  cor: %f\n", Cv/numAtoms, eCv/numAtoms, statsCvHMA[AVG_ACOR]);
+        printf("CvHMA avg: %17.10e  err: %10.4e  cor: %f\n", Cv/numAtoms, eCv/numAtoms, statsCvHMA[AVG_ACOR]);
       }
     }
   }
