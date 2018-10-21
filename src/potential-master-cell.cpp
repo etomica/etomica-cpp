@@ -229,7 +229,10 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     computeAllBonds(doForces, uTot);
   }
   if (doEwald) {
-    computeAllFourier(doForces, uTot);
+    computeAllFourier(doForces, uTot, virialTot);
+  }
+  if (doForces && !pureAtoms) {
+    virialTot += computeVirialIntramolecular();
   }
 #ifdef DEBUG
   if (uCheck[0]!=0) {

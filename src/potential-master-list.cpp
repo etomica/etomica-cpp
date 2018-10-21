@@ -279,7 +279,10 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
     }
   }
   if (doEwald) {
-    computeAllFourier(doForces, uTot);
+    computeAllFourier(doForces, uTot, virialTot);
+  }
+  if (doForces && !pureAtoms) {
+    virialTot += computeVirialIntramolecular();
   }
   computeAllTruncationCorrection(uTot, virialTot);
   if (!pureAtoms && !rigidMolecules) {
