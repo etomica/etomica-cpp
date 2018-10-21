@@ -21,8 +21,9 @@ int main(int argc, char** argv) {
   double mu = -3.5;
   double pressure = 3.7;
   bool doData = true;
-  bool doHMA = false, doP = false;
+  bool doHMA = true, doP = false;
   bool doGC = false, constPressure = false;
+  if (doHMA) doP = false;
 
   Random rand;
   printf("random seed: %d\n", rand.getSeed());
@@ -37,6 +38,7 @@ int main(int argc, char** argv) {
   box.setNumMolecules(0, numAtoms);
   box.initCoordinates();
   PotentialMasterCell potentialMaster(speciesList, box, false, 2);
+  potentialMaster.setDoTruncationCorrection(false);
   potentialMaster.setPairPotential(0, 0, &plj);
   potentialMaster.init();
   int* numCells = potentialMaster.getNumCells();
@@ -56,7 +58,8 @@ int main(int argc, char** argv) {
   }
   integrator.setTemperature(temperature);
   integrator.reset();
-  PotentialCallbackHMA pcHMA(box, temperature, 9.550752245164025e+00, false);
+  PotentialCallbackHMA pcHMA(box, temperature, temperature*9.550752245164025e+00, true);
+  pcHMA.setReturnAnharmonic(true, &potentialMaster);
   printf("u: %f\n", integrator.getPotentialEnergy());
   if (doData) integrator.doSteps(steps/10);
   DataPump pumpPE(meterPE, 10);
@@ -86,18 +89,31 @@ int main(int argc, char** argv) {
       statsPE[AVG_ERR] /= numAtoms;
     }
     printf("u avg: %f  err: %f  cor: %f\n", statsPE[AVG_AVG], statsPE[AVG_ERR], statsPE[AVG_ACOR]);
-    if (doP) {
+    if (doP && !doHMA) {
       double** statsFull = ((Average*)pumpFull.getDataSink(0))->getStatistics();
       double* statsP = statsFull[0];
       printf("p avg: %f  err: %f  cor: %f\n", statsP[AVG_AVG], statsP[AVG_ERR], statsP[AVG_ACOR]);
     }
     else if (doHMA) {
+      double** statsFull = ((Average*)pumpFull.getDataSink(0))->getStatistics();
+      double* statsP = statsFull[1];
+      printf("p avg: %f  err: %f  cor: %f\n", statsP[AVG_AVG], statsP[AVG_ERR], statsP[AVG_ACOR]);
       double* statsUHMA = statsFull[2];
       printf("uHMA avg: %f  err: %f  cor: %f\n", statsUHMA[AVG_AVG]/numAtoms, statsUHMA[AVG_ERR]/numAtoms, statsUHMA[AVG_ACOR]);
       double* statsPHMA = statsFull[3];
       double** cov = ((Average*)pumpFull.getDataSink(0))->getBlockCovariance();
       double uCor = cov[2][3]/sqrt(cov[2][2]*cov[3][3]);
       printf("pHMA avg: %f  err: %f  cor: %f   uCor: %f\n", statsPHMA[AVG_AVG], statsPHMA[AVG_ERR], statsPHMA[AVG_ACOR], uCor);
+
+      double* statsCvHMA = statsFull[5];
+      printf("CvHMAraw: %20.15e  err: %10.4e  cor: %f\n", statsCvHMA[AVG_AVG]/numAtoms, statsCvHMA[AVG_ERR]/numAtoms, statsCvHMA[AVG_ACOR]);
+      double x = statsUHMA[AVG_AVG]/temperature;
+      double Cv = statsCvHMA[AVG_AVG] - x*x;
+      double** cor = ((Average*)pumpFull.getDataSink(0))->getBlockCorrelation();
+      double ex = statsUHMA[AVG_ERR]/temperature;
+      double eCv = sqrt(statsCvHMA[AVG_ERR]*statsCvHMA[AVG_ERR] + 4*x*x*ex*ex
+          - 4 * x*ex*statsCvHMA[AVG_ERR]*cor[2][5]);
+      printf("CvHMA avg: %17.10e  err: %10.4e  cor: %f\n", Cv/numAtoms, eCv/numAtoms, statsCvHMA[AVG_ACOR]);
     }
     if (doGC) {
       double* statsNA = ((Average*)pumpNA.getDataSink(0))->getStatistics()[0];
