@@ -447,7 +447,7 @@ void PotentialEwaldBare::u012(double r2, double &u, double &du, double &d2u) {
   double r = sqrt(r2);
   double uq = qiqj*erfc(alpha*r)/r;
   u = uq;
-  double dexp = qiqj*twoosqrtpi * exp(-alpha*alpha*r2) * alpha;
-  du = -dexp - uq;
-  d2u = -dexp * (1 - alpha*alpha*2*r) - uq;
+  double derfc = -qiqj*twoosqrtpi * exp(-alpha*alpha*r2) * alpha;
+  du = derfc - uq;
+  d2u = derfc * (1 - alpha*alpha*2*r) - uq;
 }
