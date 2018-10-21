@@ -2,6 +2,7 @@
 
 class Box;
 class SpeciesList;
+class PotentialMaster;
 
 class PotentialCallback {
   public:
@@ -52,6 +53,8 @@ class PotentialCallbackHMA : public PotentialCallback {
     double phiSum;
     bool doD2;
     double dr0[3];
+    bool returnAnh, computingLat;
+    double uLat, pLat;
   public:
     PotentialCallbackHMA(Box& box, double temperature, double Pharm, bool doD2);
     ~PotentialCallbackHMA();
@@ -59,6 +62,7 @@ class PotentialCallbackHMA : public PotentialCallback {
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
     virtual int getNumData();
     virtual double* getData();
+    void setReturnAnharmonic(bool returnAnharmonic, PotentialMaster* potentialMaster);
 };
 
 class PotentialCallbackMoleculeHMA : public PotentialCallback {

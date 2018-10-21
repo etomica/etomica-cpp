@@ -4,7 +4,7 @@
 #include "potential-master.h"
 #include "alloc2d.h"
 
-PotentialCallbackHMA::PotentialCallbackHMA(Box& b, double T, double Ph, bool d2) : box(b), temperature(T), Pharm(Ph), phiSum(0), doD2(d2) {
+PotentialCallbackHMA::PotentialCallbackHMA(Box& b, double T, double Ph, bool d2) : box(b), temperature(T), Pharm(Ph), phiSum(0), doD2(d2), returnAnh(false), computingLat(false) {
   callFinished = true;
   takesForces = true;
   callPair = d2;
@@ -21,6 +21,19 @@ PotentialCallbackHMA::PotentialCallbackHMA(Box& b, double T, double Ph, bool d2)
 PotentialCallbackHMA::~PotentialCallbackHMA() {
   free2D((void**)latticePositions);
   free(data);
+}
+
+void PotentialCallbackHMA::setReturnAnharmonic(bool ra, PotentialMaster* pm) {
+  returnAnh = ra;
+  if (ra) {
+    computingLat = true;
+    vector<PotentialCallback*> callbacks;
+    callbacks.push_back(this);
+    pm->computeAll(callbacks);
+    computingLat = false;
+    uLat = data[0];
+    pLat = data[1];
+  }
 }
 
 int PotentialCallbackHMA::getNumData() {return doD2 ? 6 : 4;}
@@ -75,19 +88,23 @@ void PotentialCallbackHMA::allComputeFinished(double uTot, double virialTot, dou
       fdotdrTot += f[i][j]*dr[j];
     }
   }
-  data[0] = uTot;
+  if (computingLat) {
+    data[0] = uTot;
+    data[1] = -virialTot/(3*vol);
+    return;
+  }
+  double u0 = returnAnh ? (1.5*(N-1)*temperature + uLat) : 0;
+  data[0] = uTot - u0;
   data[1] = N*temperature/vol - virialTot/(3*vol);
-  data[2] = 1.5*(N-1)*temperature + uTot + 0.5*fdotdrTot;
+  data[2] = (returnAnh ? -uLat : 1.5*(N-1)*temperature) + uTot + 0.5*fdotdrTot;
 
   double fV = (Pharm/temperature - N/vol)/(3*(N-1));
-  data[3] = Pharm - virialTot/(3*vol) + fV * fdotdrTot;
+  data[3] = (returnAnh ? (-pLat) : Pharm) - virialTot/(3*vol) + fV * fdotdrTot;
 
   if (!doD2) return;
 
-  double uLat = N*(-7.3212105500315605);
-  double u0 = 1.5*(N-1)*temperature + uLat;
-  data[4] = (uTot-u0)*(uTot-u0);
-  data[5] = 1.5*(N-1) - 0.25 * (fdotdrTot + phiSum)/temperature + (data[2]-u0)*(data[2]-u0)/(temperature*temperature);
+  data[4] = data[0]*data[0];
+  data[5] = (returnAnh ? 0 : (1.5*(N-1))) - 0.25 * (fdotdrTot + phiSum)/temperature + data[2]*data[2]/(temperature*temperature);
 
   phiSum = 0;
 }
