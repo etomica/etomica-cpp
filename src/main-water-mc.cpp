@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   int numMolecules = 46;
   double K = 0.8314459861448581;
   double temperature = 120*K;
-  long steps = 10000000;
+  long steps = 1000000;
   bool doData = true;
   bool doHMA = true;
 
@@ -63,14 +63,17 @@ int main(int argc, char** argv) {
   int* numCells = potentialMaster.getNumCells();
   printf("cells: %d %d %d\n", numCells[0], numCells[1], numCells[2]);
   PotentialCallbackEnergy pce;
+  PotentialCallbackPressure pcp(box, temperature, true);
   /*MeterFullCompute meterFull0(potentialMaster);
   meterFull0.setDoCompute(true);
   meterFull0.addCallback(&pce);
+  meterFull0.addCallback(&pcp);
   for (int i=0; i<1000; i++) {
     meterFull0.getData();
   }
   double* data = meterFull0.getData();
-  printf("u %f %f\n", data[0], data[0]/numMolecules);*/
+  printf("u %f %f\n", data[0], data[0]/numMolecules);
+  printf("p %f\n", data[1]);*/
   IntegratorMC integrator(potentialMaster, rand);
   //IntegratorNHC integrator(speciesList.getAtomInfo(), potentialMaster, rand, box, 3, 0.1);
   //integrator.setTimeStep(0.005);
@@ -88,13 +91,14 @@ int main(int argc, char** argv) {
   DataPump pumpPE(meterPE, 1);
   MeterFullCompute meterFull(potentialMaster);
   meterFull.setDoCompute(true);
+  meterFull.addCallback(&pcp);
   if (doHMA) {
     meterFull.addCallback(&pcHMA);
   }
   DataPump pumpFull(meterFull, 4*numMolecules);
   if (doData) {
     integrator.addListener(&pumpPE);
-    if (doHMA) integrator.addListener(&pumpFull);
+    integrator.addListener(&pumpFull);
   }
 
   double t1 = getTime();
@@ -105,11 +109,14 @@ int main(int argc, char** argv) {
     statsPE[AVG_AVG] /= numMolecules;
     statsPE[AVG_ERR] /= numMolecules;
     printf("u avg: %f  err: %f  cor: %f\n", statsPE[AVG_AVG], statsPE[AVG_ERR], statsPE[AVG_ACOR]);
+    double** statsFull = ((Average*)pumpFull.getDataSink(0))->getStatistics();
+    double* statsP = statsFull[0];
+    printf("p avg: %f  err: %f  cor: %f\n", statsP[AVG_AVG], statsP[AVG_ERR], statsP[AVG_ACOR]);
     if (doHMA) {
       double uah = (statsPE[AVG_AVG] * numMolecules - u0 - (1.5*(numMolecules-1) + 1.5*numMolecules)*temperature) / numMolecules;
      
       printf("uah avg: %f  err: %f  cor: %f\n", uah, statsPE[AVG_ERR], statsPE[AVG_ACOR]);
-      double* statsHMA = ((Average*)pumpFull.getDataSink(0))->getStatistics()[0];
+      double* statsHMA = statsFull[1];
       statsHMA[AVG_AVG] /= numMolecules;
       statsHMA[AVG_ERR] /= numMolecules;
       printf("uHMA avg: %f  err: %f  cor: %f\n", statsHMA[AVG_AVG], statsHMA[AVG_ERR], statsHMA[AVG_ACOR]);
