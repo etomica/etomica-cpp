@@ -282,7 +282,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   if (doEwald) {
     computeAllFourier(doForces, uTot, virialTot);
   }
-  if (doForces) {
+  if (doForces && !pureAtoms) {
     virialTot += computeVirialIntramolecular();
   }
   if (!pureAtoms && !rigidMolecules) {
