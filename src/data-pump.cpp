@@ -2,7 +2,7 @@
 
 DataPump::DataPump(Meter& m, int i) : IntegratorListener(), meter(m), interval(i), intervalCountdown(i), dataSink1isMine(true) {
   callStepFinished = true;
-  DataSink *s = new Average(m.getNumData(),1,100,true);
+  DataSink *s = new Average(m.getNumData(),1,200,true);
   addDataSink(s);
 }
 
