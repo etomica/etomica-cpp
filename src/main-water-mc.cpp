@@ -83,7 +83,9 @@ int main(int argc, char** argv) {
   integrator.addMove(&move, 1);
   MCMoveMoleculeRotate moveRotate(speciesList, box, potentialMaster, rand);
   integrator.addMove(&moveRotate, 1);
-  PotentialCallbackMoleculeHMA pcHMA(box, speciesList, temperature);
+  double Pharm = 18;
+  PotentialCallbackMoleculeHMA pcHMA(box, speciesList, temperature, Pharm);
+  pcHMA.setReturnAnharmonic(true, &potentialMaster);
   double u0 = integrator.getPotentialEnergy();
   printf("u: %f\n", u0/numMolecules);
   if (doData) integrator.doSteps(steps/10);
@@ -91,9 +93,11 @@ int main(int argc, char** argv) {
   DataPump pumpPE(meterPE, 1);
   MeterFullCompute meterFull(potentialMaster);
   meterFull.setDoCompute(true);
-  meterFull.addCallback(&pcp);
   if (doHMA) {
     meterFull.addCallback(&pcHMA);
+  }
+  else {
+    meterFull.addCallback(&pcp);
   }
   DataPump pumpFull(meterFull, 4*numMolecules);
   if (doData) {
@@ -110,18 +114,23 @@ int main(int argc, char** argv) {
     statsPE[AVG_ERR] /= numMolecules;
     printf("u avg: %f  err: %f  cor: %f\n", statsPE[AVG_AVG], statsPE[AVG_ERR], statsPE[AVG_ACOR]);
     double** statsFull = ((Average*)pumpFull.getDataSink(0))->getStatistics();
-    double* statsP = statsFull[0];
-    printf("p avg: %f  err: %f  cor: %f\n", statsP[AVG_AVG], statsP[AVG_ERR], statsP[AVG_ACOR]);
+    if (!doHMA) {
+      double* statsP = statsFull[0];
+      printf("p avg: %f  err: %f  cor: %f\n", statsP[AVG_AVG], statsP[AVG_ERR], statsP[AVG_ACOR]);
+    }
     if (doHMA) {
-      double uah = (statsPE[AVG_AVG] * numMolecules - u0 - (1.5*(numMolecules-1) + 1.5*numMolecules)*temperature) / numMolecules;
-     
-      printf("uah avg: %f  err: %f  cor: %f\n", uah, statsPE[AVG_ERR], statsPE[AVG_ACOR]);
-      double* statsHMA = statsFull[1];
-      statsHMA[AVG_AVG] /= numMolecules;
-      statsHMA[AVG_ERR] /= numMolecules;
-      printf("uHMA avg: %f  err: %f  cor: %f\n", statsHMA[AVG_AVG], statsHMA[AVG_ERR], statsHMA[AVG_ACOR]);
-      uah = (statsHMA[AVG_AVG] * numMolecules - u0 - (1.5*(numMolecules-1) + 1.5*numMolecules)*temperature) / numMolecules;
-      printf("uahHMA avg: %f  err: %f  cor: %f\n", uah, statsHMA[AVG_ERR], statsHMA[AVG_ACOR]);
+      printf("HMA\n");
+      double* statsU = statsFull[0];
+      printf("u avg: %f  err: %f  cor: %f\n", statsU[AVG_AVG]/numMolecules, statsU[AVG_ERR]/numMolecules, statsU[AVG_ACOR]);
+      double* statsP = statsFull[1];
+      printf("p avg: %f  err: %f  cor: %f\n", statsP[AVG_AVG], statsP[AVG_ERR], statsP[AVG_ACOR]);
+
+      double* statsUHMA = statsFull[2];
+      statsUHMA[AVG_AVG] /= numMolecules;
+      statsUHMA[AVG_ERR] /= numMolecules;
+      printf("uHMA avg: %f  err: %f  cor: %f\n", statsUHMA[AVG_AVG], statsUHMA[AVG_ERR], statsUHMA[AVG_ACOR]);
+      double* statsPHMA = statsFull[3];
+      printf("pHMA avg: %f  err: %f  cor: %f\n", statsPHMA[AVG_AVG], statsPHMA[AVG_ERR], statsPHMA[AVG_ACOR]);
     }
   }
   printf("time: %4.3f\n", t2-t1);
