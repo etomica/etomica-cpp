@@ -70,6 +70,11 @@ void PotentialCallbackHMA::pairCompute(int iAtom, int jAtom, double* drij, doubl
 void PotentialCallbackHMA::allComputeFinished(double uTot, double virialTot, double** f) {
   const double* bs = box.getBoxSize();
   double vol = bs[0]*bs[1]*bs[2];
+  if (computingLat) {
+    data[0] = uTot;
+    data[1] = -virialTot/(3*vol);
+    return;
+  }
   int N = box.getNumAtoms();
   
   double dr0[3], dr[3];
@@ -87,11 +92,6 @@ void PotentialCallbackHMA::allComputeFinished(double uTot, double virialTot, dou
     for (int j=0; j<3; j++) {
       fdotdrTot += f[i][j]*dr[j];
     }
-  }
-  if (computingLat) {
-    data[0] = uTot;
-    data[1] = -virialTot/(3*vol);
-    return;
   }
   double u0 = returnAnh ? (1.5*(N-1)*temperature + uLat) : 0;
   data[0] = uTot - u0;
