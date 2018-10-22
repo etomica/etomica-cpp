@@ -8,7 +8,7 @@
 /**
  * Computes energy with mapped averaging for rigid molecular system.  Also handles atoms.
  */
-PotentialCallbackMoleculeHMA::PotentialCallbackMoleculeHMA(Box& b, SpeciesList& sl, double T) : box(b), speciesList(sl), temperature(T) {
+PotentialCallbackMoleculeHMA::PotentialCallbackMoleculeHMA(Box& b, SpeciesList& sl, double T, double Ph) : box(b), speciesList(sl), temperature(T), Pharm(Ph), returnAnh(false), computingLat(false) {
   callFinished = true;
   takesForces = true;
   int N = box.getTotalNumMolecules();
@@ -25,16 +25,39 @@ PotentialCallbackMoleculeHMA::PotentialCallbackMoleculeHMA(Box& b, SpeciesList& 
     species->getMoleculeOrientation(box, iFirstAtom, o, o+3);
     std::copy(o, o+6, latticeOrientations[i]);
   }
+  data = (double*) malloc(4*sizeof(double));
 }
 
 PotentialCallbackMoleculeHMA::~PotentialCallbackMoleculeHMA() {
   free2D((void**)latticePositions);
   free2D((void**)latticeOrientations);
+  free(data);
 }
 
-int PotentialCallbackMoleculeHMA::getNumData() {return 2;}
+void PotentialCallbackMoleculeHMA::setReturnAnharmonic(bool ra, PotentialMaster* pm) {
+  returnAnh = ra;
+  if (ra) {
+    computingLat = true;
+    vector<PotentialCallback*> callbacks;
+    callbacks.push_back(this);
+    pm->computeAll(callbacks);
+    computingLat = false;
+    uLat = data[0];
+    pLat = data[1];
+    printf("pLat %f\n", pLat);
+  }
+}
+
+int PotentialCallbackMoleculeHMA::getNumData() {return 4;}
 
 void PotentialCallbackMoleculeHMA::allComputeFinished(double uTot, double virialTot, double** f) {
+  const double* bs = box.getBoxSize();
+  double vol = bs[0]*bs[1]*bs[2];
+  if (computingLat) {
+    data[0] = uTot;
+    data[1] = -virialTot/(3*vol);
+    return;
+  }
   int N = box.getTotalNumMolecules();
   
   double dr0[3], dr[3];
@@ -64,9 +87,7 @@ void PotentialCallbackMoleculeHMA::allComputeFinished(double uTot, double virial
         double* riAtom = box.getAtomPosition(iAtom);
         double drAtom[3] = {riAtom[0]-ri[0], riAtom[1]-ri[1], riAtom[2]-ri[2]};
         box.nearestImage(drAtom);
-        if (f[iAtom][0]+f[iAtom][1]+f[iAtom][2]==16) continue;
         Vector::cross(drAtom, f[iAtom], atomTorque);
-        if (atomTorque[0]+atomTorque[1]+atomTorque[2]==16) continue;
         for (int j=0; j<3; j++) torque[j] += atomTorque[j];
       }
     }
@@ -119,7 +140,14 @@ void PotentialCallbackMoleculeHMA::allComputeFinished(double uTot, double virial
       orientationSum -= 1.5 * (theta - 0.5*axisLength) / denominator * dudt;
     }
   }
-  data[0] = (1.5*(N-1) + 0.5*rotationDOF)*temperature + uTot + 0.5*fdotdrTot + orientationSum;
+  double uHarm = 0.5*(3*(N-1) + rotationDOF)*temperature;
+  double u0 = returnAnh ? (uHarm + uLat) : 0;
+  data[0] = uTot - u0;
+  double p0 = returnAnh ? (pLat + Pharm) : 0;
+  data[1] = N*temperature/vol - virialTot/(3*vol) - p0;
+  data[2] = (returnAnh ? -uLat : uHarm) + uTot + 0.5*fdotdrTot + orientationSum;
+  double fV = (Pharm/temperature - N/vol)/(3*(N-1) + rotationDOF);
+  data[3] = (returnAnh ? -pLat : Pharm) - virialTot/(3*vol) + fV * (fdotdrTot + 2*orientationSum);
 }
 
 double* PotentialCallbackMoleculeHMA::getData() {
