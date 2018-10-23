@@ -147,6 +147,7 @@ void PotentialCallbackMoleculeHMA::allComputeFinished(double uTot, double virial
   data[1] = N*temperature/vol - virialTot/(3*vol) - p0;
   data[2] = (returnAnh ? -uLat : uHarm) + uTot + 0.5*fdotdrTot + orientationSum;
   double fV = (Pharm/temperature - N/vol)/(3*(N-1) + rotationDOF);
+  //printf("%e %e %e\n", -virialTot/(3*vol), fV * (fdotdrTot + 2*orientationSum), fV);
   data[3] = (returnAnh ? -pLat : Pharm) - virialTot/(3*vol) + fV * (fdotdrTot + 2*orientationSum);
 }
 
