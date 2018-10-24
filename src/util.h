@@ -9,6 +9,7 @@ inline double getTime() {
   return tmus*1e-6;
 }
 
+#ifdef FAST_ERFC
 // we are overriding erfc from libc.  this is ~6x faster and has adequate accuracy
 inline double erfc(double x) {
   double t = 1.0 / (1.0 + 0.3275911 * x);
@@ -18,3 +19,4 @@ inline double erfc(double x) {
             1.421413741 + t * (
               -1.453152027 + 1.061405429 * t)))));
 }
+#endif

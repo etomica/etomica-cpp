@@ -13,6 +13,9 @@ else
 FLAGS += -O3
 endif
 endif
+ifdef FAST_ERFC
+FLAGS += -DFAST_ERFC
+endif
 
 OBJDIR = build
 
