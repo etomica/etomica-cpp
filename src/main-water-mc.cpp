@@ -64,19 +64,7 @@ int main(int argc, char** argv) {
   printf("cells: %d %d %d\n", numCells[0], numCells[1], numCells[2]);
   PotentialCallbackEnergy pce;
   PotentialCallbackPressure pcp(box, temperature, true);
-  /*MeterFullCompute meterFull0(potentialMaster);
-  meterFull0.setDoCompute(true);
-  meterFull0.addCallback(&pce);
-  meterFull0.addCallback(&pcp);
-  for (int i=0; i<1000; i++) {
-    meterFull0.getData();
-  }
-  double* data = meterFull0.getData();
-  printf("u %f %f\n", data[0], data[0]/numMolecules);
-  printf("p %f\n", data[1]);*/
   IntegratorMC integrator(potentialMaster, rand);
-  //IntegratorNHC integrator(speciesList.getAtomInfo(), potentialMaster, rand, box, 3, 0.1);
-  //integrator.setTimeStep(0.005);
   integrator.setTemperature(temperature);
   integrator.reset();
   MCMoveMoleculeDisplacement move(box, potentialMaster, rand, 0.2);
