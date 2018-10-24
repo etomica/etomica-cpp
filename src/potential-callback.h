@@ -70,14 +70,18 @@ class PotentialCallbackMoleculeHMA : public PotentialCallback {
     Box& box;
     SpeciesList& speciesList;
     double temperature;
-    double data[1];
+    double Pharm;
+    double* data;
     double** latticePositions;
     double** latticeOrientations;
+    bool returnAnh, computingLat;
+    double uLat, pLat;
   public:
-    PotentialCallbackMoleculeHMA(Box& box, SpeciesList& speciesList, double temperature);
+    PotentialCallbackMoleculeHMA(Box& box, SpeciesList& speciesList, double temperature, double Pharm);
     ~PotentialCallbackMoleculeHMA();
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
     virtual int getNumData();
     virtual double* getData();
+    void setReturnAnharmonic(bool returnAnharmonic, PotentialMaster* potentialMaster);
 };
 
