@@ -1,3 +1,6 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 CFLAGS = -DSFMT_MEXP=19937 -DHAVE_SSE2 -msse2
 FLAGS = -std=c++11 -Wall

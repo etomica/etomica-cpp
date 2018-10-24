@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "cluster.h"
 
 Cluster::Cluster(int nm, int nv, bool cached) : IntegratorListener(), nValues(nv), numMolecules(nm), useCache(cached), cacheDirty(true), inTrial(false) {
