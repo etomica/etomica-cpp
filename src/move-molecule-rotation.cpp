@@ -6,6 +6,7 @@
 #include "alloc2d.h"
 
 MCMoveMoleculeRotate::MCMoveMoleculeRotate(SpeciesList& sl, Box& b, PotentialMaster& p, Random& r) : MCMove(b,p,r,0.5), speciesList(sl), numOldPositions(0), oldPositions(nullptr), iSpecies(-1) {
+  maxStepSize = M_PI;
 }
 
 MCMoveMoleculeRotate::~MCMoveMoleculeRotate() {
