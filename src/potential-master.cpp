@@ -388,8 +388,11 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot, doubl
     }
   }
   double coeff = 4*M_PI/(bs[0]*bs[1]*bs[2]);
-  double fourierSum = 0;
+  double fourierSum = 0, virialSum = 0;;
   int ik = 0;
+  for (int i=0; i<3; i++) {
+    kBasis[i] = 2*M_PI/bs[i];
+  }
   for (int ikx=0; ikx<=kxMax; ikx++) {
     double kx = ikx*kBasis[0];
     double kx2 = kx*kx;
@@ -420,8 +423,17 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot, doubl
           sFac[ik] += sFacAtom[iAtom];
         }
         // we could skip this as long as box-length, kCut don't change between calls
-        fExp[ik] = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
-        fourierSum += fExp[ik] * (sFac[ik]*conj(sFac[ik])).real();
+        double expthing = exp(-0.25*kxyz2/(alpha*alpha));
+        fExp[ik] = 2*expthing/kxyz2;
+        double x = (sFac[ik]*conj(sFac[ik])).real();
+        fourierSum += fExp[ik] * x;
+        //dFS/dV += dfExp/dV * x;
+        //             dfExp/dk dk/dV
+        //             dfExp/dk dk/dL dL/dV
+        //             dfExp/dk (-2k/3V)
+        //             (-2 exp/k^2 - 0.5/alpha^2 exp/k) (-2k/3V)
+        //             (2 exp/3V) (2/k + 0.5/alpha^2)
+        virialSum += 2*expthing * (2/kxyz2 + 0.5/(alpha*alpha))*x;
         if (doForces) {
           double coeffk = coeff * fExp[ik];
           for (int iAtom=0; iAtom<numAtoms; iAtom++) {
@@ -439,7 +451,9 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot, doubl
   fill(fExp.begin()+ik, fExp.end(), 0);
   fill(sFac.begin()+ik, sFac.end(), 0);
   uTot += 0.5*coeff * fourierSum;
-  virialTot += -3*0.5*coeff * fourierSum;
+  // dU/dV = -0.5*coeff*fourierSum/V
+  // virialTot = dU/dV *3V
+  virialTot += -3*0.5*coeff * fourierSum + 0.5*coeff*virialSum;
 }
 
 double PotentialMaster::computeVirialIntramolecular() {
@@ -691,6 +705,9 @@ double PotentialMaster::oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) 
   double coeff = 4*M_PI/(bs[0]*bs[1]*bs[2]);
   double fourierSum = 0;
   int ik = 0;
+  for (int i=0; i<3; i++) {
+    kBasis[i] = 2*M_PI/bs[i];
+  }
   for (int ikx=0; ikx<=kxMax; ikx++) {
     double kx = ikx*kBasis[0];
     double kx2 = kx*kx;
