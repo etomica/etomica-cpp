@@ -159,4 +159,5 @@ class PotentialEwald : public Potential {
     double du(double r2);
     double d2u(double r2);
     void u012(double r2, double &u, double &du, double &d2u);
+    virtual void u012TC(double &u, double &du, double &d2u);
 };

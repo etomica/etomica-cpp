@@ -423,6 +423,10 @@ void PotentialEwald::u012(double r2, double &u, double &du, double &d2u) {
   d2u = -dexp * (1 - alpha*alpha*2*r) - uq + pd2u;
 }
 
+void PotentialEwald::u012TC(double &u, double &du, double &d2u) {
+  p.u012TC(u, du, d2u);
+}
+
 PotentialEwaldBare::PotentialEwaldBare(double a, double qq, double rc) : Potential(TRUNC_SIMPLE, rc), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
 }
 
