@@ -35,7 +35,7 @@ class PotentialCallbackPressure : public PotentialCallback {
     virtual int getNumData();
     virtual double* getData();
 };
-    
+
 class PotentialCallbackEnergy : public PotentialCallback {
   protected:
     double data[1];
@@ -87,5 +87,20 @@ class PotentialCallbackMoleculeHMA : public PotentialCallback {
     virtual int getNumData();
     virtual double* getData();
     void setReturnAnharmonic(bool returnAnharmonic, PotentialMaster* potentialMaster);
+};
+
+class PotentialCallbackBulkModulus : public PotentialCallback {
+  protected:
+    Box& box;
+    double temperature;
+    double data[2];
+  public:
+    PotentialCallbackBulkModulus(Box& box, double temperature);
+    ~PotentialCallbackBulkModulus() {}
+    virtual int getNumData();
+    virtual void reset();
+    virtual void pairCompute(int iAtom, int jAtom, double* dr, double u, double du, double d2u);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual double* getData();
 };
 
