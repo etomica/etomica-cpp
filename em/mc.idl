@@ -190,7 +190,8 @@ interface PotentialCallbackPressure : PotentialCallback {
 PotentialCallbackPressure implements PotentialCallback;
 
 interface PotentialCallbackHMA : PotentialCallback {
-  void PotentialCallbackHMA([Ref] Box box, double temperature, double Pharm);
+  void PotentialCallbackHMA([Ref] Box box, double temperature, double Pharm, boolean doD2);
+  void setReturnAnharmonic(boolean returnAnharmonic, PotentialMaster potentialMaster);
 };
 
 PotentialCallbackHMA implements PotentialCallback;
@@ -265,11 +266,11 @@ interface IntegratorMD : Integrator {
 
 IntegratorMD implements Integrator;
 
-interface IntegratorNVE : IntegratorMD {
-  void IntegratorNVE([Ref] AtomInfo atomInfo, [Ref] PotentialMaster potentialMaster, [Ref] Random random, [Ref] Box box);
+interface IntegratorMDVelocityVerlet : IntegratorMD {
+  void IntegratorMDVelocityVerlet([Ref] AtomInfo atomInfo, [Ref] PotentialMaster potentialMaster, [Ref] Random random, [Ref] Box box);
 };
 
-IntegratorNVE implements IntegratorMD;
+IntegratorMDVelocityVerlet implements IntegratorMD;
 
 interface Cluster { };
 
