@@ -119,6 +119,7 @@ class PotentialMaster {
     vector<double> fExp;
     bool doEwald;
     double minR2;
+    double phi[3][3];
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);
     void handleOneBondPair(bool doForces, double &uTot, int iAtom, int jAtom, Potential* p);
@@ -314,14 +315,15 @@ class PotentialMaster {
     }
     virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom, const bool onlyAtom);
     virtual double oldEmbeddingEnergy(int iAtom);
-    void computeAllFourier(const bool doForces, double &uTot, double &virialTot);
+    void computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot);
     double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy);
-    void computeFourierIntramolecular(int iMolecule, bool doForces, double &uTot, double &virialTot);
+    void computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot);
     double computeVirialIntramolecular();
 
   public:
     PotentialMaster(const SpeciesList &speciesList, Box& box, bool doEmbed);
     virtual ~PotentialMaster();
+    virtual void init() {}
     Box& getBox();
     void setDoTruncationCorrection(bool doCorrection);
     void setDoSingleTruncationCorrection(bool doCorrection);

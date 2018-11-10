@@ -76,8 +76,8 @@ int main(int argc, char** argv) {
   MCMoveMoleculeRotate moveRotate(speciesList, box, potentialMaster, rand);
   integrator.addMove(&moveRotate, 1);
   double Pharm = 18;
-  PotentialCallbackMoleculeHMA pcHMA(box, speciesList, temperature, Pharm);
-  pcHMA.setReturnAnharmonic(true, &potentialMaster);
+  PotentialCallbackMoleculeHMA pcHMA(box, speciesList, &potentialMaster, temperature, Pharm);
+  pcHMA.setReturnAnharmonic(true);
   double u0 = integrator.getPotentialEnergy();
   printf("u: %f\n", u0/numMolecules);
   if (doData) integrator.doSteps(steps/10);

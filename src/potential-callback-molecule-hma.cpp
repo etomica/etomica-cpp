@@ -8,11 +8,12 @@
 #include "alloc2d.h"
 #include "vector.h"
 #include "rotation-matrix.h"
+#include "matrix.h"
 
 /**
  * Computes energy with mapped averaging for rigid molecular system.  Also handles atoms.
  */
-PotentialCallbackMoleculeHMA::PotentialCallbackMoleculeHMA(Box& b, SpeciesList& sl, double T, double Ph) : box(b), speciesList(sl), temperature(T), Pharm(Ph), returnAnh(false), computingLat(false) {
+PotentialCallbackMoleculeHMA::PotentialCallbackMoleculeHMA(Box& b, SpeciesList& sl, PotentialMaster* pm, double T, double Ph) : box(b), speciesList(sl), potentialMaster(pm), temperature(T), Pharm(Ph), returnAnh(false), computingLat(false), computingPshift(false) {
   callFinished = true;
   takesForces = true;
   int N = box.getTotalNumMolecules();
@@ -30,31 +31,284 @@ PotentialCallbackMoleculeHMA::PotentialCallbackMoleculeHMA(Box& b, SpeciesList& 
     std::copy(o, o+6, latticeOrientations[i]);
   }
   data = (double*) malloc(4*sizeof(double));
+
+  dRdV = nullptr;
+}
+
+void PotentialCallbackMoleculeHMA::findShiftV() {
+  computingPshift = true;
+  vector<PotentialCallback*> callbacks;
+  callbacks.push_back(this);
+  callPair = true;
+  takesPhi = true;
+  takesDFDV = true;
+  int numAtoms = box.getNumAtoms();
+  // construct these bits for atoms, transform to molecules later
+  phiTotal = (double**)malloc2D(3*numAtoms, 3*numAtoms, sizeof(double));
+  dFdV = (double**)malloc2D(numAtoms, 3, sizeof(double));
+  com = (double**)malloc2D(numAtoms, 3, sizeof(double));
+  for (int i=0; i<numAtoms; i++) {
+    for (int k=0; k<3; k++) {
+      dFdV[i][k] = 0;
+      for (int j=0; j<numAtoms; j++) {
+        for (int l=0; l<3; l++) {
+          phiTotal[3*i + k][3*j + l] = 0;
+        }
+      }
+    }
+  }
+  int numMolecules = box.getTotalNumMolecules();
+  for (int iMolecule=0; iMolecule<numMolecules; iMolecule++) {
+    int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+    box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
+    double* x = speciesList.get(iSpecies)->getMoleculeCOM(box, iFirstAtom, iLastAtom);
+    for (int k=0; k<3; k++) com[iMolecule][k] = x[k];
+  }
+  potentialMaster->computeAll(callbacks);
+  computingPshift = false;
+  callPair = false;
+  takesPhi = false;
+  free2D((void**)phiTotal);
+  free2D((void**)dFdV);
+  free2D((void**)com);
 }
 
 PotentialCallbackMoleculeHMA::~PotentialCallbackMoleculeHMA() {
   free2D((void**)latticePositions);
   free2D((void**)latticeOrientations);
   free(data);
+  free2D((void**)dRdV);
 }
 
-void PotentialCallbackMoleculeHMA::setReturnAnharmonic(bool ra, PotentialMaster* pm) {
+void PotentialCallbackMoleculeHMA::pairComputePhi(int iAtom, int jAtom, double phi[3][3]) {
+  double* ri = box.getAtomPosition(iAtom);
+  double* rj = box.getAtomPosition(jAtom);
+  double dri[3], drj[3];
+  dri[0] = ri[0] - com[iAtom][0]; dri[1] = ri[1] - com[iAtom][1]; dri[2] = ri[2] - com[iAtom][2];
+  drj[0] = rj[0] - com[jAtom][0]; drj[1] = rj[1] - com[jAtom][1]; drj[2] = rj[2] - com[jAtom][2];
+  box.nearestImage(dri);
+  box.nearestImage(drj);
+  for (int k=0; k<3; k++) {
+    for (int l=0; l<3; l++) {
+      phiTotal[3*iAtom+k][3*jAtom+l] += phi[k][l];
+      phiTotal[3*jAtom+l][3*iAtom+k] += phi[k][l];
+    }
+  }
+}
+
+void PotentialCallbackMoleculeHMA::computeDFDV(int iAtom, double* idFdV) {
+  for (int k=0; k<3; k++) dFdV[iAtom][k] += idFdV[k];
+}
+
+void PotentialCallbackMoleculeHMA::pairCompute(int iAtom, int jAtom, double* drij, double u, double du, double d2u) {
+  // drij = rj-ri
+
+  double dri[3];
+  int s, m, f;
+  box.getMoleculeInfoAtom(iAtom, m, s, f);
+  double* ri = box.getAtomPosition(iAtom);
+  dri[0] = ri[0] - com[m][0]; dri[1] = ri[1] - com[m][1]; dri[2] = ri[2] - com[m][2];
+  box.nearestImage(dri);
+  double* rj = box.getAtomPosition(jAtom);
+  double drj[3];
+  box.getMoleculeInfoAtom(jAtom, m, s, f);
+  drj[0] = rj[0] - com[m][0]; drj[1] = rj[1] - com[m][1]; drj[2] = rj[2] - com[m][2];
+  box.nearestImage(drj);
+
+  double r2 = 0;
+  for (int k=0; k<3; k++) r2 += drij[k]*drij[k];
+  double dfac = (du - d2u) / (r2*r2);
+  for (int k=0; k<3; k++) {
+    double foo = drij[k]*dfac;
+    for (int l=0; l<3; l++) {
+      double der2 = foo*drij[l];
+      if (k==l) der2 -= du/r2;
+      phiTotal[3*iAtom+k][3*jAtom+l] += der2;
+      phiTotal[3*jAtom+l][3*iAtom+k] += der2;
+    }
+    // handle this here since pair separation depends directly on V
+    dFdV[iAtom][k] += d2u * drij[k] / r2;
+    dFdV[jAtom][k] -= d2u * drij[k] / r2;
+  }
+}
+
+void PotentialCallbackMoleculeHMA::setReturnAnharmonic(bool ra) {
   returnAnh = ra;
   if (ra) {
     computingLat = true;
     vector<PotentialCallback*> callbacks;
     callbacks.push_back(this);
-    pm->computeAll(callbacks);
+    potentialMaster->computeAll(callbacks);
     computingLat = false;
     uLat = data[0];
     pLat = data[1];
-    printf("pLat %f\n", pLat);
   }
 }
 
 int PotentialCallbackMoleculeHMA::getNumData() {return 4;}
 
+void PotentialCallbackMoleculeHMA::computeShift(double** f) {
+  // compute self phi
+  int numAtoms = box.getNumAtoms();
+  for (int iAtom=0; iAtom<numAtoms; iAtom++) {
+    for (int jAtom=0; jAtom<numAtoms; jAtom++) {
+      if (jAtom==iAtom) continue;
+      for (int k=0; k<3; k++) {
+        for (int l=0; l<3; l++) {
+          phiTotal[3*iAtom+k][3*iAtom+l] -= phiTotal[3*iAtom+k][3*jAtom+l];
+        }
+      }
+    }
+  }
+  const double* bs = box.getBoxSize();
+  double vol = bs[0]*bs[1]*bs[2];
+  for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
+    int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+    box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
+    if (iLastAtom==iFirstAtom) continue;
+    for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+      double* ri = box.getAtomPosition(iAtom);
+      double dri[3];
+      for (int k=0; k<3; k++) dri[k] = ri[k]-com[iMolecule][k];
+      box.nearestImage(dri);
+      // includes i=j
+      for (int jMolecule=0; jMolecule<box.getTotalNumMolecules(); jMolecule++) {
+        int jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom;
+        box.getMoleculeInfo(jMolecule, jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom);
+        if (jLastAtom==jFirstAtom) continue;
+        for (int jAtom=jFirstAtom; jAtom<=jLastAtom; jAtom++) {
+          double* rj = box.getAtomPosition(jAtom);
+          double drj[3];
+          for (int k=0; k<3; k++) drj[k] = rj[k]-com[jMolecule][k];
+          box.nearestImage(drj);
+          for (int k=0; k<3; k++) {
+            for (int l=0; l<3; l++) {
+              dFdV[iAtom][k] += phiTotal[3*iAtom+k][3*jAtom+l] * drj[l];
+            }
+          }
+        }
+      }
+    }
+  }
+  // transform to molecular coordinates
+  
+  int numMolecules = box.getTotalNumMolecules();
+  // dFdV for molecules
+  double* Fm = (double*)malloc(6*numMolecules*sizeof(double));
+  for (int i=0; i<6*numMolecules; i++) Fm[i]=0;
+  // phi for molecules
+  for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
+    int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+    box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
+    for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+      for (int k=0; k<3; k++) {
+        Fm[6*iMolecule + k] += dFdV[iAtom][k];
+      }
+      double* ri = box.getAtomPosition(iAtom);
+      double dri[3];
+      for (int k=0; k<3; k++) dri[k] = ri[k]-com[iMolecule][k];
+      box.nearestImage(dri);
+      double torque[3];
+      Vector::cross(dri, dFdV[iAtom], torque);
+      for (int k=0; k<3; k++) {
+        Fm[6*iMolecule + 3 + k] += torque[k];
+      }
+    }
+  }
+  Matrix phimall = Matrix(6*numMolecules, 6*numMolecules);
+  double** phim = phimall.matrix;
+  Matrix Ri(3,3), Rj(3,3);
+  double** Rim = Ri.matrix;
+  Rim[0][0] = Rim[1][1] = Rim[2][2] = 0;
+  double** Rjm = Rj.matrix;
+  Rjm[0][0] = Rjm[1][1] = Rjm[2][2] = 0;
+  Matrix phimat(3,3);
+  double** phimm = phimat.matrix;
+  Matrix tmpmat(3,3);
+  for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
+    int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+    box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
+    for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+      double* ri = box.getAtomPosition(iAtom);
+      double dri[3];
+      for (int k=0; k<3; k++) dri[k] = ri[k]-com[iMolecule][k];
+      box.nearestImage(dri);
+      Rim[0][1] = dri[2];
+      Rim[1][0] = -dri[2];
+      Rim[0][2] = -dri[1];
+      Rim[2][0] = dri[1];
+      Rim[1][2] = dri[0];
+      Rim[2][1] = -dri[0];
+      for (int jMolecule=0; jMolecule<box.getTotalNumMolecules(); jMolecule++) {
+        int jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom;
+        box.getMoleculeInfo(jMolecule, jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom);
+        for (int jAtom=jFirstAtom; jAtom<=jLastAtom; jAtom++) {
+          double* rj = box.getAtomPosition(jAtom);
+          double drj[3];
+          for (int k=0; k<3; k++) drj[k] = rj[k]-com[jMolecule][k];
+          box.nearestImage(drj);
+          Rjm[0][1] = drj[2];
+          Rjm[1][0] = -drj[2];
+          Rjm[0][2] = -drj[1];
+          Rjm[2][0] = drj[1];
+          Rjm[1][2] = drj[0];
+          Rjm[2][1] = -drj[0];
+          for (int k=0; k<3; k++) {
+            for (int l=0; l<3; l++) {
+              phimm[k][l] += phiTotal[3*iAtom+k][3*jAtom+l];
+            }
+          }
+          tmpmat.E(phimat);
+          tmpmat.TE(Rj);
+          for (int k=0; k<3; k++) {
+            for (int l=0; l<3; l++) {
+              phim[6*iMolecule + k][6*jMolecule + 3 + l] += tmpmat.matrix[k][l];
+            }
+          }
+          tmpmat.E(Ri);
+          tmpmat.TE(phimat);
+          for (int k=0; k<3; k++) {
+            for (int l=0; l<3; l++) {
+              phim[6*iMolecule + 3 + k][6*jMolecule + l] += tmpmat.matrix[k][l];
+            }
+          }
+          tmpmat.TE(Rj);
+          for (int k=0; k<3; k++) {
+            for (int l=0; l<3; l++) {
+              phim[6*iMolecule + 3 + k][6*jMolecule + 3 + l] += tmpmat.matrix[k][l];
+            }
+          }
+        }
+      }
+      double xdotf = Vector::dot(dri, f[iAtom]);
+      for (int k=0; k<3; k++) {
+        phim[6*iMolecule + 3 + k][6*iMolecule + 3 + k] += xdotf;
+        for (int l=0; l<3; l++) {
+          phim[6*iMolecule + 3 + k][6*iMolecule + 3 + l] -= dri[k]*f[iAtom][l];
+        }
+      }
+    }
+  }
+  // -dFdV = phimm DR
+  // DR = - phimm^-1 dFdV
+  phimall.invert();
+  phimall.transform(Fm);
+  dRdV = (double**)malloc2D(numMolecules, 6, sizeof(double));
+  for (int iMolecule=0; iMolecule<numMolecules; iMolecule++) {
+    for (int k=0; k<3; k++) dRdV[iMolecule][k] = Fm[6*iMolecule+k];
+  }
+  free(Fm);
+
+  // F_i (new force at old lattice site) = sum phi_ij DRj (amount each j should move)
+  // DRj = phi_ii^-1 F_i
+  // dRi/dV = phi_ii^-1 dFi/dV
+}
+
 void PotentialCallbackMoleculeHMA::allComputeFinished(double uTot, double virialTot, double** f) {
+  if (computingPshift) {
+    computeShift(f);
+    return;
+  }
   const double* bs = box.getBoxSize();
   double vol = bs[0]*bs[1]*bs[2];
   if (computingLat) {

@@ -8,7 +8,7 @@
 #include "alloc2d.h"
 #include "util.h"
 
-PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false) {}
+PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false), takesPhi(false), takesDFDV(false) {}
 
 PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed), charges(nullptr), sFacAtom(nullptr), doEwald(false) {
 
@@ -198,10 +198,12 @@ Box& PotentialMaster::getBox() {
 
 void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   pairCallbacks.resize(0);
-  bool doForces = false;
+  bool doForces = false, doPhi = false, doDFDV = false;
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if (!embeddingPotentials && (*it)->callPair) pairCallbacks.push_back(*it);
     if ((*it)->takesForces) doForces = true;
+    if ((*it)->takesPhi) doPhi = true;
+    if ((*it)->takesDFDV) doDFDV = true;
   }
   int numAtoms = box.getNumAtoms();
   if (doForces && numAtoms > numForceAtoms) {
@@ -284,7 +286,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
     }
   }
   if (doEwald) {
-    computeAllFourier(doForces, uTot, virialTot);
+    computeAllFourier(doForces, doPhi, doDFDV, uTot, virialTot);
   }
   if (doForces && !pureAtoms) {
     virialTot += computeVirialIntramolecular();
@@ -298,7 +300,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   }
 }
 
-void PotentialMaster::computeFourierIntramolecular(int iMolecule, bool doForces, double &uTot, double &virialTot) {
+void PotentialMaster::computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot) {
   int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
   if (iLastAtom==iFirstAtom) return;
@@ -319,7 +321,7 @@ void PotentialMaster::computeFourierIntramolecular(int iMolecule, bool doForces,
       double qiqj = qi*qj;
       double ec = erfc(alpha*r);
       uTot -= qiqj*(1-ec)/r;
-      if (doForces) {
+      if (!rigidMolecules && doForces) {
         double du = -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *alpha + (ec-1)/r) / r2;
         for (int m=0; m<3; m++) {
           force[iAtom][m] += dr[m]*du;
@@ -331,7 +333,7 @@ void PotentialMaster::computeFourierIntramolecular(int iMolecule, bool doForces,
   }
 }
 
-void PotentialMaster::computeAllFourier(const bool doForces, double &uTot, double &virialTot) {
+void PotentialMaster::computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot) {
   const int numAtoms = box.getNumAtoms();
   double q2sum = 0;
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
@@ -343,7 +345,7 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot, doubl
   uTot -= alpha/sqrt(M_PI)*q2sum;
 
   for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
-    computeFourierIntramolecular(iMolecule, doForces, uTot, virialTot);
+    computeFourierIntramolecular(iMolecule, doForces, doPhi, uTot, virialTot);
   }
 
   const double kCut2 = kCut*kCut;
@@ -387,7 +389,8 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot, doubl
       }
     }
   }
-  double coeff = 4*M_PI/(bs[0]*bs[1]*bs[2]);
+  double vol = bs[0]*bs[1]*bs[2];
+  double coeff = 4*M_PI/vol;
   double fourierSum = 0, virialSum = 0;;
   int ik = 0;
   for (int i=0; i<3; i++) {
@@ -409,6 +412,7 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot, doubl
         if (!xpositive && !ypositive && ikz<=0) continue;
         double kz = ikz*kBasis[2];
         double kxyz2 = kxy2 + kz*kz;
+        double expthing = exp(-0.25*kxyz2/(alpha*alpha));
         sFac[ik] = 0;
         for (int iAtom=0; iAtom<numAtoms; iAtom++) {
           int iType = box.getAtomType(iAtom);
@@ -421,9 +425,29 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot, doubl
                                * eik[1][iAtom*nk[1]+kMax[1]+iky]
                                * eik[2][iAtom*nk[2]+kMax[2]+ikz];
           sFac[ik] += sFacAtom[iAtom];
+          if (doPhi) {
+            double* ri = box.getAtomPosition(iAtom);
+            double phiFac = expthing/kxyz2;
+            double karray[3] = {kx,ky,kz};
+            for (int jAtom=0; jAtom<numAtoms; jAtom++) {
+              int jType = box.getAtomType(jAtom);
+              double qj = charges[jType];
+              if (qj==0) continue;
+              double* rj = box.getAtomPosition(jAtom);
+              double jPhiFac = phiFac*cos(kx*(rj[0]-ri[0]) + ky*(rj[1]-ri[1]) + kz*(rj[2]-rj[2]));
+              for (int k=0; k<3; k++) {
+                for (int l=0; l<3; l++) {
+                  phi[k][l] = jPhiFac*karray[k]*karray[l];
+                }
+              }
+              for (vector<PotentialCallback*>::iterator it = pairCallbacks.begin(); it!=pairCallbacks.end(); it++) {
+                (*it)->pairComputePhi(iAtom, jAtom, phi);
+              }
+
+            }
+          }
         }
         // we could skip this as long as box-length, kCut don't change between calls
-        double expthing = exp(-0.25*kxyz2/(alpha*alpha));
         fExp[ik] = 2*expthing/kxyz2;
         double x = (sFac[ik]*conj(sFac[ik])).real();
         fourierSum += fExp[ik] * x;
@@ -442,6 +466,12 @@ void PotentialMaster::computeAllFourier(const bool doForces, double &uTot, doubl
             force[iAtom][0] += coeffki * kx;
             force[iAtom][1] += coeffki * ky;
             force[iAtom][2] += coeffki * kz;
+            if (doDFDV) {
+              double dfdv[3] = {coeffki*kx/(3*vol), coeffki*ky/(3*vol), coeffki*kz/(3*vol)};
+              for (vector<PotentialCallback*>::iterator it = pairCallbacks.begin(); it!=pairCallbacks.end(); it++) {
+                (*it)->computeDFDV(iAtom, dfdv);
+              }
+            }
           }
         }
         ik++;
@@ -663,7 +693,7 @@ void PotentialMaster::computeOneMoleculeBonds(const int iSpecies, const int iMol
 
 double PotentialMaster::oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) {
   double u = 0, v = 0;
-  computeFourierIntramolecular(iMolecule, false, u, v);
+  computeFourierIntramolecular(iMolecule, false, false, u, v);
   int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
 
@@ -1034,7 +1064,7 @@ double PotentialMaster::uTotalFromAtoms() {
 
     double virialTot = 0;
     for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
-      computeFourierIntramolecular(iMolecule, false, uTot, virialTot);
+      computeFourierIntramolecular(iMolecule, false, false, uTot, virialTot);
     }
     double fourierSum = 0;
     for (int ik=0; ik<(int)sFac.size(); ik++) {

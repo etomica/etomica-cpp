@@ -205,10 +205,12 @@ resetStart:
 
 void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
   pairCallbacks.resize(0);
-  bool doForces = false;
+  bool doForces = false, doPhi = false, doDFDV = false;
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if (!embeddingPotentials && (*it)->callPair) pairCallbacks.push_back(*it);
     if ((*it)->takesForces) doForces = true;
+    if ((*it)->takesPhi) doPhi = true;
+    if ((*it)->takesDFDV) doDFDV = true;
   }
   int numAtoms = box.getNumAtoms();
   if (doForces && numAtoms > numForceAtoms) {
@@ -283,7 +285,7 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
     }
   }
   if (doEwald) {
-    computeAllFourier(doForces, uTot, virialTot);
+    computeAllFourier(doForces, doPhi, doDFDV, uTot, virialTot);
   }
   if (doForces && !pureAtoms) {
     virialTot += computeVirialIntramolecular();
