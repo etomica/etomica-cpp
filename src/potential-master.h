@@ -113,9 +113,9 @@ class PotentialMaster {
     double kBasis[3];
     double kCut, alpha;
     complex<double> *sFacAtom;
-    vector<complex<double>> sFac;
-    vector<complex<double>> eik[3];
-    vector<complex<double>> dsFacMolecule;
+    vector<complex<double> > sFac;
+    vector<complex<double> > eik[3];
+    vector<complex<double> > dsFacMolecule;
     vector<double> fExp;
     bool doEwald;
     double minR2;
