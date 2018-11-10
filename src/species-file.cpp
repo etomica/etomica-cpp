@@ -111,7 +111,7 @@ char* SpeciesFile::readAtoms(FILE* f, const char* filename, vector<double*> &tmp
     if (!atomNumStr || atomNumStr[0]=='#') continue;
     int atomNum = atoi(atomNumStr);
     if (atomNum != (int)types.size()+1) {
-      fprintf(stderr, "atom %d on line %lu!\n", atomNum, types.size()+1);
+      fprintf(stderr, "atom %d on line %d!\n", atomNum, (int)types.size()+1);
       abort();
     }
     if (!c) {
