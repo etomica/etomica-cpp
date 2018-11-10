@@ -4,7 +4,7 @@
 
 # DEBUG flags
 #FLAGS = -O0 -Wall -s ASSERTIONS=2 -s SAFE_HEAP=1 -s STACK_OVERFLOW_CHECK=2 -s DEMANGLE_SUPPORT=1
-FLAGS = -Os -Wall
+FLAGS = -Os -std=c++11 -Wall
 CFLAGS = $(FLAGS) -I../src/ -I. -Ibuild -DSFMT_MEXP=19937
 LFLAGS = $(FLAGS) -s WASM=1
 # define WEBIDL or create webidl.mk
