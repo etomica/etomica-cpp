@@ -5,8 +5,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>MC Simulation</title>
 <script src='//code.jquery.com/jquery-3.3.1.min.js' integrity='sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=' crossorigin='anonymous'></script>
-<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel='stylesheet' href='style.css'>
@@ -19,34 +19,7 @@
       <progress value="0" max="100" id="progress" hidden=1></progress>  
     </div>
     <h1>Monte Carlo Simulation</h1>
-<?php
-  $SFMTbits = array_merge(glob("SFMT*.h"), glob("SFMT*.cpp"));
-  echo "<p><a href='http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/'>SFMT random numbers</a>: ";
-  foreach ($SFMTbits as $f) {
-    echo "<a href='$f'>$f</a> ";
-  }
-  echo "</p>";
-  $hBits = glob("*.h");
-  echo "<p>Headers: ";
-  foreach ($hBits as $f) {
-    if (substr($f,0,4) == "SFMT") continue;
-    echo "<a href='$f'>$f</a> ";
-  }
-  echo "</p>";
-  $cppBits = glob("*.cpp");
-  echo "<p>Source: ";
-  foreach ($cppBits as $f) {
-    if (substr($f,0,4) == "SFMT") continue;
-    echo "<a href='$f'>$f</a> ";
-  }
-  echo "</p>";
-  $extra = array_merge(glob("*.idl"), glob("Makefile"));
-  echo "<p>Extra: ";
-  foreach ($extra as $f) {
-    echo "<a href='$f'>$f</a> ";
-  }
-  echo "</p>";
-?>
+    <p><a href='https://github.com/etomica/etomica-cpp'>Github repository</a></p>
     <div id='parametersDiv' class='card'>
       <div class='card-header' role='tab' id='headingParameters'><h5 class='mb-0'><a role='button' data-toggle='collapse' href='#collapseParameters' aria-expanded='true' aria-controls='collapseParameters'>Parameters</a> <button type='button' id='btnNewParameters' style='display: none;' class='btn btn-sm btn-secondary'>New parameters</button></h5></div>
       <div id='collapseParameters' class='collapse show' aria-labelledby='headingParameters'>
@@ -555,9 +528,7 @@ document.getElementById("doMD").removeAttribute("disabled");
 document.getElementById("doNbrList").removeAttribute("readonly");
 document.getElementById("doNbrList").removeAttribute("disabled");
     </script>
-<?php
-  echo "<script async type='text/javascript' src='mc.js'></script>";
-?>
+    <script async type='text/javascript' src='mc.js'></script>
   </body>
 </html>
 
