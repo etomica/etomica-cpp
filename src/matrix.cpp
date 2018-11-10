@@ -19,6 +19,14 @@ Matrix::~Matrix() {
   delete[] tmpVec;
 }
 
+void Matrix::E(Matrix& m) {
+  for (int i=0; i<nRows; i++) {
+    for (int j=0; j<nCols; j++) {
+      matrix[i][j] = m.matrix[i][j];
+    }
+  }
+}
+
 void Matrix::setRows(double** rows) {
   for (int i=0; i<nRows; i++) {
     for (int j=0; j<nCols; j++) {

@@ -12,6 +12,7 @@ class Matrix {
     double **matrix;
     Matrix(int rows, int cols);
     ~Matrix();
+    void E(Matrix& m);
     void setRows(double** rows);
     void transpose();
     void transform(double* vec);
