@@ -96,6 +96,7 @@ class PotentialCallbackMoleculeHMA : public PotentialCallback {
     PotentialCallbackMoleculeHMA(Box& box, SpeciesList& speciesList, PotentialMaster* pm, double temperature, double Pharm);
     virtual ~PotentialCallbackMoleculeHMA();
     virtual void findShiftV();
+    virtual double** getDRDV();
     virtual void pairCompute(int iAtom, int jAtom, double* dr, double u, double du, double d2u);
     virtual void pairComputePhi(int iAtom, int jAtom, double phi[3][3]);
     virtual void computeDFDV(int iAtom, double* idFdV);
