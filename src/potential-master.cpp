@@ -427,14 +427,16 @@ void PotentialMaster::computeAllFourier(const bool doForces, const bool doPhi, c
           sFac[ik] += sFacAtom[iAtom];
           if (doPhi) {
             double* ri = box.getAtomPosition(iAtom);
-            double phiFac = expthing/kxyz2;
+            double phiFac = 4*M_PI*qi*expthing/(kxyz2*vol);
             double karray[3] = {kx,ky,kz};
             for (int jAtom=0; jAtom<numAtoms; jAtom++) {
+              if (jAtom==iAtom) continue;
               int jType = box.getAtomType(jAtom);
               double qj = charges[jType];
               if (qj==0) continue;
               double* rj = box.getAtomPosition(jAtom);
-              double jPhiFac = phiFac*cos(kx*(rj[0]-ri[0]) + ky*(rj[1]-ri[1]) + kz*(rj[2]-rj[2]));
+              double dr[3] = {rj[0]-ri[0],rj[1]-ri[1],rj[2]-ri[2]};
+              double jPhiFac = qj*phiFac*cos(kx*dr[0] + ky*dr[1] + kz*dr[2]);
               for (int k=0; k<3; k++) {
                 for (int l=0; l<3; l++) {
                   phi[k][l] = jPhiFac*karray[k]*karray[l];
