@@ -300,8 +300,8 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
   // satisfy fixed COM.
   for (int k=0; k<3; k++) {
     for (int j=0; j<numMolecules; j++) {
-      for (int l=0; l<3; l++) {
-        phim[k][3*j+l] = k!=l ? 0 : (j==0 ? 1 : -1.0/numMolecules);
+      for (int l=0; l<6; l++) {
+        phim[k][6*j+l] = k==l ? 1 : 0;
       }
     }
     Fm[k] = 0;
@@ -352,7 +352,7 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
   dRdV = (double**)malloc2D(numMolecules, 6, sizeof(double));
   for (int iMolecule=0; iMolecule<numMolecules; iMolecule++) {
     for (int k=0; k<6; k++) {
-      dRdV[iMolecule][k] = Fm[6*iMolecule+k-3];
+      dRdV[iMolecule][k] = Fm[6*iMolecule+k];
     }
   }
   free(Fm);
