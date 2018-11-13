@@ -70,8 +70,26 @@ void Matrix::TE(Matrix& m) {
   }
 }
 
+/**
+ * If the matrix is square, this will determine the inverse and then
+ * replace the matrix with its inverse.  A => A^-1
+ *
+ * It the matrix is augmented (with nCols>nRows), the matrix will be inverted
+ * in place with the augmented part replaced with the solution.
+ * A x = b with matrix A|b, then invert will replace b with x.
+ */
 void Matrix::invert() {
   double** M = matrix;
+  double** B = nullptr;
+  if (nRows==nCols) {
+    B = (double**)malloc2D(nRows, nRows, sizeof(double));
+    for (int i=0; i<nRows; i++) {
+      for (int j=0; j<nRows; j++) {
+        B[i][j] = 0;
+      }
+      B[i][i] = 1;
+    }
+  }
 
   // zero L
   for (int i=0; i<nRows; i++) {
@@ -92,17 +110,34 @@ void Matrix::invert() {
         M[i][j] = M[prow][j]/pval;
         M[prow][j] = t;
       }
+      if (B) {
+        for (int j=0; j<nCols; j++) {
+          double t = B[i][j];
+          B[i][j] = B[prow][j]/pval;
+          B[prow][j] = t;
+        }
+      }
     }
     else {
       // just normalize
       for (int j=i+1; j<nCols; j++) {
         M[i][j] /= pval;
       }
+      if (B) {
+        for (int j=0; j<nCols; j++) {
+          B[i][j] /= pval;
+        }
+      }
     }
     for (int j=i+1; j<nRows; j++) {
       double Mij_iMii=M[j][i];
       for (int k=i+1; k<nCols; k++) {
         M[j][k]-=M[i][k]*Mij_iMii;
+      }
+      if (B) {
+        for (int k=0; k<nCols; k++) {
+          B[j][k] -= B[i][k]*Mij_iMii;
+        }
       }
       M[j][i]=0.0;
     }
@@ -119,6 +154,20 @@ void Matrix::invert() {
       for (int k=nRows; k<nCols; k++) {
         M[j][k]-=M[i][k]*M[j][i];
       }
+      if (B) {
+        for (int k=0; k<nCols; k++) {
+          B[j][k] -= B[i][k]*M[j][i];
+        }
+      }
     }
+  }
+
+  if (B) {
+    for (int i=0; i<nRows; i++) {
+      for (int j=0; j<nRows; j++) {
+        M[i][j] = B[i][j];
+      }
+    }
+    free2D((void**)B);
   }
 }

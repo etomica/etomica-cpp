@@ -17,5 +17,14 @@ class Matrix {
     void transpose();
     void transform(double* vec);
     void TE(Matrix& m);
+
+    /**
+     * If the matrix is square, this will determine the inverse and then
+     * replace the matrix with its inverse.  A => A^-1
+     *
+     * It the matrix is augmented (with nCols>nRows), the matrix will be inverted
+     * in place with the augmented part replaced with the solution.
+     * A x = b with matrix A|b, then invert will replace b with x.
+     */
     void invert();
 };
