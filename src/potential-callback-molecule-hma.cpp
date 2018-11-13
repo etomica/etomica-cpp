@@ -95,19 +95,6 @@ void PotentialCallbackMoleculeHMA::computeDFDV(int iAtom, double* idFdV) {
 
 void PotentialCallbackMoleculeHMA::pairCompute(int iAtom, int jAtom, double* drij, double u, double du, double d2u) {
   // drij = rj-ri
-
-  double dri[3];
-  int s, m, f;
-  box.getMoleculeInfoAtom(iAtom, m, s, f);
-  double* ri = box.getAtomPosition(iAtom);
-  dri[0] = ri[0] - com[m][0]; dri[1] = ri[1] - com[m][1]; dri[2] = ri[2] - com[m][2];
-  box.nearestImage(dri);
-  double* rj = box.getAtomPosition(jAtom);
-  double drj[3];
-  box.getMoleculeInfoAtom(jAtom, m, s, f);
-  drj[0] = rj[0] - com[m][0]; drj[1] = rj[1] - com[m][1]; drj[2] = rj[2] - com[m][2];
-  box.nearestImage(drj);
-
   double r2 = 0;
   for (int k=0; k<3; k++) r2 += drij[k]*drij[k];
   double dfac = (du - d2u) / (r2*r2);
@@ -174,7 +161,7 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
         for (int j=0; j<3; j++) torque[j] += atomTorque[j];
       }
     }
-    printf("F %2d  % f % f % f  % f % f % f\n", i, fi[0], fi[1], fi[2], torque[0], torque[1], torque[2]);
+    printf("F %2d  % 15.8f % 15.8f % 15.8f  % 15.8f % 15.8f % 15.8f\n", i, fi[0], fi[1], fi[2], torque[0], torque[1], torque[2]);
   }
 
   for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
@@ -210,14 +197,15 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
   // dFdV for molecules
   double* Fm = (double*)malloc(6*numMolecules*sizeof(double));
   for (int i=0; i<6*numMolecules; i++) Fm[i]=0;
+  const double* bs = box.getBoxSize();
+  double vol = bs[0]*bs[1]*bs[2];
   // phi for molecules
-  printf("dFdV\n");
   for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
     int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
     box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
     for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
       for (int k=0; k<3; k++) {
-        Fm[6*iMolecule + k] += dFdV[iAtom][k];
+        Fm[6*iMolecule + k] += dFdV[iAtom][k] / (3*vol);
       }
       double* ri = box.getAtomPosition(iAtom);
       double dri[3];
@@ -226,10 +214,10 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
       double torque[3];
       Vector::cross(dri, dFdV[iAtom], torque);
       for (int k=0; k<3; k++) {
-        Fm[6*iMolecule + 3 + k] += torque[k];
+        Fm[6*iMolecule + 3 + k] += torque[k] / (3*vol);
       }
     }
-    printf("%2d  % f % f % f  % f % f % f\n", iMolecule, Fm[6*iMolecule], Fm[6*iMolecule+1], Fm[6*iMolecule+2], Fm[6*iMolecule+3], Fm[6*iMolecule+4], Fm[6*iMolecule+5]);
+    printf("dFdV %2d  % f % f % f  % f % f % f\n", iMolecule, Fm[6*iMolecule], Fm[6*iMolecule+1], Fm[6*iMolecule+2], Fm[6*iMolecule+3], Fm[6*iMolecule+4], Fm[6*iMolecule+5]);
   }
   Matrix phimall = Matrix(6*numMolecules, 6*numMolecules);
   double** phim = phimall.matrix;
@@ -255,6 +243,7 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
       Rim[2][0] = dri[1];
       Rim[1][2] = dri[0];
       Rim[2][1] = -dri[0];
+      Ri.transpose();
       for (int jMolecule=0; jMolecule<box.getTotalNumMolecules(); jMolecule++) {
         int jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom;
         box.getMoleculeInfo(jMolecule, jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom);
@@ -297,15 +286,25 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
           }
         }
       }
-      // sign flipped compared to SI from https://dx.doi.org/10.1021/ie504008h ???
       double xdotf = Vector::dot(dri, f[iAtom]);
       for (int k=0; k<3; k++) {
-        phim[6*iMolecule + 3 + k][6*iMolecule + 3 + k] -= xdotf;
+        phim[6*iMolecule + 3 + k][6*iMolecule + 3 + k] += xdotf;
         for (int l=0; l<3; l++) {
-          phim[6*iMolecule + 3 + k][6*iMolecule + 3 + l] += dri[k]*f[iAtom][l];
+          phim[6*iMolecule + 3 + k][6*iMolecule + 3 + l] -= dri[k]*f[iAtom][l];
         }
       }
     }
+  }
+  // We can't solve all 3N translation DOF based on phi and dFdV because
+  // the COM mode is free.  Instead enforce that molecule 0 translates to
+  // satisfy fixed COM.
+  for (int k=0; k<3; k++) {
+    for (int j=0; j<numMolecules; j++) {
+      for (int l=0; l<3; l++) {
+        phim[k][3*j+l] = k!=l ? 0 : (j==0 ? 1 : -1.0/numMolecules);
+      }
+    }
+    Fm[k] = 0;
   }
   /*printf("atomic phi00\n");
   for (int i=0; i<3; i++) {
@@ -314,16 +313,16 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
     }
     printf("\n");
   }*/
-  for (int i=0; i<46; i++) {
-    printf("phi 0 %d", i);
-    for (int k=3; k<6; k++) {
-      for (int l=0; l<6; l++) {
-        printf(" % 10f", phim[k][6*i+l]);
+  /*for (int i=0; i<46; i++) {
+    printf("phi 45 %d", i);
+    for (int k=0; k<3; k++) {
+      for (int l=0; l<3; l++) {
+        printf(" % 15.8f", phim[6*i + k][6*45+l]);
       }
       printf("\n");
-      break;
     }
-  }
+    break;
+  }*/
   /*printf("phi00\n");
   for (int i=0; i<6; i++) {
     for (int j=0; j<6; j++) {
@@ -349,9 +348,12 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
   // dRdV = - phimm^-1 dFdV
   phimall.invert();
   phimall.transform(Fm);
+  // Now determine the shift we need to keep COM fixed
   dRdV = (double**)malloc2D(numMolecules, 6, sizeof(double));
   for (int iMolecule=0; iMolecule<numMolecules; iMolecule++) {
-    for (int k=0; k<6; k++) dRdV[iMolecule][k] = Fm[6*iMolecule+k];
+    for (int k=0; k<6; k++) {
+      dRdV[iMolecule][k] = Fm[6*iMolecule+k-3];
+    }
   }
   free(Fm);
 
