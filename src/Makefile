@@ -7,7 +7,7 @@ FLAGS = -std=c++11 -Wall
 ifdef DEBUG
 FLAGS += -O0 -g -DDEBUG
 ifdef VALGRIND
-FLAGS += -DVALGRIND_CHECKS
+CFLAGS += -DVALGRIND_CHECKS
 endif
 else
 ifdef PROFILE
@@ -17,7 +17,10 @@ FLAGS += -O3
 endif
 endif
 ifdef FAST_ERFC
-FLAGS += -DFAST_ERFC
+CFLAGS += -DFAST_ERFC
+endif
+ifdef LATTICE_DYNAMICS
+CFLAGS += -DLATTICE_DYNAMICS -I/usr/include/eigen3
 endif
 
 OBJDIR = build
