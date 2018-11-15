@@ -30,7 +30,7 @@ PotentialCallbackMoleculeHMA::PotentialCallbackMoleculeHMA(Box& b, SpeciesList& 
     species->getMoleculeOrientation(box, iFirstAtom, o, o+3);
     std::copy(o, o+6, latticeOrientations[i]);
   }
-  data = (double*) malloc(4*sizeof(double));
+  data = (double*) malloc(6*sizeof(double));
 
   dRdV = nullptr;
 }
@@ -125,7 +125,7 @@ void PotentialCallbackMoleculeHMA::setReturnAnharmonic(bool ra) {
   }
 }
 
-int PotentialCallbackMoleculeHMA::getNumData() {return 4;}
+int PotentialCallbackMoleculeHMA::getNumData() {return 6;}
 
 void PotentialCallbackMoleculeHMA::computeShift(double** f) {
   // compute self phi
@@ -161,7 +161,7 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
         for (int j=0; j<3; j++) torque[j] += atomTorque[j];
       }
     }
-    printf("F %2d  % 15.8f % 15.8f % 15.8f  % 15.8f % 15.8f % 15.8f\n", i, fi[0], fi[1], fi[2], torque[0], torque[1], torque[2]);
+    //printf("F %2d  % 15.8f % 15.8f % 15.8f  % 15.8f % 15.8f % 15.8f\n", i, fi[0], fi[1], fi[2], torque[0], torque[1], torque[2]);
   }
 
   for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
@@ -217,7 +217,7 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
         Fm[6*iMolecule + 3 + k] += torque[k] / (3*vol);
       }
     }
-    printf("dFdV %2d  % f % f % f  % f % f % f\n", iMolecule, Fm[6*iMolecule], Fm[6*iMolecule+1], Fm[6*iMolecule+2], Fm[6*iMolecule+3], Fm[6*iMolecule+4], Fm[6*iMolecule+5]);
+    //printf("dFdV %2d  % f % f % f  % f % f % f\n", iMolecule, Fm[6*iMolecule], Fm[6*iMolecule+1], Fm[6*iMolecule+2], Fm[6*iMolecule+3], Fm[6*iMolecule+4], Fm[6*iMolecule+5]);
   }
   Matrix phimall = Matrix(6*numMolecules, 6*numMolecules);
   double** phim = phimall.matrix;
@@ -322,8 +322,8 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
       printf("\n");
     }
     break;
-  }*/
-  /*printf("phi00\n");
+  }
+  printf("phi00\n");
   for (int i=0; i<6; i++) {
     for (int j=0; j<6; j++) {
       printf(" % f", phim[i][j]);
@@ -346,6 +346,21 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
   }*/
   // -dFdV = phimm dRdV
   // dRdV = - phimm^-1 dFdV
+  Matrix phit(3*numMolecules,3*numMolecules);
+  double** phitmm = phit.matrix;
+  double* Fmt = (double*)malloc(3*numMolecules* sizeof(double));
+  for (int i=0; i<numMolecules; i++) {
+    for (int k=0; k<3; k++) {
+      for (int j=0; j<numMolecules; j++) {
+        for (int l=0; l<3; l++) {
+          phitmm[3*i+k][3*j+l] = phim[6*i+3+k][6*j+3+l];
+        }
+      }
+      Fmt[3*i+k] = Fm[6*i+3+k];
+    }
+  }
+  phit.invert();
+  phit.transform(Fmt);
   phimall.invert();
   phimall.transform(Fm);
   // Now determine the shift we need to keep COM fixed
@@ -367,7 +382,6 @@ double** PotentialCallbackMoleculeHMA::getDRDV() {
 }
 
 void PotentialCallbackMoleculeHMA::allComputeFinished(double uTot, double virialTot, double** f) {
-  printf("uTot %f\n", uTot);
   if (computingPshift) {
     computeShift(f);
     return;
@@ -390,6 +404,7 @@ void PotentialCallbackMoleculeHMA::allComputeFinished(double uTot, double virial
     dr0[j] = ri[j] - latticePositions[0][j];
   }
   double fdotdrTot = 0, orientationSum = 0;
+  double fdrdVTot = 0, fdrdVTot2 = 0;
   double rotationDOF = 0;
   for (int i=0; i<N; i++) {
     box.getMoleculeInfo(i, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
@@ -414,6 +429,7 @@ void PotentialCallbackMoleculeHMA::allComputeFinished(double uTot, double virial
     }
     for (int j=0; j<3; j++) {
       fdotdrTot += fi[j]*dr[j];
+      if (dRdV) fdrdVTot += fi[j]*dRdV[i][j];
     }
 
     double o[9];
@@ -459,6 +475,10 @@ void PotentialCallbackMoleculeHMA::allComputeFinished(double uTot, double virial
       double denominator =  1 - cos(theta);
       if (denominator == 0) continue;
       orientationSum -= 1.5 * (theta - 0.5*axisLength) / denominator * dudt;
+
+      if (dRdV) {
+        fdrdVTot2 += torque[0]*dRdV[i][3] + torque[1]*dRdV[i][4] + torque[2]*dRdV[i][5];
+      }
     }
   }
   double uHarm = 0.5*(3*(N-1) + rotationDOF)*temperature;
@@ -470,6 +490,8 @@ void PotentialCallbackMoleculeHMA::allComputeFinished(double uTot, double virial
   double fV = (Pharm/temperature - N/vol)/(3*(N-1) + rotationDOF);
   //printf("%e %e %e\n", -virialTot/(3*vol), fV * (fdotdrTot + 2*orientationSum), fV);
   data[3] = (returnAnh ? -pLat : Pharm) - virialTot/(3*vol) + fV * (fdotdrTot + 2*orientationSum);
+  data[4] = fdrdVTot;
+  data[5] = fdrdVTot2;
 }
 
 double* PotentialCallbackMoleculeHMA::getData() {
