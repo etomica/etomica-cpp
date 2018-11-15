@@ -13,6 +13,7 @@ class RotationMatrix {
     RotationMatrix();
     ~RotationMatrix() {}
     void setSimpleAxisAngle(int iAxis, double theta);
+    void setAxisAngle(double* axis, double theta);
     void setRows(double* row0, double* row1, double* row2);
     void transpose();
     void transform(double* vec);

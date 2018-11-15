@@ -36,6 +36,23 @@ void RotationMatrix::setSimpleAxisAngle(int iAxis, double theta) {
   }
 }
 
+void RotationMatrix::setAxisAngle(double* u, double theta) {
+  double costheta = cos(theta);
+  double sintheta = sin(theta);
+  for (int i=0; i<3; i++) {
+    for (int j=0; j<3; j++) {
+      matrix[i][j] = i==j ? costheta : 0;
+      matrix[i][j] += (1-costheta)*u[i]*u[j];
+    }
+  }
+  matrix[0][1] -= sintheta*u[2];
+  matrix[0][2] += sintheta*u[1];
+  matrix[1][0] += sintheta*u[2];
+  matrix[1][2] -= sintheta*u[0];
+  matrix[2][0] -= sintheta*u[1];
+  matrix[2][1] += sintheta*u[0];
+}
+
 void RotationMatrix::transform(double* vec) {
   double newVec[3];
   for (int i=0; i<3; i++) {
