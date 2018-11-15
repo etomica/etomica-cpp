@@ -63,5 +63,5 @@ void Integrator::removeListener(IntegratorListener* listener) {
 }
 
 IntegratorListener::IntegratorListener() {
-  callStepStarted = callStepFinished = callAccept = callReject = false;
+  callStepStarted = callStepFinished = callAccept = callReject = callPreForce = callPostForce = false;
 }
