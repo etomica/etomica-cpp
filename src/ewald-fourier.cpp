@@ -339,3 +339,18 @@ double EwaldFourier::oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) {
   u += 0.5*coeff * fourierSum;
   return u;
 }
+
+void EwaldFourier::processAtomU(int coeff) {
+  for (int i=0; i<(int)sFac.size(); i++) {
+    // by the time we get to processAtom(+1), we have
+    // the difference.  just use that
+    if (coeff==1) {
+      sFac[i] += dsFacMolecule[i];
+    }
+    dsFacMolecule[i] = 0;
+  }
+}
+
+void EwaldFourier::resetAtomDU() {
+  fill(dsFacMolecule.begin(), dsFacMolecule.end(), 0);
+}

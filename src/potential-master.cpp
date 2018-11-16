@@ -293,7 +293,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
     }
   }
   if (doEwald) {
-    computeAllFourier(doForces, doPhi, doDFDV, uTot, virialTot);
+    ewald->computeAllFourier(doForces, doPhi, doDFDV, uTot, virialTot, force);
   }
   if (doForces && !pureAtoms) {
     virialTot += computeVirialIntramolecular();
@@ -851,7 +851,7 @@ double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
     u -= oldIntraMoleculeEnergyLS(iAtom, iLastAtom);
   }
   if (doEwald) {
-    u += oneMoleculeFourierEnergy(iMolecule, true);
+    u += ewald->oneMoleculeFourierEnergy(iMolecule, true);
   }
   return u;
 }
@@ -878,7 +878,7 @@ void PotentialMaster::resetAtomDU() {
     rhoAtomsChanged.clear();
   }
   if (doEwald) {
-    fill(dsFacMolecule.begin(), dsFacMolecule.end(), 0);
+    ewald->resetAtomDU();
   }
 }
 
@@ -919,14 +919,7 @@ void PotentialMaster::processAtomU(int coeff) {
     rhoAtomsChanged.clear();
   }
   if (doEwald) {
-    for (int i=0; i<(int)sFac.size(); i++) {
-      // by the time we get to processAtom(+1), we have
-      // the difference.  just use that
-      if (coeff==1) {
-        sFac[i] += dsFacMolecule[i];
-      }
-      dsFacMolecule[i] = 0;
-    }
+    ewald->processAtomU(coeff);
   }
 }
 
@@ -1010,7 +1003,7 @@ void PotentialMaster::computeOneMolecule(int iMolecule, double &u1) {
     computeOneMoleculeBonds(iSpecies, iMolecule, u1);
   }
   if (doEwald) {
-    u1 += oneMoleculeFourierEnergy(iMolecule, false);
+    u1 += ewald->oneMoleculeFourierEnergy(iMolecule, false);
   }
 }
 

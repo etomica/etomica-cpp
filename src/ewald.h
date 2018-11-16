@@ -30,6 +30,8 @@ class EwaldBase {
     virtual void computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot, double** force) = 0;
     virtual void computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot, double** force) = 0;
     virtual double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) = 0;
+    virtual void processAtomU(int coeff) = 0;
+    virtual void resetAtomDU() = 0;
 
     virtual void setCharge(int iType, double charge);
 };
@@ -54,4 +56,7 @@ class EwaldFourier : public EwaldBase {
 
     void setParameters(double kCut, double alpha);
     double uTotalFromAtoms();
+    void processAtomU(int coeff);
+    void resetAtomDU();
+
 };

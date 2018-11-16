@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include "ewald.h"
 #include "alloc2d.h"
 #include "potential-master.h"
 #ifdef VALGRIND_CHECKS
@@ -235,7 +236,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     computeAllBonds(doForces, uTot);
   }
   if (doEwald) {
-    computeAllFourier(doForces, doPhi, doDFDV, uTot, virialTot);
+    ewald->computeAllFourier(doForces, doPhi, doDFDV, uTot, virialTot, force);
   }
   if (doForces && !pureAtoms) {
     virialTot += computeVirialIntramolecular();
