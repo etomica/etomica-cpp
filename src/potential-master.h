@@ -325,6 +325,7 @@ class PotentialMaster {
     virtual ~PotentialMaster();
     virtual void init() {}
     Box& getBox();
+    void setEwald(EwaldBase* ewald);
     void setDoTruncationCorrection(bool doCorrection);
     void setDoSingleTruncationCorrection(bool doCorrection);
     virtual void setPairPotential(int iType, int jType, Potential* pij);
@@ -348,8 +349,6 @@ class PotentialMaster {
     void processAtomU(int coeff);
     void addCallback(PotentialCallback* pcb);
     virtual double uTotalFromAtoms();
-    void setCharge(int iType, double charge);
-    void setEwald(double kCut, double alpha);
     virtual void updateVolume() {}
 };
 

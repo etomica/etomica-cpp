@@ -10,7 +10,7 @@
 #include "alloc2d.h"
 #include "util.h"
 
-EwaldFourier::EwaldFourier(const SpeciesList& sl, Box& b, vector<PotentialCallback*>* pcb) : EwaldBase(sl,b,pcb) {
+EwaldFourier::EwaldFourier(const SpeciesList& sl, Box& b) : EwaldBase(sl,b) {
   sFacAtom = (complex<double>*)malloc(box.getNumAtoms()*sizeof(complex<double>));
   setParameters(0, 0);
 }
@@ -61,7 +61,7 @@ void EwaldFourier::computeFourierIntramolecular(int iMolecule, const bool doForc
   }
 }
 
-void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot, double** force) {
+void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot, double** force, vector<PotentialCallback*>* pairCallbacks) {
   const int numAtoms = box.getNumAtoms();
   double q2sum = 0;
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
@@ -170,8 +170,10 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
                   phi[k][l] = jPhiFac*karray[k]*karray[l];
                 }
               }
-              for (vector<PotentialCallback*>::iterator it = pairCallbacks->begin(); it!=pairCallbacks->end(); it++) {
-                (*it)->pairComputePhi(iAtom, jAtom, phi);
+              if (pairCallbacks) {
+                for (vector<PotentialCallback*>::iterator it = pairCallbacks->begin(); it!=pairCallbacks->end(); it++) {
+                  (*it)->pairComputePhi(iAtom, jAtom, phi);
+                }
               }
 
             }
@@ -196,7 +198,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
             force[iAtom][0] += coeffki * kx;
             force[iAtom][1] += coeffki * ky;
             force[iAtom][2] += coeffki * kz;
-            if (doDFDV) {
+            if (doDFDV && pairCallbacks) {
               double dfdv[3] = {coeffki*kx/(3*vol), coeffki*ky/(3*vol), coeffki*kz/(3*vol)};
               for (vector<PotentialCallback*>::iterator it = pairCallbacks->begin(); it!=pairCallbacks->end(); it++) {
                 (*it)->computeDFDV(iAtom, dfdv);

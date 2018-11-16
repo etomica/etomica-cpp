@@ -82,7 +82,6 @@ PotentialMaster::~PotentialMaster() {
   delete[] bondAngleTriplets;
   delete[] bondAnglePotentials;
   delete[] numAtomsByType;
-  delete ewald;
 }
 
 void PotentialMaster::setDoTruncationCorrection(bool doCorrection) {
@@ -118,21 +117,8 @@ void PotentialMaster::setEmbedF(int iType, EmbedF* ef) {
   embedF[iType] = ef;
 }
 
-void PotentialMaster::setCharge(int iType, double q) {
-  if (!doEwald) {
-    doEwald = true;
-    ewald = new EwaldFourier(speciesList, box, &pairCallbacks);
-    charges = new double[numAtomTypes];
-    for (int i=0; i<numAtomTypes; i++) charges[i] = 0;
-    sFacAtom = (complex<double>*)malloc(box.getNumAtoms()*sizeof(complex<double>));
-    setEwald(0, 0);
-  }
-  charges[iType] = q;
-  ewald->setCharge(iType, q);
-}
-
-void PotentialMaster::setEwald(double kc, double a) {
-  ((EwaldFourier*)ewald)->setParameters(kc, a);
+void PotentialMaster::setEwald(EwaldBase* e) {
+  ewald = e;
 }
 
 void PotentialMaster::setBondPotential(int iSpecies, vector<int*> &bp, Potential *p) {
@@ -284,7 +270,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
     }
   }
   if (doEwald) {
-    ewald->computeAllFourier(doForces, doPhi, doDFDV, uTot, virialTot, force);
+    ewald->computeAllFourier(doForces, doPhi, doDFDV, uTot, virialTot, force, &pairCallbacks);
   }
   if (doForces && !pureAtoms) {
     virialTot += computeVirialIntramolecular();
