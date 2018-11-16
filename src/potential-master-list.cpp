@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include "potential-master.h"
+#include "ewald.h"
 #include "alloc2d.h"
 
 PotentialMasterList::PotentialMasterList(const SpeciesList& sl, Box& box, bool doEmbed, int cellRange, double nRange) : PotentialMasterCell(sl, box, doEmbed, cellRange), nbrRange(nRange), nbrs(nullptr), onlyUpNbrs(true), numAtomNbrsUp(nullptr), numAtomNbrsDn(nullptr), nbrsNumAtoms(0), maxNab(0), nbrBoxOffsets(nullptr), oldAtomPositions(nullptr), safetyFac(0.1) {
@@ -285,7 +286,7 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
     }
   }
   if (doEwald) {
-    computeAllFourier(doForces, doPhi, doDFDV, uTot, virialTot);
+    ewald->computeAllFourier(doForces, doPhi, doDFDV, uTot, virialTot, force);
   }
   if (doForces && !pureAtoms) {
     virialTot += computeVirialIntramolecular();

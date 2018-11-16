@@ -32,6 +32,7 @@ class EwaldBase {
     virtual double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) = 0;
     virtual void processAtomU(int coeff) = 0;
     virtual void resetAtomDU() = 0;
+    virtual double uTotalFromAtoms() = 0;
 
     virtual void setCharge(int iType, double charge);
 };

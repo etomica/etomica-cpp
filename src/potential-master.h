@@ -318,9 +318,6 @@ class PotentialMaster {
     }
     virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom, const bool onlyAtom);
     virtual double oldEmbeddingEnergy(int iAtom);
-    void computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot);
-    double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy);
-    void computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot);
     double computeVirialIntramolecular();
 
   public:
