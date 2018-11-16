@@ -29,14 +29,13 @@ class EwaldBase {
     void setRigidMolecules(bool rigidMolecules);
     virtual void computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot, double** force) = 0;
     virtual void computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot, double** force) = 0;
+    virtual double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) = 0;
 
-    virtual void setCharge(int iType, double charge) = 0;
-    virtual void setEwald(double kCut, double alpha) = 0;
+    virtual void setCharge(int iType, double charge);
 };
 
 class EwaldFourier : public EwaldBase {
   protected:
-    vector<PotentialCallback*>* pairCallbacks;
     double kBasis[3];
     double kCut, alpha;
     complex<double> *sFacAtom;
@@ -51,7 +50,8 @@ class EwaldFourier : public EwaldBase {
     virtual ~EwaldFourier();
     void computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot, double** force);
     void computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot, double** force);
+    double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy);
 
-    void setEwald(double kCut, double alpha);
+    void setParameters(double kCut, double alpha);
     double uTotalFromAtoms();
 };

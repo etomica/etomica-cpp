@@ -11,6 +11,10 @@ EwaldBase::~EwaldBase() {
   delete[] charges;
 }
 
+void EwaldBase::setCharge(int iType, double q) {
+  charges[iType] = q;
+}
+
 void EwaldBase::setRigidMolecules(bool rm) {
   rigidMolecules = rm;
 }

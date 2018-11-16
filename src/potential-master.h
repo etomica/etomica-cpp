@@ -16,6 +16,8 @@
 #include "potential-molecular.h"
 #include "potential-callback.h"
 
+class EwaldBase;
+
 using namespace std;
 
 class EmbedF {
@@ -120,6 +122,7 @@ class PotentialMaster {
     bool doEwald;
     double minR2;
     double phi[3][3];
+    EwaldBase* ewald;
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);
     void handleOneBondPair(bool doForces, double &uTot, int iAtom, int jAtom, Potential* p);

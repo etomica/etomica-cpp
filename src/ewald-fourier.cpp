@@ -12,14 +12,14 @@
 
 EwaldFourier::EwaldFourier(const SpeciesList& sl, Box& b, vector<PotentialCallback*>* pcb) : EwaldBase(sl,b,pcb) {
   sFacAtom = (complex<double>*)malloc(box.getNumAtoms()*sizeof(complex<double>));
-  setEwald(0, 0);
+  setParameters(0, 0);
 }
 
 EwaldFourier::~EwaldFourier() {
   free(sFacAtom);
 }
 
-void EwaldFourier::setEwald(double kc, double a) {
+void EwaldFourier::setParameters(double kc, double a) {
   kCut = kc;
   alpha = a;
   const double* bs = box.getBoxSize();
@@ -239,4 +239,103 @@ double EwaldFourier::uTotalFromAtoms() {
   double coeff = 4*M_PI/(bs[0]*bs[1]*bs[2]);
   uTot += 0.5*coeff * fourierSum;
   return uTot;
+}
+
+double EwaldFourier::oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) {
+  double u = 0, v = 0;
+  computeFourierIntramolecular(iMolecule, false, false, u, v, nullptr);
+  int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+  box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
+
+  const double kCut2 = kCut*kCut;
+  const double* bs = box.getBoxSize();
+  int kxMax = (int)(0.5*bs[0]/M_PI*kCut);
+  int kMax[3] = {kxMax, (int)(0.5*bs[1]/M_PI*kCut), (int)(0.5*bs[2]/M_PI*kCut)};
+  // cube instead of sphere, so conservatively big
+  int nk[3] = {kMax[0]+1, 2*kMax[1]+1, 2*kMax[2]+1};
+  int nktot = ((2*(nk[0]-1)+1)*nk[1]*nk[2]-1)/2;
+  dsFacMolecule.resize(nktot);
+
+  // we save this too... would need to update after accepted move, revert after rejection
+  double q2Sum = 0;
+  int numAtoms = box.getNumAtoms();
+  for (int a=0; a<3; a++) {
+    double fac = 2.0*M_PI/bs[a];
+    eik[a].resize(numAtoms*nk[a]); // way bigger than we need, but OK
+    for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+      int iType = box.getAtomType(iAtom);
+      double qi = charges[iType];
+      if (qi == 0) continue;
+      if (a==0) q2Sum += qi*qi;
+      int idx = iAtom*nk[a];
+      if (a>0) idx += kMax[a];
+      double* ri = box.getAtomPosition(iAtom);
+      eik[a][idx] = 1;
+      eik[a][idx+1] = std::complex<double>(cos(fac*ri[a]), sin(fac*ri[a]));
+      for (int i=2; i<=kMax[a]; i++) {
+        eik[a][idx+i] = eik[a][idx+1] * eik[a][idx+i-1];
+      }
+      if (a==0) continue;
+      for (int i=1; i<=kMax[a]; i++) {
+        eik[a][idx-i] = conj(eik[a][idx+i]);
+      }
+    }
+  }
+  u -= alpha/sqrt(M_PI)*q2Sum;
+  double coeff = 4*M_PI/(bs[0]*bs[1]*bs[2]);
+  double fourierSum = 0;
+  int ik = 0;
+  for (int i=0; i<3; i++) {
+    kBasis[i] = 2*M_PI/bs[i];
+  }
+  for (int ikx=0; ikx<=kxMax; ikx++) {
+    double kx = ikx*kBasis[0];
+    double kx2 = kx*kx;
+    double kyCut2 = kCut2 - kx2;
+    bool xpositive = ikx>0;
+    int kyMax = (int)(0.5*bs[1]*sqrt(kyCut2)/M_PI);
+    for (int iky=-kyMax; iky<=kyMax; iky++) {
+      if (!xpositive && iky<0) continue;
+      bool ypositive = iky>0;
+      double ky = iky*kBasis[1];
+      double kxy2 = kx2 + ky*ky;
+      int kzMax = (int)(0.5*bs[2]*sqrt(kCut2 - kxy2)/M_PI);
+      for (int ikz=-kzMax; ikz<=kzMax; ikz++) {
+        if (!xpositive && !ypositive && ikz<=0) continue;
+        double kz = ikz*kBasis[2];
+        double kxyz2 = kxy2 + kz*kz;
+        // when we compute old energy, this will come in as 0
+        // when we compute new energy, this will come in as old fourier sum
+        double fExp = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
+        if (!oldEnergy) {
+          complex<double> sFacMinus = sFac[ik] - dsFacMolecule[ik];
+          // energy without this atom
+          fourierSum -= fExp * (sFacMinus*conj(sFacMinus)).real();
+          dsFacMolecule[ik] = -dsFacMolecule[ik];
+        }
+        for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+          int iType = box.getAtomType(iAtom);
+          double qi = charges[iType];
+          if (qi==0) continue;
+          dsFacMolecule[ik] += qi * eik[0][iAtom*nk[0]+ikx]
+                                  * eik[1][iAtom*nk[1]+kMax[1]+iky]
+                                  * eik[2][iAtom*nk[2]+kMax[2]+ikz];
+        }
+        
+        if (oldEnergy) {
+          complex<double> sFacMinus = sFac[ik] - dsFacMolecule[ik];
+          // energy with this atom present (as we computed it before) and without
+          fourierSum += fExp * ((sFac[ik]*conj(sFac[ik])).real()
+                               -(sFacMinus*conj(sFacMinus)).real());
+        }
+        else {
+          complex<double> sFacNew = sFac[ik] + dsFacMolecule[ik];
+          fourierSum += fExp * (sFacNew*conj(sFacNew)).real();
+        }
+        ik++;
+      }
+    }
+  }
+  u += 0.5*coeff * fourierSum;
+  return u;
 }

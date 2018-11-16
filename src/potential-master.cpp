@@ -5,12 +5,13 @@
 #include <algorithm>
 #include <stdio.h>
 #include "potential-master.h"
+#include "ewald.h"
 #include "alloc2d.h"
 #include "util.h"
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false), takesPhi(false), takesDFDV(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed), charges(nullptr), sFacAtom(nullptr), doEwald(false) {
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed), charges(nullptr), sFacAtom(nullptr), doEwald(false), ewald(nullptr) {
 
   if (embeddingPotentials && !pureAtoms) {
     fprintf(stderr, "Embedding potentials require a purely atomic system");
@@ -120,12 +121,14 @@ void PotentialMaster::setEmbedF(int iType, EmbedF* ef) {
 void PotentialMaster::setCharge(int iType, double q) {
   if (!doEwald) {
     doEwald = true;
+    ewald = new EwaldFourier(speciesList, box, &pairCallbacks);
     charges = new double[numAtomTypes];
     for (int i=0; i<numAtomTypes; i++) charges[i] = 0;
     sFacAtom = (complex<double>*)malloc(box.getNumAtoms()*sizeof(complex<double>));
     setEwald(0, 0);
   }
   charges[iType] = q;
+  ewald->setCharge(iType, q);
 }
 
 void PotentialMaster::setEwald(double kc, double a) {
@@ -138,6 +141,7 @@ void PotentialMaster::setEwald(double kc, double a) {
   if (!doEwald) {
     setCharge(0, 0);
   }
+  ((EwaldFourier*)ewald)->setParameters(kc, a);
 }
 
 void PotentialMaster::setBondPotential(int iSpecies, vector<int*> &bp, Potential *p) {
@@ -146,6 +150,9 @@ void PotentialMaster::setBondPotential(int iSpecies, vector<int*> &bp, Potential
     abort();
   }
   rigidMolecules = false;
+  if (ewald) {
+    ewald->setRigidMolecules(false);
+  }
   bondedPairs[iSpecies].push_back(bp);
   bondedPotentials[iSpecies].push_back(p);
   Species* s = speciesList.get(iSpecies);
