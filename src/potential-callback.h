@@ -120,3 +120,25 @@ class PotentialCallbackBulkModulus : public PotentialCallback {
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
     virtual double* getData();
 };
+
+class PotentialCallbackMoleculePhi : public PotentialCallback {
+  protected:
+    Box& box;
+    SpeciesList& speciesList;
+    PotentialMaster& potentialMaster;
+    int ndof;
+    double** atomPhiTotal;
+    double** moleculePhiTotal;
+    int* nmap;
+    double** com;
+    double uLat, pLat;
+
+  public:
+    PotentialCallbackMoleculePhi(Box& box, SpeciesList& speciesList, PotentialMaster& pm);
+    virtual ~PotentialCallbackMoleculePhi();
+    virtual void reset();
+    virtual void pairCompute(int iAtom, int jAtom, double* dr, double u, double du, double d2u);
+    virtual void pairComputePhi(int iAtom, int jAtom, double phi[3][3]);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    double** getMoleculePhi();
+};
