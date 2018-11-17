@@ -7,10 +7,12 @@
 class Matrix {
   protected:
     double* tmpVec;
+    bool arrayOwner;
   public:
     const int nRows, nCols;
     double **matrix;
     Matrix(int rows, int cols);
+    Matrix(int rows, int cols, double** array);
     ~Matrix();
     void E(Matrix& m);
     void setRows(double** rows);

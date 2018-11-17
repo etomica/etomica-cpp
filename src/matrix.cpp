@@ -12,10 +12,16 @@ Matrix::Matrix(int n, int m) : nRows(n), nCols(m) {
   matrix = (double**)malloc2D(n, m, sizeof(double));
   std::fill(matrix[0], matrix[0]+n*m, 0.0);
   tmpVec = new double[n];
+  arrayOwner = true;
+}
+
+Matrix::Matrix(int n, int m, double** array) : nRows(n), nCols(m), matrix(array) {
+  tmpVec = new double[n];
+  arrayOwner = false;
 }
 
 Matrix::~Matrix() {
-  free2D((void**)matrix);
+  if (arrayOwner) free2D((void**)matrix);
   delete[] tmpVec;
 }
 
