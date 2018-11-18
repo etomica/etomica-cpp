@@ -1,7 +1,13 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#ifdef LATTICE_DYNAMICS
+#pragma once
+
 class Potential;
 
 class LatticeDynamics {
-#ifdef LATTICE_DYNAMICS
   private:
     int numCells[3];
     double density;
@@ -43,7 +49,7 @@ class LatticeDynamics {
     int doSelfSum();
     int goEVD(int nwv);
     int getWaveVectorCount() {return wCount;}
-    double getUnstable() {return unstable;}
+    bool getUnstable() {return unstable;}
     double getLogSum() {return logSum;}
     double getU();
 #endif
