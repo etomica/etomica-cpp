@@ -13,7 +13,7 @@
 /**
  * Computes energy with mapped averaging for rigid molecular system.  Also handles atoms.
  */
-PotentialCallbackMoleculePhi::PotentialCallbackMoleculePhi(Box& b, SpeciesList& sl, PotentialMaster& pm) : box(b), speciesList(sl), potentialMaster(pm) {
+PotentialCallbackMoleculePhi::PotentialCallbackMoleculePhi(PotentialMaster& pm) : box(pm.getBox()), speciesList(pm.getBox().getSpeciesList()), potentialMaster(pm) {
   callFinished = true;
   callPair = true;
   takesForces = true;
@@ -102,6 +102,16 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
       }
     }
   }
+  int numMolecules = box.getTotalNumMolecules();
+  for (int iMolecule=0; iMolecule<numMolecules; iMolecule++) {
+    for (int k=nmap[iMolecule]; k<nmap[iMolecule+1]; k++) {
+      for (int jMolecule=0; jMolecule<numMolecules; jMolecule++) {
+        for (int l=nmap[jMolecule]; l<nmap[jMolecule+1]; l++) {
+          moleculePhiTotal[k][l] = 0;
+        }
+      }
+    }
+  }
 
   // phi for molecules
   Matrix Ri(3,3), Rj(3,3);
@@ -112,7 +122,6 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
   Matrix phimat(3,3);
   double** phimm = phimat.matrix;
   Matrix tmpmat(3,3);
-  int numMolecules = box.getTotalNumMolecules();
   for (int iMolecule=0; iMolecule<numMolecules; iMolecule++) {
     int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
     box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
@@ -180,7 +189,7 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
           }
         }
       }
-      // intramlocular RR correction
+      // intramolecular RR correction
       if (iLastAtom>iFirstAtom) {
         double xdotf = Vector::dot(dri, f[iAtom]);
         for (int k=0; k<3; k++) {

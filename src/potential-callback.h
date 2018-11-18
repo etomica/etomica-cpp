@@ -131,10 +131,9 @@ class PotentialCallbackMoleculePhi : public PotentialCallback {
     double** moleculePhiTotal;
     int* nmap;
     double** com;
-    double uLat, pLat;
 
   public:
-    PotentialCallbackMoleculePhi(Box& box, SpeciesList& speciesList, PotentialMaster& pm);
+    PotentialCallbackMoleculePhi(PotentialMaster& pm);
     virtual ~PotentialCallbackMoleculePhi();
     virtual void reset();
     virtual void pairCompute(int iAtom, int jAtom, double* dr, double u, double du, double d2u);
