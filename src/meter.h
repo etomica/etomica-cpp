@@ -6,6 +6,7 @@
 
 #include "data-sink.h"
 #include "integrator.h"
+#include "species.h"
 
 class Integrator;
 class IntegratorMD;
@@ -73,4 +74,21 @@ class MeterFullCompute : public Meter {
     double* getData();
     void addCallback(PotentialCallback* pcb);
     void setDoCompute(bool doCompute);
+};
+
+class MeterPressureFD : public Meter {
+  protected:
+    SpeciesList speciesList;
+    PotentialMaster& potentialMaster;
+    double data[1];
+    vector<PotentialCallback*> callbacks;
+    double eps;
+    double temperature;
+
+    void scale(double s, double* boxSize);
+  public:
+    MeterPressureFD(SpeciesList& sl, PotentialMaster& potentialMaster, double temperature);
+    ~MeterPressureFD();
+    void setEps(double newEps);
+    double* getData();
 };
