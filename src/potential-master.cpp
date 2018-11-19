@@ -118,6 +118,7 @@ void PotentialMaster::setEmbedF(int iType, EmbedF* ef) {
 }
 
 void PotentialMaster::setEwald(EwaldBase* e) {
+  doEwald = e != nullptr;
   ewald = e;
 }
 
