@@ -9,28 +9,8 @@ MCMoveVolume::MCMoveVolume(Box& b, PotentialMaster& pm, Random& r, double p, dou
 }
 
 void MCMoveVolume::scaleVolume(double s) {
-  int nm = box.getTotalNumMolecules();
-  s -= 1;
-  for (int iMolecule=0; iMolecule<nm; iMolecule++) {
-    int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
-    box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
-    Species* species = speciesList.get(iSpecies);
-    double* iPos = species->getMoleculeCOM(box, iFirstAtom, iLastAtom);
-    double dr[3] = {iPos[0]*s, iPos[1]*s, iPos[2]*s};
-    for (int jAtom=iFirstAtom; jAtom<=iLastAtom; jAtom++) {
-      double* rj = box.getAtomPosition(jAtom);
-      for (int k=0; k<3; k++) rj[k] += dr[k];
-    }
-  }
   const double* bs = box.getBoxSize();
-  s += 1;
-  double bx = bs[0]*s, by = bs[1]*s, bz = bs[2]*s;
-  box.setBoxSize(bx, by, bz);
-  int na = box.getNumAtoms();
-  for (int iAtom=0; iAtom<na; iAtom++) {
-    double* ri = box.getAtomPosition(iAtom);
-    box.nearestImage(ri);
-  }
+  box.scaleBoxTo(bs[0]*s, bs[1]*s, bs[2]*s);
 }
 
 bool MCMoveVolume::doTrial() {

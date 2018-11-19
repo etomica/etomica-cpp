@@ -252,6 +252,33 @@ void Box::setBoxSize(double x, double y, double z) {
   boxSizeUpdated();
 }
 
+void Box::scaleBoxTo(double bx, double by, double bz) {
+  double s[3] = {bx/boxSize[0]-1, by/boxSize[1]-1, bz/boxSize[2]-1};
+  int nm = getTotalNumMolecules();
+  // first unwrap and move molecules
+  for (int iMolecule=0; iMolecule<nm; iMolecule++) {
+    int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+    getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
+    Species* species = speciesList.get(iSpecies);
+    double* center = species->getMoleculeCOM(*this, iFirstAtom, iLastAtom);
+    for (int jAtom=iFirstAtom; jAtom<=iLastAtom; jAtom++) {
+      double dr[3];
+      double* rj = getAtomPosition(jAtom);
+      for (int k=0; k<3; k++) dr[k] = rj[k]-center[k];
+      nearestImage(dr);
+      for (int k=0; k<3; k++) rj[k] = center[k]*s[k] + dr[k];
+    }
+  }
+  // now change box size
+  setBoxSize(bx, by, bz);
+  int na = getNumAtoms();
+  // now wrap atoms back inside box
+  for (int iAtom=0; iAtom<na; iAtom++) {
+    double* ri = getAtomPosition(iAtom);
+    nearestImage(ri);
+  }
+}
+
 void Box::enableVelocities() {
   if (velocities) {
     fprintf(stderr, "velocities alread enabled\n");

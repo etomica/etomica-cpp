@@ -75,6 +75,8 @@ class Box {
     void nearestImage(double *dr);
     void initCoordinates();
     void setBoxSize(double x, double y, double z);
+    // sets box size and scales molecule coordinates
+    void scaleBoxTo(double x, double y, double z);
     void setNumMolecules(int iSpecies, int numMolecules);
     double* getAtomVelocity(int iAtom);
     void enableVelocities();
