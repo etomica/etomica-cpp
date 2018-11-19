@@ -253,7 +253,7 @@ void Box::setBoxSize(double x, double y, double z) {
 }
 
 void Box::scaleBoxTo(double bx, double by, double bz) {
-  double s[3] = {bx/boxSize[0]-1, by/boxSize[1]-1, bz/boxSize[2]-1};
+  double s[3] = {bx/boxSize[0], by/boxSize[1], bz/boxSize[2]};
   int nm = getTotalNumMolecules();
   // first unwrap and move molecules
   for (int iMolecule=0; iMolecule<nm; iMolecule++) {
