@@ -6,8 +6,9 @@
 
 #include <Eigen/Eigenvalues>
 #include <complex>
-#include "box.h"
 #include "lattice-dynamics-full.h"
+#include "box.h"
+#include "potential-master.h"
 #include "alloc2d.h"
 
 LatticeDynamicsFull::LatticeDynamicsFull(PotentialMaster& pm) : PotentialCallbackMoleculePhi(pm) {
@@ -23,32 +24,21 @@ void LatticeDynamicsFull::setNumCells(int x, int y, int z) {
   numCells[0] = x;
   numCells[1] = y;
   numCells[2] = z;
-  if (nBasis!=0) {
-    int nCells = numCells[0]*numCells[1]*numCells[2];
-    int numMolecules = box.getTotalNumMolecules();
-    if (numMolecules != nCells*nBasis) {
-      fprintf(stderr, "warning: number of molecules %d is not of the basis size %d times the number of cells %d\n", numMolecules, nBasis, nCells);
-    }
-  }
-}
 
-void LatticeDynamicsFull::setBasisSize(int nb) {
-  nBasis = nb;
+  int nCells = numCells[0]*numCells[1]*numCells[2];
   int numMolecules = box.getTotalNumMolecules();
-  if (numMolecules%nBasis != 0) {
-    fprintf(stderr, "number of molecules %d must be a multiple of the basis size %d\n", numMolecules, nBasis);
+  int nBasis = numMolecules/nCells;
+  if (numMolecules != nCells*nBasis) {
+    fprintf(stderr, "warning: number of molecules %d must be a multiple of the number of cells %d\n", numMolecules, nCells);
     abort();
   }
-  if (numCells[0] != 0) {
-    int nCells = numCells[0]*numCells[1]*numCells[2];
-    if (numMolecules != nCells*nBasis) {
-      fprintf(stderr, "warning: number of molecules %d is not of the basis size %d times the number of cells %d\n", numMolecules, nBasis, nCells);
-    }
-  }
 }
 
-void LatticeDynamicsFull::setup() {
+void LatticeDynamicsFull::compute() {
 
+  int nCells = numCells[0]*numCells[1]*numCells[2];
+  int numMolecules = box.getTotalNumMolecules();
+  int nBasis = numMolecules/nCells;
   const double* bs = box.getBoxSize();
   double cellSize[3];
   for (int k=0; k<3; k++) cellSize[k] = bs[k]/numCells[k];
@@ -145,9 +135,17 @@ donef:  if (flip) {
 
   logSum = 0;
   unstable = false;
+
+  vector<PotentialCallback*> pcs;
+  pcs.push_back(this);
+  potentialMaster.computeAll(pcs);
 }
 
 void LatticeDynamicsFull::allComputeFinished(double uTot, double virialTot, double** f) {
+  PotentialCallbackMoleculePhi::allComputeFinished(uTot, virialTot, f);
+  int nCells = numCells[0]*numCells[1]*numCells[2];
+  int numMolecules = box.getTotalNumMolecules();
+  int nBasis = numMolecules/nCells;
   const double* bs = box.getBoxSize();
   double cellSize[3];
   for (int k=0; k<3; k++) cellSize[k] = bs[k]/numCells[k];
@@ -179,8 +177,9 @@ void LatticeDynamicsFull::allComputeFinished(double uTot, double virialTot, doub
           ifacDone[k] = true;
         }
         for (int i=nmap[iMolecule]; i<nmap[iMolecule+1]; i++) {
-          for (int j=nmap[jBasis]; j<nmap[jBasis+1]; j++) {
-            matrix[k][i][j] += moleculePhiTotal[i][j]*ifac[k];
+          for (int j=nmap[jMolecule]; j<nmap[jMolecule+1]; j++) {
+            int jj = nmap[jBasis] + (j-nmap[jMolecule]);
+            matrix[k][i][jj] += moleculePhiTotal[i][j]*ifac[k];
           }
         }
       }
@@ -199,13 +198,17 @@ void LatticeDynamicsFull::allComputeFinished(double uTot, double virialTot, doub
     double klnsum = 0;
     for (int i=0; i<nmap[nBasis]; i++) {
       //printf("%d %d %25.15e\n", k, i, std::real(eVals(i)));
+      double ev = std::real(eVals(i));
       if (k>0 || i>2) {
-        double ev = std::real(eVals(i));
-        if (ev < 0) {
+        printf("%d %d %f (%f)\n", k, i, ev, std::imag(eVals(i)));
+        if (ev <= 0) {
           unstable = true;
           return;
         }
         klnsum += log(ev);
+      }
+      else {
+        printf("%d %d %f (%f)\n", k, i, ev, std::imag(eVals(i)));
       }
     }
     logSum += wvCount[k]*klnsum;

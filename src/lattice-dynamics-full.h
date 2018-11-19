@@ -17,7 +17,6 @@ class LatticeDynamicsFull : public PotentialCallbackMoleculePhi {
   protected:
     vector<PotentialCallback*> selfPotentialCallbackVec;
     int numCells[3];
-    int nBasis;
     int wCount;
     double** waveVectors;
     std::complex<double> ***matrix;
@@ -29,8 +28,7 @@ class LatticeDynamicsFull : public PotentialCallbackMoleculePhi {
     virtual ~LatticeDynamicsFull();
     virtual void allComputeFinished(double uTot, double virialTot, double** f);
     void setNumCells(int x, int y, int z);
-    void setBasisSize(int basisSize);
-    void setup();
+    void compute();
     bool getUnstable() {return unstable;}
     double getLogSum() {return logSum;}
 };
