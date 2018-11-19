@@ -201,15 +201,15 @@ void LatticeDynamicsFull::allComputeFinished(double uTot, double virialTot, doub
       //printf("%d %d %25.15e\n", k, i, std::real(eVals(i)));
       double ev = std::real(eVals(i));
       if (k>0 || i>2) {
-        printf("%d %d %f (%f)\n", k, i, ev, std::imag(eVals(i)));
         if (ev <= 0) {
           unstable = true;
           return;
         }
         klnsum += log(ev);
+        //printf("%d %d %f (%f) %f\n", k, i, ev, std::imag(eVals(i)), klnsum);
       }
       else {
-        printf("%d %d %f (%f)\n", k, i, ev, std::imag(eVals(i)));
+        //printf("%d %d %f (%f)\n", k, i, ev, std::imag(eVals(i)));
       }
     }
     logSum += wvCount[k]*klnsum;
