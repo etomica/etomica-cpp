@@ -290,7 +290,7 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
       for (int k=0; k<3; k++) {
         phim[6*iMolecule + 3 + k][6*iMolecule + 3 + k] += xdotf;
         for (int l=0; l<3; l++) {
-          phim[6*iMolecule + 3 + k][6*iMolecule + 3 + l] -= dri[k]*f[iAtom][l];
+          phim[6*iMolecule + 3 + k][6*iMolecule + 3 + l] -= 0.5*(dri[k]*f[iAtom][l] + dri[l]*f[iAtom][k]);
         }
       }
     }

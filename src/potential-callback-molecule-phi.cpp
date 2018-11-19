@@ -195,7 +195,7 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
         for (int k=0; k<3; k++) {
           moleculePhiTotal[nmap[iMolecule] + 3 + k][nmap[iMolecule] + 3 + k] += xdotf;
           for (int l=0; l<3; l++) {
-            moleculePhiTotal[nmap[iMolecule] + 3 + k][nmap[iMolecule] + 3 + l] -= dri[k]*f[iAtom][l];
+            moleculePhiTotal[nmap[iMolecule] + 3 + k][nmap[iMolecule] + 3 + l] -= 0.5*(dri[k]*f[iAtom][l] + dri[l]*f[iAtom][k]);
           }
         }
       }
