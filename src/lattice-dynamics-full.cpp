@@ -35,6 +35,7 @@ void LatticeDynamicsFull::setNumCells(int x, int y, int z) {
 }
 
 void LatticeDynamicsFull::compute() {
+  PotentialCallbackMoleculePhi::reset();
 
   int nCells = numCells[0]*numCells[1]*numCells[2];
   int numMolecules = box.getTotalNumMolecules();
