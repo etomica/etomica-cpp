@@ -45,8 +45,8 @@ void Replicate::go(Box& box, int replicates[3]) {
       for (int xr=0; xr<replicates[0]; xr++) {
         for (int yr=0; yr<replicates[1]; yr++) {
           for (int zr=0; zr<replicates[2]; zr++) {
-            jAtom += N*na;
             if (xr+yr+zr==0) continue;
+            jAtom += N*na;
             double* rj = box.getAtomPosition(jAtom);
             int xrr[3] = {xr,yr,zr};
             for (int k=0; k<3; k++) rj[k] = ri[k] + xrr[k]*bs[k]/replicates[k];
