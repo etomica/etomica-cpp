@@ -80,7 +80,6 @@ class Box {
     void setNumMolecules(int iSpecies, int numMolecules);
     double* getAtomVelocity(int iAtom);
     void enableVelocities();
-    void getAtomInfo(int iMolecule, int iSpecies);
     // gives species index, first and last atom indicies for molecule with global index iMolecule
     void getMoleculeInfo(int iMolecule, int &iSpecies, int &iMoleculeInSpecies, int &firstAtom, int &lastAtom);
     void getMoleculeInfoAtom(int iAtom, int &iMolecule, int &iSpecies, int &firstAtom);
