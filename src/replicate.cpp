@@ -7,13 +7,14 @@
 #include "box.h"
 
 void Replicate::go(Box& box, int replicates[3]) {
+  SpeciesList& speciesList = box.getSpeciesList();
   int nRep = replicates[0]*replicates[1]*replicates[2];
   int nm = box.getTotalNumMolecules();
   // first unwrap
   for (int iMolecule=0; iMolecule<nm; iMolecule++) {
     int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
     box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
-    Species* species = box.getSpeciesList().get(iSpecies);
+    Species* species = speciesList.get(iSpecies);
     double* center = species->getMoleculeCOM(box, iFirstAtom, iLastAtom);
     for (int jAtom=iFirstAtom; jAtom<=iLastAtom; jAtom++) {
       double dr[3];
@@ -32,7 +33,6 @@ void Replicate::go(Box& box, int replicates[3]) {
     for (int k=0; k<3; k++) ri[k] -= 0.5*(replicates[k]-1)*bs[k];
   }
 
-  SpeciesList speciesList = box.getSpeciesList();
   int nOffset = 0;
   for (int iSpecies=0; iSpecies<speciesList.size(); iSpecies++) {
     Species* species = speciesList.get(iSpecies);
