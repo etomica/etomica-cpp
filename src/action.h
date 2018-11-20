@@ -23,18 +23,11 @@ class ConfigurationFile {
   protected:
     Box& box;
     const char* filename;
-    int replicates[3];
 
   public:
     ConfigurationFile(Box& box, const char* filename);
     ~ConfigurationFile();
 
-    /**
-     * Configures this class to replicate the configuration the requested
-     * number of times in each direction.  Box size and # of molecules must be
-     * set appropriately before invoking go().
-     */
-    void setReplication(int x, int y, int z);
     void go();
 };
 
