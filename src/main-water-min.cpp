@@ -17,6 +17,9 @@
 
 int main(int argc, char** argv) {
   int numMolecules = 46;
+  double density = 46/(12.03*12.03*12.03);
+  if  (argc>1) density = atof(argv[1]);
+  double uTol = 1e-9;
 
   double A = 600E3, C = 610;
   double s6 = A/C;
@@ -42,6 +45,8 @@ int main(int argc, char** argv) {
   box.setNumMolecules(0, numMolecules);
   ConfigurationFile config(box, "water.pos");
   config.go();
+  L = pow(numMolecules/density, 1.0/3.0);
+  box.scaleBoxTo(L,L,L);
   PotentialMasterCell potentialMaster(speciesList, box, false, 3);
   potentialMaster.setPairPotential(oType, oType, &pOO);
   potentialMaster.setPairPotential(hType, hType, &pHH);
@@ -65,15 +70,18 @@ int main(int argc, char** argv) {
 
   double t1 = getTime();
   Minimize min(potentialMaster);
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<10; i++) {
     min.doStep();
     double lastDR = min.getLastDR();
     data = meterFull.getData();
     double unow = data[0]/numMolecules;
+    double du = unow-lastU;
     printf("%d % 10.4e % 10.4e\n", i, lastDR, unow-lastU);
     lastU = unow;
+    if (fabs(du) < uTol) break;
   }
   double t2 = getTime();
+  printf("u: %20.15e\n", lastU);
   printf("time: %4.3f\n", t2-t1);
 }
 
