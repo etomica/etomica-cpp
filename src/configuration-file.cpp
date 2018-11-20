@@ -63,7 +63,6 @@ void ConfigurationFile::go() {
           o[2] = (-0.5 + (iz-0.5)/replicates[2]) * bs[2];
           double *ri = box.getAtomPosition(nBasis*irep + iAtom);
           for (int k=0; k<3; k++) ri[k] = r[k] + o[k];
-          printf("%d % 10.5f % 10.5f % 10.5f\n", nBasis*irep+iAtom, ri[0], ri[1], ri[2]);
           box.nearestImage(ri);
           irep++;
         }
