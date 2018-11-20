@@ -6,14 +6,7 @@
 
 class Box;
 
-class Action {
-  public:
-    Action() {}
-    virtual ~Action() {}
-    virtual void go() = 0;
-};
-
-class ConfigurationLattice : Action {
+class ConfigurationLattice {
   protected:
     Box& box;
     int numBasisAtoms;
@@ -26,13 +19,26 @@ class ConfigurationLattice : Action {
     virtual void go();
 };
 
-class ConfigurationFile : Action {
+class ConfigurationFile {
   protected:
     Box& box;
     const char* filename;
+    int replicates[3];
 
   public:
     ConfigurationFile(Box& box, const char* filename);
     ~ConfigurationFile();
-    virtual void go();
+
+    /**
+     * Configures this class to replicate the configuration the requested
+     * number of times in each direction.  Box size and # of molecules must be
+     * set appropriately before invoking go().
+     */
+    void setReplication(int x, int y, int z);
+    void go();
+};
+
+class Replicate {
+  public:
+    static void go(Box& box, int replicates[3]);
 };
