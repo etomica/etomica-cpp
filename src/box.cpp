@@ -149,7 +149,6 @@ void Box::setNumMolecules(int iSpecies, int n) {
       continue;
     }
     int iStart = jSpecies==iSpecies ? numMoleculesBySpecies[iSpecies] : 0;
-    fa += iStart;
     for (int i=iStart; i<n; i++) {
       firstAtom[iSpecies][i] = fa + i*sna;
     }
