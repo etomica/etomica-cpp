@@ -11,19 +11,21 @@
 #include "util.h"
 
 EwaldFourier::EwaldFourier(const SpeciesList& sl, Box& b) : EwaldBase(sl,b) {
-  setParameters(0, 0);
 }
 
 EwaldFourier::~EwaldFourier() {
 }
 
-void EwaldFourier::setParameters(double kc, double a) {
+void EwaldFourier::setCutoff(double kc) {
   kCut = kc;
+}
+
+void EwaldFourier::setChargeAlpha(double a) {
   alpha = a;
-  const double* bs = box.getBoxSize();
-  for (int i=0; i<3; i++) {
-    kBasis[i] = 2*M_PI/bs[i];
-  }
+}
+
+void EwaldFourier::setR6eta(double e) {
+  eta = e;
 }
 
 void EwaldFourier::computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot, double** force) {

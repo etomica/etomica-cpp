@@ -66,7 +66,8 @@ int main(int argc, char** argv) {
   EwaldFourier ewald(speciesList, box);
   ewald.setCharge(hType, qH);
   ewald.setCharge(mType, -2*qH);
-  ewald.setParameters(kCut, alpha);
+  ewald.setCutoff(kCut);
+  ewald.setChargeAlpha(alpha);
   potentialMaster.setEwald(&ewald);
   potentialMaster.setDoTruncationCorrection(false);
   potentialMaster.init();

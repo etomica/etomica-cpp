@@ -20,6 +20,8 @@ class EwaldBase {
 
     bool rigidMolecules;
     double* charges;
+    double** B6;
+    double** b6;
 
   public:
     EwaldBase(const SpeciesList &speciesList, Box& box);
@@ -34,12 +36,13 @@ class EwaldBase {
     virtual double uTotalFromAtoms() = 0;
 
     virtual void setCharge(int iType, double charge);
+    virtual void setR6Coeff(int iType, double sigma, double epsilon);
 };
 
 class EwaldFourier : public EwaldBase {
   protected:
     double kBasis[3];
-    double kCut, alpha;
+    double kCut, alpha, eta;
     vector<complex<double> > sFacAtom;
     vector<complex<double> > sFac;
     vector<complex<double> > eik[3];
@@ -54,7 +57,9 @@ class EwaldFourier : public EwaldBase {
     void computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot, double** force);
     double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy);
 
-    void setParameters(double kCut, double alpha);
+    void setCutoff(double kCut);
+    void setChargeAlpha(double alpha);
+    void setR6eta(double eta);
     double uTotalFromAtoms();
     void processAtomU(int coeff);
     void resetAtomDU();

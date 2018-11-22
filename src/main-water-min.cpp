@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   double s6 = A/C;
   double sigma = pow(s6, 1.0/6.0);
   double epsilon = (C/s6)*1000/4 * 1000.*1e20*1e-24*4.184;
-  PotentialLJ pOO(epsilon,sigma,TRUNC_SIMPLE, 20);
+  PotentialLJ pOO(epsilon,sigma,TRUNC_SIMPLE, 11);
   double alpha = 0.3;
   double kCut = 3.5;
   double qH = 193.82504408037946;
@@ -55,7 +55,8 @@ int main(int argc, char** argv) {
   EwaldFourier ewald(speciesList, box);
   ewald.setCharge(hType, qH);
   ewald.setCharge(mType, -2*qH);
-  ewald.setParameters(kCut, alpha);
+  ewald.setCutoff(kCut);
+  ewald.setChargeAlpha(alpha);
   potentialMaster.setEwald(&ewald);
   potentialMaster.setDoTruncationCorrection(true);
   potentialMaster.init();
