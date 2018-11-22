@@ -40,7 +40,7 @@ class EwaldFourier : public EwaldBase {
   protected:
     double kBasis[3];
     double kCut, alpha;
-    complex<double> *sFacAtom;
+    vector<complex<double> > sFacAtom;
     vector<complex<double> > sFac;
     vector<complex<double> > eik[3];
     vector<complex<double> > dsFacMolecule;

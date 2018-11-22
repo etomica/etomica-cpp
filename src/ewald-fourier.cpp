@@ -11,12 +11,10 @@
 #include "util.h"
 
 EwaldFourier::EwaldFourier(const SpeciesList& sl, Box& b) : EwaldBase(sl,b) {
-  sFacAtom = (complex<double>*)malloc(box.getNumAtoms()*sizeof(complex<double>));
   setParameters(0, 0);
 }
 
 EwaldFourier::~EwaldFourier() {
-  free(sFacAtom);
 }
 
 void EwaldFourier::setParameters(double kc, double a) {
@@ -124,6 +122,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
   for (int i=0; i<3; i++) {
     kBasis[i] = 2*M_PI/bs[i];
   }
+  sFacAtom.resize(numAtoms);
   for (int ikx=0; ikx<=kxMax; ikx++) {
     double kx = ikx*kBasis[0];
     double kx2 = kx*kx;
