@@ -10,7 +10,7 @@
 #include "alloc2d.h"
 #include "util.h"
 
-EwaldFourier::EwaldFourier(const SpeciesList& sl, Box& b) : EwaldBase(sl,b) {
+EwaldFourier::EwaldFourier(const SpeciesList& sl, Box& b) : EwaldBase(sl,b), kCut(0), alpha(0), eta(0) {
 }
 
 EwaldFourier::~EwaldFourier() {
@@ -63,28 +63,45 @@ void EwaldFourier::computeFourierIntramolecular(int iMolecule, const bool doForc
 
 void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot, double** force, vector<PotentialCallback*>* pairCallbacks) {
   const int numAtoms = box.getNumAtoms();
-  double q2sum = 0;
-  for (int iAtom=0; iAtom<numAtoms; iAtom++) {
-    int iType = box.getAtomType(iAtom);
+  double q2sum = 0, sumBij = 0, sumBii = 0;
+  int numAtomTypes = speciesList.getNumAtomTypes();
+  for (int iType=0; iType<numAtomTypes; iType++) {
+    int inum = numAtomsByType[iType];
+    if (inum==0) continue;
     double qi = charges[iType];
-    if (qi==0) continue;
-    q2sum += qi*qi;
+    q2sum += inum*qi*qi;
+    double Bii = B6[iType][iType];
+    if (Bii!=0) {
+      sumBii += inum*Bii;
+      sumBij += inum*(inum-1)*Bii/2;
+      for (int jType=0; jType<numAtomTypes; jType++) {
+        if (jType != iType) sumBij += inum*numAtomsByType[jType]*B6[iType][jType];
+      }
+    }
   }
   uTot -= alpha/sqrt(M_PI)*q2sum;
+  const double* bs = box.getBoxSize();
+  double vol = bs[0]*bs[1]*bs[2];
+  if (sumBii > 0) {
+    double eta3 = eta*eta*eta;
+    uTot += pow(M_PI, 2.0/3.0)/(6*vol*eta3) * sumBij;
+    uTot -= 1.0/(12.0*eta3*eta3) * sumBii;
+  }
 
   for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
     computeFourierIntramolecular(iMolecule, doForces, doPhi, uTot, virialTot, force);
   }
 
   const double kCut2 = kCut*kCut;
-  const double* bs = box.getBoxSize();
   int kxMax = (int)(0.5*bs[0]/M_PI*kCut);
   int kMax[3] = {kxMax, (int)(0.5*bs[1]/M_PI*kCut), (int)(0.5*bs[2]/M_PI*kCut)};
   // cube instead of sphere, so conservatively big
   int nk[3] = {kMax[0]+1, 2*kMax[1]+1, 2*kMax[2]+1};
   int nktot = ((2*(nk[0]-1)+1)*nk[1]*nk[2]-1)/2;
   sFac.resize(nktot);
+  for (int kB=0; kB<=6; kB++) sFacB[kB].resize(nktot);
   fExp.resize(nktot);
+  f6Exp.resize(nktot);
   // We want exp(i dot(k,r)) for every k and every r
   // then sum over atoms, s(k) = sum[exp(i dot(k,r))] and U(k) = s(k) * s*(k)
   //
@@ -102,7 +119,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
     eik[a].resize(numAtoms*nk[a]);
     for (int iAtom=0; iAtom<numAtoms; iAtom++) {
       int iType = box.getAtomType(iAtom);
-      if (charges[iType] == 0) continue;
+      if (charges[iType] == 0 && B6[iType][iType] == 0) continue;
       int idx = iAtom*nk[a];
       if (a>0) idx += kMax[a];
       double* ri = box.getAtomPosition(iAtom);
@@ -117,9 +134,8 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
       }
     }
   }
-  double vol = bs[0]*bs[1]*bs[2];
   double coeff = 4*M_PI/vol;
-  double fourierSum = 0, virialSum = 0;;
+  double fourierSum = 0, fourierSum6 = 0, virialSum = 0;;
   int ik = 0;
   for (int i=0; i<3; i++) {
     kBasis[i] = 2*M_PI/bs[i];
@@ -143,17 +159,21 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
         double kxyz2 = kxy2 + kz*kz;
         double expthing = exp(-0.25*kxyz2/(alpha*alpha));
         sFac[ik] = 0;
+        for (int kB=0; kB<=6; kB++) sFacB[kB][ik] = 0;
         for (int iAtom=0; iAtom<numAtoms; iAtom++) {
           int iType = box.getAtomType(iAtom);
           double qi = charges[iType];
-          if (qi==0) {
+          double Bii = B6[iType][iType];
+          if (qi==0 && Bii == 0) {
             sFacAtom[iAtom] = 0;
             continue;
           }
-          sFacAtom[iAtom] = qi * eik[0][iAtom*nk[0]+ikx]
-                               * eik[1][iAtom*nk[1]+kMax[1]+iky]
-                               * eik[2][iAtom*nk[2]+kMax[2]+ikz];
-          sFac[ik] += sFacAtom[iAtom];
+          complex<double> icontrib = eik[0][iAtom*nk[0]+ikx]
+                          * eik[1][iAtom*nk[1]+kMax[1]+iky]
+                          * eik[2][iAtom*nk[2]+kMax[2]+ikz];
+          sFacAtom[iAtom] = qi*icontrib;
+          sFac[ik] += qi*icontrib;
+          for (int kB=0; kB<6; kB++) sFacB[kB][ik] += b6[iType][kB]*icontrib;
           if (doPhi) {
             double* ri = box.getAtomPosition(iAtom);
             double phiFac = 4*M_PI*qi*expthing/(kxyz2*vol);
@@ -184,6 +204,15 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
         fExp[ik] = 2*expthing/kxyz2;
         double x = (sFac[ik]*conj(sFac[ik])).real();
         fourierSum += fExp[ik] * x;
+        if (eta>0) {
+          double kxyz1 = sqrt(kxyz2);
+          double halfketa = 0.5*kxyz1*eta;
+          double halfketa2 = halfketa*halfketa;
+          f6Exp[ik] = (kxyz1*kxyz2*(sqrt(M_PI)*erfc(halfketa) + (0.5/halfketa2 - 1.0)/halfketa*exp(-halfketa2)));
+          for (int kB=0; kB<6; kB++) {
+            fourierSum6 += 2*f6Exp[ik] * (sFacB[kB][ik]*conj(sFacB[kB][ik])).real();
+          }
+        }
         //dFS/dV += dfExp/dV * x;
         //             dfExp/dk dk/dV
         //             dfExp/dk dk/dL dL/dV
@@ -214,6 +243,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
   fill(fExp.begin()+ik, fExp.end(), 0);
   fill(sFac.begin()+ik, sFac.end(), 0);
   uTot += 0.5*coeff * fourierSum;
+  uTot += pow(M_PI,2.0/3.0)/(24.0*vol)*fourierSum6;
   // dU/dV = -0.5*coeff*fourierSum/V
   // virialTot = dU/dV *3V
   virialTot += -3*0.5*coeff * fourierSum + 0.5*coeff*virialSum;

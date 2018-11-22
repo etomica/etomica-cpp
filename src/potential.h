@@ -161,3 +161,20 @@ class PotentialEwald : public Potential {
     void u012(double r2, double &u, double &du, double &d2u);
     virtual void u012TC(double &u, double &du, double &d2u);
 };
+
+class PotentialEwald6 : public Potential {
+  private:
+    Potential& pShort;
+    double Bij;
+    double eta, eta2, eta6r;
+  public:
+    PotentialEwald6(Potential& pShort, double sigmai, double epsiloni, double sigmaj, double epsilonj, double eta, double rc);
+    virtual ~PotentialEwald6();
+    double ur(double r);
+    double u(double r2);
+    double du(double r2);
+    double d2u(double r2);
+    void u012(double r2, double &u, double &du, double &d2u);
+    virtual void u012TC(double &u, double &du, double &d2u);
+};
+

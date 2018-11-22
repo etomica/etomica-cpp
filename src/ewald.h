@@ -17,6 +17,7 @@ class EwaldBase {
   protected:
     const SpeciesList& speciesList;
     Box& box;
+    int* numAtomsByType;
 
     bool rigidMolecules;
     double* charges;
@@ -28,6 +29,7 @@ class EwaldBase {
     virtual ~EwaldBase();
     virtual void init() {}
     void setRigidMolecules(bool rigidMolecules);
+    void setNumAtomsByType(int* numAtomsByType);
     virtual void computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot, double** force, vector<PotentialCallback*>* pairCallbacks) = 0;
     virtual void computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot, double** force) = 0;
     virtual double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) = 0;
@@ -45,9 +47,10 @@ class EwaldFourier : public EwaldBase {
     double kCut, alpha, eta;
     vector<complex<double> > sFacAtom;
     vector<complex<double> > sFac;
+    vector<complex<double> > sFacB[6];
     vector<complex<double> > eik[3];
     vector<complex<double> > dsFacMolecule;
-    vector<double> fExp;
+    vector<double> fExp, f6Exp;
     double phi[3][3];
 
   public:

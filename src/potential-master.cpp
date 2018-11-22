@@ -127,6 +127,7 @@ void PotentialMaster::setEmbedF(int iType, EmbedF* ef) {
 void PotentialMaster::setEwald(EwaldBase* e) {
   doEwald = e != nullptr;
   ewald = e;
+  ewald->setNumAtomsByType(numAtomsByType);
 }
 
 void PotentialMaster::setBondPotential(int iSpecies, vector<int*> &bp, Potential *p) {

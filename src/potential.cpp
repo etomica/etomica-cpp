@@ -427,6 +427,62 @@ void PotentialEwald::u012TC(double &u, double &du, double &d2u) {
   p.u012TC(u, du, d2u);
 }
 
+PotentialEwald6::PotentialEwald6(Potential& p, double si, double ei, double sj, double ej, double eta, double rc) : Potential(TRUNC_SIMPLE, rc), pShort(p), eta(eta) {
+  eta2 = eta*eta;
+  eta6r = 1/(eta2*eta2*eta2);
+  Bij = 0;
+  for (int k=0; k<=6; k++) {
+    int ck = factorial(6)/(factorial(6-k)*factorial(k));
+    double bik = 0.25*pow(si, k)*sqrt(ck*ei);
+    double bjk = 0.25*pow(sj, 6-k)*sqrt(ck*ej);
+    Bij += bik*bjk;
+  }
+}
+
+PotentialEwald6::~PotentialEwald6() {}
+
+double PotentialEwald6::ur(double r) {
+  return u(r*r);
+}
+
+double PotentialEwald6::u(double r2) {
+  double a2 = r2/eta2;
+  double a4 = a2*a2;
+  return pShort.u(r2) - Bij*eta6r*(1+a2+a4/2)*exp(-a2)/(a4*a2);
+}
+
+double PotentialEwald6::du(double r2) {
+  double a2 = r2/eta2;
+  double a4 = a2*a2;
+  double a6 = a4*a2;
+  double e = exp(-a2);
+  // (2a + 2a3) e/a6 - 2(1 + a2 + a4/2) e/a5 - 6(1 + a2 + a4/2) e/a7
+  return pShort.du(r2) + Bij*eta6r*(6 + 6*a2 + 3*a4 + a6)*e/a6;
+}
+
+double PotentialEwald6::d2u(double r2) {
+  double a2 = r2/eta2;
+  double a4 = a2*a2;
+  double a6 = a4*a2;
+  double e = exp(-a2);
+  return pShort.d2u(r2) - Bij * eta6r*(42 + 42*a2 + 21*a4 + (7+2*a2)*a6)*e/a6;
+}
+
+void PotentialEwald6::u012(double r2, double &u, double &du, double &d2u) {
+  pShort.u012(r2, u, du, d2u);
+  double a2 = r2/eta2;
+  double a4 = a2*a2;
+  double a6 = a4*a2;
+  double e = exp(-a2);
+  u += -Bij*eta6r*(1+a2+a4/2)*e/a6;
+  du += Bij*eta6r*(6 + 6*a2 + 3*a4 + a6)*e/a6;
+  d2u += -Bij * eta6r*(42 + 42*a2 + 21*a4 + (7+2*a2)*a6)*e/a6;
+}
+
+void PotentialEwald6::u012TC(double &u, double &du, double &d2u) {
+  pShort.u012TC(u, du, d2u);
+}
+
 PotentialEwaldBare::PotentialEwaldBare(double a, double qq, double rc) : Potential(TRUNC_SIMPLE, rc), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
 }
 

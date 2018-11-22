@@ -35,7 +35,7 @@ void EwaldBase::setR6Coeff(int iType, double sigma, double epsilon) {
   double sigmak = 1;
   for (int jType=0; jType<numAtomTypes; jType++) {
     B6[iType][jType] = 0;
-    for (int k=0; k<6; k++) {
+    for (int k=0; k<=6; k++) {
       int ck = factorial(6)/(factorial(6-k)*factorial(k));
       b6[iType][k] = 0.25*sigmak*sqrt(ck*epsilon);
       B6[iType][jType] += b6[iType][k]*b6[jType][6-k];
@@ -47,4 +47,8 @@ void EwaldBase::setR6Coeff(int iType, double sigma, double epsilon) {
 
 void EwaldBase::setRigidMolecules(bool rm) {
   rigidMolecules = rm;
+}
+
+void EwaldBase::setNumAtomsByType(int* nabt) {
+  numAtomsByType = nabt;
 }
