@@ -42,6 +42,7 @@ double PotentialMasterCell::getRange() {
 }
 
 void PotentialMasterCell::init() {
+  PotentialMaster::init();
   cellManager.init();
 #ifdef DEBUG
   uAtom[0] = 0;

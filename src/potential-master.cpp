@@ -45,7 +45,6 @@ PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : 
       embedF[i] = nullptr;
     }
   }
-  uAtom.resize(b.getNumAtoms());
   bondedPairs = new vector<vector<int*> >[sl.size()];
   bondedPotentials = new vector<Potential*>[sl.size()];
   bondedAtoms = new vector<int>*[sl.size()];
@@ -82,6 +81,14 @@ PotentialMaster::~PotentialMaster() {
   delete[] bondAngleTriplets;
   delete[] bondAnglePotentials;
   delete[] numAtomsByType;
+}
+
+void PotentialMaster::init() {
+  int na = box.getNumAtoms();
+  int s = uAtom.size();
+  if (s < na || s > 2*na) {
+    uAtom.resize(na);
+  }
 }
 
 void PotentialMaster::setDoTruncationCorrection(bool doCorrection) {

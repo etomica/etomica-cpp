@@ -323,7 +323,7 @@ class PotentialMaster {
   public:
     PotentialMaster(const SpeciesList &speciesList, Box& box, bool doEmbed);
     virtual ~PotentialMaster();
-    virtual void init() {}
+    virtual void init();
     Box& getBox();
     void setEwald(EwaldBase* ewald);
     void setDoTruncationCorrection(bool doCorrection);
