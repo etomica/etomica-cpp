@@ -47,7 +47,7 @@ class EwaldFourier : public EwaldBase {
     double kCut, alpha, eta;
     vector<complex<double> > sFacAtom;
     vector<complex<double> > sFac;
-    vector<complex<double> > sFacB[6];
+    vector<complex<double> > sFacB[7];
     vector<complex<double> > eik[3];
     vector<complex<double> > dsFacMolecule;
     vector<double> fExp, f6Exp;

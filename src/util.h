@@ -24,3 +24,9 @@ inline double erfc(double x) {
               -1.453152027 + 1.061405429 * t)))));
 }
 #endif
+
+inline long factorial(int i) {
+  long f = 1;
+  for (int j=2; j<=i; j++) f *= j;
+  return f;
+}
