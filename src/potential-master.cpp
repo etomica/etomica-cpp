@@ -506,6 +506,9 @@ double PotentialMaster::oldEnergy(int iAtom) {
   if (embeddingPotentials) {
     u += oldEmbeddingEnergy(iAtom);
   }
+  if (doEwald) {
+    u += ewald->computeFourierAtom(iAtom, true);
+  }
   return u;
 }
 
@@ -639,6 +642,9 @@ void PotentialMaster::computeOne(const int iAtom, double &u1) {
   }
   const double *ri = box.getAtomPosition(iAtom);
   computeOneInternal(iAtom, ri, u1, iSpecies, iMolecule, iFirstAtom, true);
+  if (doEwald) {
+    u1 += ewald->computeFourierAtom(iAtom, false);
+  }
   if (doSingleTruncationCorrection) {
     u1 += computeOneTruncationCorrection(iAtom);
   }

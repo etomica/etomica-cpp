@@ -33,6 +33,7 @@ class EwaldBase {
     virtual void computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot, double** force, vector<PotentialCallback*>* pairCallbacks) = 0;
     virtual void computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot, double** force) = 0;
     virtual double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) = 0;
+    virtual double computeFourierAtom(int iAtom, bool oldEnergy) = 0;
     virtual void processAtomU(int coeff) = 0;
     virtual void resetAtomDU() = 0;
     virtual double uTotalFromAtoms() = 0;
@@ -50,6 +51,7 @@ class EwaldFourier : public EwaldBase {
     vector<complex<double> > sFacB[7];
     vector<complex<double> > eik[3];
     vector<complex<double> > dsFacMolecule;
+    vector<complex<double> > dsFacBMolecule[7];
     vector<double> fExp, f6Exp;
     double phi[3][3];
 
@@ -59,6 +61,7 @@ class EwaldFourier : public EwaldBase {
     void computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot, double** force, vector<PotentialCallback*>* pairCallbacks);
     void computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot, double** force);
     double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy);
+    double computeFourierAtom(int iAtom, bool oldEnergy);
 
     void setCutoff(double kCut);
     void setChargeAlpha(double alpha);
