@@ -134,6 +134,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
     }
   }
   double coeff = 4*M_PI/vol;
+  double coeffB = 2*sqrt(M_PI)*M_PI/(24.0*vol);
   double fourierSum = 0, fourierSum6 = 0, virialSum = 0;;
   int ik = 0;
   for (int i=0; i<3; i++) {
@@ -170,9 +171,13 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
           complex<double> icontrib = eik[0][iAtom*nk[0]+ikx]
                           * eik[1][iAtom*nk[1]+kMax[1]+iky]
                           * eik[2][iAtom*nk[2]+kMax[2]+ikz];
-          sFacAtom[iAtom] = qi*icontrib;
+          sFacAtom[iAtom] = icontrib;
           sFac[ik] += qi*icontrib;
-          for (int kB=0; kB<=6; kB++) sFacB[kB][ik] += b6[iType][kB]*icontrib;
+          if (eta>0) {
+            for (int kB=0; kB<=6; kB++) {
+              sFacB[kB][ik] += b6[iType][kB]*icontrib;
+            }
+          }
           if (doPhi) {
             double* ri = box.getAtomPosition(iAtom);
             double phiFac = 4*M_PI*qi*expthing/(kxyz2*vol);
@@ -184,6 +189,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
               if (qj==0) continue;
               double* rj = box.getAtomPosition(jAtom);
               double dr[3] = {rj[0]-ri[0],rj[1]-ri[1],rj[2]-ri[2]};
+              // cos(kr) ?= f(eik.real,ejk.real)
               double jPhiFac = qj*phiFac*cos(kx*dr[0] + ky*dr[1] + kz*dr[2]);
               for (int k=0; k<3; k++) {
                 for (int l=0; l<3; l++) {
@@ -200,14 +206,16 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
           }
         }
         // we could skip this as long as box-length, kCut don't change between calls
-        fExp[ik] = 2*expthing/kxyz2;
-        double x = (sFac[ik]*conj(sFac[ik])).real();
-        fourierSum += fExp[ik] * x;
+        fExp[ik] = 2*coeff*expthing/kxyz2;
         if (eta>0) {
           double kxyz1 = sqrt(kxyz2);
           double halfketa = 0.5*kxyz1*eta;
           double halfketa2 = halfketa*halfketa;
-          f6Exp[ik] = -(kxyz1*kxyz2*(sqrt(M_PI)*erfc(halfketa) + (0.5/halfketa2 - 1.0)/halfketa*exp(-halfketa2)));
+          f6Exp[ik] = -coeffB*(kxyz1*kxyz2*(sqrt(M_PI)*erfc(halfketa) + (0.5/halfketa2 - 1.0)/halfketa*exp(-halfketa2)));
+        }
+        double x = (sFac[ik]*conj(sFac[ik])).real();
+        fourierSum += fExp[ik] * x;
+        if (eta>0) {
           for (int kB=0; kB<=6; kB++) {
             fourierSum6 += f6Exp[ik] * (sFacB[kB][ik]*conj(sFacB[6-kB][ik])).real();
           }
@@ -220,10 +228,17 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
         //             (2 exp/3V) (2/k + 0.5/alpha^2)
         virialSum += 2*expthing * (2/kxyz2 + 0.5/(alpha*alpha))*x;
         if (doForces) {
-          double coeffk = coeff * fExp[ik];
           for (int iAtom=0; iAtom<numAtoms; iAtom++) {
-            double coeffki = coeffk * (sFacAtom[iAtom].imag()*sFac[ik].real()
-                                      -sFacAtom[iAtom].real()*sFac[ik].imag());
+            int iType = box.getAtomType(iAtom);
+            double qi = charges[iType];
+            double coeffki = fExp[ik]*qi*(sFacAtom[iAtom].imag()*sFac[ik].real()
+                             -sFacAtom[iAtom].real()*sFac[ik].imag());
+            if (eta>0) {
+              for (int kB=0; kB<=7; kB++) {
+                coeffki += f6Exp[ik]*b6[iType][kB]*(sFacAtom[iAtom].imag()*sFacB[6-kB][ik].real()
+                           -sFacAtom[iAtom].real()*sFacB[6-kB][ik].imag());
+              }
+            }
             force[iAtom][0] += coeffki * kx;
             force[iAtom][1] += coeffki * ky;
             force[iAtom][2] += coeffki * kz;
@@ -241,9 +256,9 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
   }
   fill(fExp.begin()+ik, fExp.end(), 0);
   fill(sFac.begin()+ik, sFac.end(), 0);
-  uTot += 0.5*coeff * fourierSum;
+  uTot += 0.5*fourierSum;
   // extra factor of 2 here from????
-  uTot += 2*sqrt(M_PI)*M_PI/(24.0*vol)*fourierSum6;
+  uTot += fourierSum6;
   // dU/dV = -0.5*coeff*fourierSum/V
   // virialTot = dU/dV *3V
   virialTot += -3*0.5*coeff * fourierSum + 0.5*coeff*virialSum;
