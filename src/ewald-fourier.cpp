@@ -161,6 +161,18 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
         double expthing = exp(-0.25*kxyz2/(alpha*alpha));
         sFac[ik] = 0;
         for (int kB=0; kB<=6; kB++) sFacB[kB][ik] = 0;
+        // we could skip this as long as box-length, kCut don't change between calls
+        fExp[ik] = 2*coeff*expthing/kxyz2;
+        double df6 = 0;
+        if (eta>0) {
+          double kxyz1 = sqrt(kxyz2);
+          double halfketa = 0.5*kxyz1*eta;
+          double halfketa2 = halfketa*halfketa;
+          f6Exp[ik] = -coeffB*kxyz1*kxyz2*(sqrt(M_PI)*erfc(halfketa) + (0.5/halfketa2 - 1.0)/halfketa*exp(-halfketa2));
+          df6 = -(3*f6Exp[ik]/kxyz1 - coeffB*kxyz1*kxyz2*(-exp(-halfketa2)*eta
+                  + (-1.5/halfketa2 + 1.0)/halfketa2 * exp(-halfketa2) * 0.5*eta
+                  - (0.5/halfketa2 - 1.0)/halfketa * exp(-halfketa2) * 2*0.5*halfketa*eta))*kxyz1;
+        }
         for (int iAtom=0; iAtom<numAtoms; iAtom++) {
           int iType = box.getAtomType(iAtom);
           double qi = charges[iType];
@@ -181,7 +193,13 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
           }
           if (doPhi) {
             double* ri = box.getAtomPosition(iAtom);
-            double phiFac = 4*M_PI*qi*expthing/(kxyz2*vol);
+            double phiFac = qi*fExp[ik];
+            double phiFac6[7];
+            if (eta>0) {
+              for (int kB=0; kB<=7; kB++) {
+                phiFac6[kB] += f6Exp[ik]*b6[iType][kB];
+              }
+            }
             double karray[3] = {kx,ky,kz};
             for (int jAtom=0; jAtom<numAtoms; jAtom++) {
               if (jAtom==iAtom) continue;
@@ -191,7 +209,13 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
               double* rj = box.getAtomPosition(jAtom);
               double dr[3] = {rj[0]-ri[0],rj[1]-ri[1],rj[2]-ri[2]};
               // cos(kr) ?= f(eik.real,ejk.real)
-              double jPhiFac = qj*phiFac*cos(kx*dr[0] + ky*dr[1] + kz*dr[2]);
+              double jPhiFac = qj*phiFac;
+              if (eta>0) {
+                for (int kB=0; kB<=7; kB++) {
+                  jPhiFac += b6[jType][6-kB]*phiFac6[kB];
+                }
+              }
+              jPhiFac *= cos(kx*dr[0] + ky*dr[1] + kz*dr[2]);
               for (int k=0; k<3; k++) {
                 for (int l=0; l<3; l++) {
                   phi[k][l] = jPhiFac*karray[k]*karray[l];
@@ -205,18 +229,6 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
 
             }
           }
-        }
-        // we could skip this as long as box-length, kCut don't change between calls
-        fExp[ik] = 2*coeff*expthing/kxyz2;
-        double df6 = 0;
-        if (eta>0) {
-          double kxyz1 = sqrt(kxyz2);
-          double halfketa = 0.5*kxyz1*eta;
-          double halfketa2 = halfketa*halfketa;
-          f6Exp[ik] = -coeffB*kxyz1*kxyz2*(sqrt(M_PI)*erfc(halfketa) + (0.5/halfketa2 - 1.0)/halfketa*exp(-halfketa2));
-          df6 = -(3*f6Exp[ik]/kxyz1 - coeffB*kxyz1*kxyz2*(-exp(-halfketa2)*eta
-                  + (-1.5/halfketa2 + 1.0)/halfketa2 * exp(-halfketa2) * 0.5*eta
-                  - (0.5/halfketa2 - 1.0)/halfketa * exp(-halfketa2) * 2*0.5*halfketa*eta))*kxyz1;
         }
         double x = (sFac[ik]*conj(sFac[ik])).real();
         fourierSum += fExp[ik] * x;
@@ -243,8 +255,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
         if (doForces) {
           for (int iAtom=0; iAtom<numAtoms; iAtom++) {
             int iType = box.getAtomType(iAtom);
-            double qi = charges[iType];
-            double coeffki = fExp[ik]*qi*(sFacAtom[iAtom].imag()*sFac[ik].real()
+            double coeffki = fExp[ik]*charges[iType]*(sFacAtom[iAtom].imag()*sFac[ik].real()
                              -sFacAtom[iAtom].real()*sFac[ik].imag());
             if (eta>0) {
               for (int kB=0; kB<=7; kB++) {
