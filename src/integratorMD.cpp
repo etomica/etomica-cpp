@@ -4,15 +4,28 @@
 
 #include "integrator.h"
 #include "potential-master.h"
+#include "neighbor-update-listener.h"
 
-IntegratorMD::IntegratorMD(AtomInfo& ai, PotentialMaster& p, Random& r, Box& b) : Integrator(p), atomInfo(ai), random(r), box(b), forces(NULL), tStep(0.01), thermostat(THERMOSTAT_NONE), nbrCheckInterval(-1), nbrCheckCountdown(-1) {
+IntegratorMD::IntegratorMD(AtomInfo& ai, PotentialMaster& p, Random& r, Box& b) : Integrator(p), atomInfo(ai), random(r), box(b), forces(nullptr), tStep(0.01), thermostat(THERMOSTAT_NONE), neighborUpdateListener(nullptr) {
   takesForces = true;
 }
 
-IntegratorMD::~IntegratorMD(){}
+IntegratorMD::~IntegratorMD(){
+  delete neighborUpdateListener;
+}
 
 void IntegratorMD::setNbrCheckInterval(int i) {
-  nbrCheckInterval = nbrCheckCountdown = i;
+  if (!neighborUpdateListener && i>0) {
+    neighborUpdateListener = new NeighborUpdateListener(static_cast<PotentialMasterList&>(potentialMaster), i);
+    addListener(neighborUpdateListener);
+    return;
+  }
+  if (i==0) {
+    removeListener(neighborUpdateListener);
+    delete neighborUpdateListener;
+    return;
+  }
+  neighborUpdateListener->setInterval(i);
 }
 
 void IntegratorMD::allComputeFinished(double uTotNew, double virialTotNew, double **f) {
@@ -77,10 +90,7 @@ void IntegratorMD::randomizeVelocities(bool zeroMomentum) {
 }
 
 void IntegratorMD::reset() {
-  if (nbrCheckInterval>0) {
-    static_cast<PotentialMasterList&>(potentialMaster).reset();
-    nbrCheckCountdown = nbrCheckInterval;
-  }
+  potentialMaster.init();
   Integrator::reset();
 
   kineticEnergy = 0;

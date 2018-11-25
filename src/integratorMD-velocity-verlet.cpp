@@ -17,10 +17,6 @@ IntegratorMDVelocityVerlet::IntegratorMDVelocityVerlet(AtomInfo& ai, PotentialMa
 IntegratorMDVelocityVerlet::~IntegratorMDVelocityVerlet(){}
 
 void IntegratorMDVelocityVerlet::doStep() {
-  if (nbrCheckCountdown==0) {
-    static_cast<PotentialMasterList&>(potentialMaster).checkUpdateNbrs();
-    nbrCheckCountdown = nbrCheckInterval;
-  }
   stepCount++;
   for (vector<IntegratorListener*>::iterator it = listenersStepStarted.begin(); it!=listenersStepStarted.end(); it++) {
     (*it)->stepStarted();
@@ -60,7 +56,6 @@ void IntegratorMDVelocityVerlet::doStep() {
   for (vector<IntegratorListener*>::iterator it = listenersStepFinished.begin(); it!=listenersStepFinished.end(); it++) {
     (*it)->stepFinished();
   }
-  if (nbrCheckInterval>0) nbrCheckCountdown--;
 #ifdef DEBUG
   printf("%ld step %e %e %e\n", stepCount, energy/n, kineticEnergy/n, (energy + kineticEnergy)/n);
 #endif

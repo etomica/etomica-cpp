@@ -47,6 +47,7 @@ void PotentialMasterList::init() {
       maxR2[i] = maxDr*maxDr;
     }
   }
+  reset();
 }
 
 void PotentialMasterList::setDoDownNbrs(bool doDown) {

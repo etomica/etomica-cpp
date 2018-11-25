@@ -15,6 +15,7 @@ class AtomInfo;
 class MCMove;
 class PotentialMaster;
 class Box;
+class NeighborUpdateListener;
 
 class IntegratorListener {
   public:
@@ -96,7 +97,7 @@ class IntegratorMD : public Integrator {
     double** forces;
     double tStep;
     int thermostat;
-    int nbrCheckInterval, nbrCheckCountdown;
+    NeighborUpdateListener* neighborUpdateListener;
     vector<struct PotentialCallbackInfo> allPotentialCallbacks;
     double kineticEnergy;
 

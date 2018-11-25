@@ -62,7 +62,6 @@ void IntegratorNHC::doStep() {
   for (vector<IntegratorListener*>::iterator it = listenersStepFinished.begin(); it!=listenersStepFinished.end(); it++) {
     (*it)->stepFinished();
   }
-  if (nbrCheckInterval>0) nbrCheckCountdown--;
 #ifdef DEBUG
   int n = box.getTotalNumMolecules();
   printf("%ld step %e %e %e\n", stepCount, energy/n, kineticEnergy/n, (energy + kineticEnergy)/n);
