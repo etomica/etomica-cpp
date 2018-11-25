@@ -84,6 +84,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
   if (sumBii > 0) {
     double eta3 = eta*eta*eta;
     uTot -= sqrt(M_PI)*M_PI/(6*vol*eta3) * sumBij;
+    virialTot += 3*sqrt(M_PI)*M_PI/(6*vol*eta3) * sumBij;
     uTot += 1.0/(12.0*eta3*eta3) * sumBii;
   }
 
@@ -135,7 +136,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
   }
   double coeff = 4*M_PI/vol;
   double coeffB = 2*sqrt(M_PI)*M_PI/(24.0*vol);
-  double fourierSum = 0, fourierSum6 = 0, virialSum = 0;;
+  double fourierSum = 0, fourierSum6 = 0, virialSum = 0, virialSum6 = 0;
   int ik = 0;
   for (int i=0; i<3; i++) {
     kBasis[i] = 2*M_PI/bs[i];
@@ -207,26 +208,38 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
         }
         // we could skip this as long as box-length, kCut don't change between calls
         fExp[ik] = 2*coeff*expthing/kxyz2;
+        double df6 = 0;
         if (eta>0) {
           double kxyz1 = sqrt(kxyz2);
           double halfketa = 0.5*kxyz1*eta;
           double halfketa2 = halfketa*halfketa;
-          f6Exp[ik] = -coeffB*(kxyz1*kxyz2*(sqrt(M_PI)*erfc(halfketa) + (0.5/halfketa2 - 1.0)/halfketa*exp(-halfketa2)));
+          f6Exp[ik] = -coeffB*kxyz1*kxyz2*(sqrt(M_PI)*erfc(halfketa) + (0.5/halfketa2 - 1.0)/halfketa*exp(-halfketa2));
+          df6 = -(3*f6Exp[ik]/kxyz1 - coeffB*kxyz1*kxyz2*(-exp(-halfketa2)*eta
+                  + (-1.5/halfketa2 + 1.0)/halfketa2 * exp(-halfketa2) * 0.5*eta
+                  - (0.5/halfketa2 - 1.0)/halfketa * exp(-halfketa2) * 2*0.5*halfketa*eta))*kxyz1;
         }
         double x = (sFac[ik]*conj(sFac[ik])).real();
         fourierSum += fExp[ik] * x;
-        if (eta>0) {
-          for (int kB=0; kB<=6; kB++) {
-            fourierSum6 += f6Exp[ik] * (sFacB[kB][ik]*conj(sFacB[6-kB][ik])).real();
-          }
-        }
         //dFS/dV += dfExp/dV * x;
         //             dfExp/dk dk/dV
         //             dfExp/dk dk/dL dL/dV
         //             dfExp/dk (-2k/3V)
         //             (-2 exp/k^2 - 0.5/alpha^2 exp/k) (-2k/3V)
         //             (2 exp/3V) (2/k + 0.5/alpha^2)
-        virialSum += 2*expthing * (2/kxyz2 + 0.5/(alpha*alpha))*x;
+        if (alpha>0) virialSum += 2*expthing * (2/kxyz2 + 0.5/(alpha*alpha))*x;
+        // f6Exp = coeffB k^3 (pi^.5 erfc(a) + (0.5/a^3 - 1/a) exp(-a2))
+        // dFS6/dV += df6Exp/dV * y
+        // df6Exp/dV = df6Exp/dk dk/dV
+        //           = df6Exp/dk (-k/3V)
+        //           = 3 f6Exp / k + k^3 (pi^.5 (-2 exp(-a^2)/pi^.5) eta/2 + (-1.5/a^4 + 1/a^2) exp(-a2) eta/2 + (0.5/a^4 - 1/a^2) exp(-a2) (-2a) eta/2)
+        //           = 3 f6Exp/k + k^3 (-exp(-a^2) eta + (-0.75/a^4 + 0.5/a^2) exp(-a2) eta/a - (0.5/a^4 - 1/a^2) exp(-a2) a eta)
+        if (eta>0) {
+          for (int kB=0; kB<=6; kB++) {
+            double y = (sFacB[kB][ik]*conj(sFacB[6-kB][ik])).real();
+            fourierSum6 += f6Exp[ik] * y;
+            virialSum6 += df6*y;
+          }
+        }
         if (doForces) {
           for (int iAtom=0; iAtom<numAtoms; iAtom++) {
             int iType = box.getAtomType(iAtom);
@@ -261,7 +274,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
   uTot += fourierSum6;
   // dU/dV = -0.5*coeff*fourierSum/V
   // virialTot = dU/dV *3V
-  virialTot += -3*0.5*coeff * fourierSum + 0.5*coeff*virialSum;
+  virialTot += -3*0.5* fourierSum + 0.5*coeff*virialSum  -3*fourierSum6 + virialSum6;
 }
 
 double EwaldFourier::uTotalFromAtoms() {
@@ -304,7 +317,7 @@ double EwaldFourier::uTotalFromAtoms() {
   }
   double coeff = 4*M_PI/vol;
   uTot += 0.5*coeff * fourierSum;
-  uTot += 2*sqrt(M_PI)*M_PI/(24.0*vol)*fourierSum6;
+  uTot += fourierSum6;
   return uTot;
 }
 
@@ -379,28 +392,18 @@ double EwaldFourier::computeFourierAtom(int iAtom, bool oldEnergy) {
       int kzMax = (int)(0.5*bs[2]*sqrt(kCut2 - kxy2)/M_PI);
       for (int ikz=-kzMax; ikz<=kzMax; ikz++) {
         if (!xpositive && !ypositive && ikz<=0) continue;
-        double kz = ikz*kBasis[2];
-        double kxyz2 = kxy2 + kz*kz;
         // when we compute old energy, this will come in as 0
         // when we compute new energy, this will come in as old fourier sum
-        double fExp = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
-        double f6Exp = 0;
-        if (eta>0) {
-          double kxyz1 = sqrt(kxyz2);
-          double halfketa = 0.5*kxyz1*eta;
-          double halfketa2 = halfketa*halfketa;
-          f6Exp = -(kxyz1*kxyz2*(sqrt(M_PI)*erfc(halfketa) + (0.5/halfketa2 - 1.0)/halfketa*exp(-halfketa2)));
-        }
         if (!oldEnergy) {
           complex<double> sFacMinus = sFac[ik] - dsFacMolecule[ik];
           // energy without this atom
-          fourierSum -= fExp * (sFacMinus*conj(sFacMinus)).real();
+          fourierSum -= fExp[ik] * (sFacMinus*conj(sFacMinus)).real();
           dsFacMolecule[ik] = -dsFacMolecule[ik];
           if (eta>0) {
             for (int kB=0; kB<=6; kB++) {
               sFacMinus = sFacB[kB][ik] - dsFacBMolecule[kB][ik];
               // energy without this atom
-              fourierSum6 -= f6Exp * (sFacMinus*conj(sFacMinus)).real();
+              fourierSum6 -= f6Exp[ik] * (sFacMinus*conj(sFacMinus)).real();
               dsFacBMolecule[kB][ik] = -dsFacBMolecule[kB][ik];
             }
           }
@@ -416,24 +419,24 @@ double EwaldFourier::computeFourierAtom(int iAtom, bool oldEnergy) {
         if (oldEnergy) {
           complex<double> sFacMinus = sFac[ik] - dsFacMolecule[ik];
           // energy with this atom present (as we computed it before) and without
-          fourierSum += fExp * ((sFac[ik]*conj(sFac[ik])).real()
+          fourierSum += fExp[ik] * ((sFac[ik]*conj(sFac[ik])).real()
                                -(sFacMinus*conj(sFacMinus)).real());
           if (eta>0) {
             for (int kB=0; kB<=6; kB++) {
               sFacMinus = sFacB[kB][ik] - dsFacBMolecule[kB][ik];
               // energy with this atom present (as we computed it before) and without
-              fourierSum6 += f6Exp * ((sFacB[kB][ik]*conj(sFacB[kB][ik])).real()
+              fourierSum6 += f6Exp[ik] * ((sFacB[kB][ik]*conj(sFacB[kB][ik])).real()
                   -(sFacMinus*conj(sFacMinus)).real());
             }
           }
         }
         else {
           complex<double> sFacNew = sFac[ik] + dsFacMolecule[ik];
-          fourierSum += fExp * (sFacNew*conj(sFacNew)).real();
+          fourierSum += fExp[ik] * (sFacNew*conj(sFacNew)).real();
           if (eta>0) {
             for (int kB=0; kB<=6; kB++) {
               sFacNew = sFacB[kB][ik] + dsFacBMolecule[kB][ik];
-              fourierSum6 += f6Exp * (sFacNew*conj(sFacNew)).real();
+              fourierSum6 += f6Exp[ik] * (sFacNew*conj(sFacNew)).real();
             }
           }
         }
@@ -442,7 +445,7 @@ double EwaldFourier::computeFourierAtom(int iAtom, bool oldEnergy) {
     }
   }
   u += 0.5*coeff * fourierSum;
-  u += 2*sqrt(M_PI)*M_PI/(24.0*vol)*fourierSum6;
+  u += fourierSum6;
   return u;
 }
 
@@ -524,28 +527,18 @@ double EwaldFourier::oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) {
       int kzMax = (int)(0.5*bs[2]*sqrt(kCut2 - kxy2)/M_PI);
       for (int ikz=-kzMax; ikz<=kzMax; ikz++) {
         if (!xpositive && !ypositive && ikz<=0) continue;
-        double kz = ikz*kBasis[2];
-        double kxyz2 = kxy2 + kz*kz;
         // when we compute old energy, this will come in as 0
         // when we compute new energy, this will come in as old fourier sum
-        double fExp = 2*exp(-0.25*kxyz2/(alpha*alpha))/kxyz2;
-        double f6Exp = 0;
-        if (eta>0) {
-          double kxyz1 = sqrt(kxyz2);
-          double halfketa = 0.5*kxyz1*eta;
-          double halfketa2 = halfketa*halfketa;
-          f6Exp = -(kxyz1*kxyz2*(sqrt(M_PI)*erfc(halfketa) + (0.5/halfketa2 - 1.0)/halfketa*exp(-halfketa2)));
-        }
         if (!oldEnergy) {
           complex<double> sFacMinus = sFac[ik] - dsFacMolecule[ik];
           // energy without this atom
-          fourierSum -= fExp * (sFacMinus*conj(sFacMinus)).real();
+          fourierSum -= fExp[ik] * (sFacMinus*conj(sFacMinus)).real();
           dsFacMolecule[ik] = -dsFacMolecule[ik];
           if (eta>0) {
             for (int kB=0; kB<=6; kB++) {
               sFacMinus = sFacB[kB][ik] - dsFacBMolecule[kB][ik];
               // energy without this atom
-              fourierSum6 -= f6Exp * (sFacMinus*conj(sFacMinus)).real();
+              fourierSum6 -= f6Exp[ik] * (sFacMinus*conj(sFacMinus)).real();
               dsFacBMolecule[kB][ik] = -dsFacBMolecule[kB][ik];
             }
           }
@@ -566,24 +559,24 @@ double EwaldFourier::oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) {
         if (oldEnergy) {
           complex<double> sFacMinus = sFac[ik] - dsFacMolecule[ik];
           // energy with this atom present (as we computed it before) and without
-          fourierSum += fExp * ((sFac[ik]*conj(sFac[ik])).real()
+          fourierSum += fExp[ik] * ((sFac[ik]*conj(sFac[ik])).real()
                                -(sFacMinus*conj(sFacMinus)).real());
           if (eta>0) {
             for (int kB=0; kB<=6; kB++) {
               sFacMinus = sFacB[kB][ik] - dsFacBMolecule[kB][ik];
               // energy with this atom present (as we computed it before) and without
-              fourierSum6 += f6Exp * ((sFacB[kB][ik]*conj(sFacB[kB][ik])).real()
+              fourierSum6 += f6Exp[ik] * ((sFacB[kB][ik]*conj(sFacB[kB][ik])).real()
                   -(sFacMinus*conj(sFacMinus)).real());
             }
           }
         }
         else {
           complex<double> sFacNew = sFac[ik] + dsFacMolecule[ik];
-          fourierSum += fExp * (sFacNew*conj(sFacNew)).real();
+          fourierSum += fExp[ik] * (sFacNew*conj(sFacNew)).real();
           if (eta>0) {
             for (int kB=0; kB<=6; kB++) {
               sFacNew = sFacB[kB][ik] + dsFacBMolecule[kB][ik];
-              fourierSum6 += f6Exp * (sFacNew*conj(sFacNew)).real();
+              fourierSum6 += f6Exp[ik] * (sFacNew*conj(sFacNew)).real();
             }
           }
         }
