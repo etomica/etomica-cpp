@@ -161,7 +161,7 @@ void CellManager::assignCells() {
     return;
   }
   if (range == 0 || cellRange == 0) {
-    fprintf(stderr, "range and cell range need to be non-zero\n");
+    fprintf(stderr, "range (%f) and cell range (%d) need to be non-zero\n", range, cellRange);
     return;
   }
 
@@ -205,6 +205,7 @@ void CellManager::removeAtom(int iAtom) {
     }
   }
 }
+
 void CellManager::updateAtom(int iAtom) {
   int cellNum = 0;
   const double *bs = box.getBoxSize();
