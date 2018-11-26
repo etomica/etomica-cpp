@@ -765,3 +765,7 @@ double PotentialMaster::uTotalFromAtoms() {
   computeAllTruncationCorrection(uTot, virialTot);
   return uTot;
 }
+
+void PotentialMaster::updateAtom(int iAtom) {
+  box.nearestImage(box.getAtomPosition(iAtom));
+}

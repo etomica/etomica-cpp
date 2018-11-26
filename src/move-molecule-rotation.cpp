@@ -13,6 +13,16 @@ MCMoveMoleculeRotate::~MCMoveMoleculeRotate() {
   free2D((void**)oldPositions);
 }
 
+void MCMoveMoleculeRotate::transformAbout(double* r, const double* rOld, double* center) {
+  mat.transformAbout(r, center, box);
+  // ugh.  that transformed and wrapped into the box.
+  // we need to (maybe) unwrap to be on the same side of the box it started at
+  double dr[3];
+  for (int k=0; k<3; k++) dr[k] = r[k] - rOld[k];
+  box.nearestImage(dr);
+  for (int k=0; k<3; k++) r[k] = rOld[k] + dr[k];
+}
+
 bool MCMoveMoleculeRotate::doTrial() {
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
@@ -67,7 +77,8 @@ bool MCMoveMoleculeRotate::doTrial() {
     for (int j=0; j<3; j++) {
       oldPositions[i][j] = ri[j];
     }
-    mat.transformAbout(ri, center, box);
+    transformAbout(ri, oldPositions[i], center);
+    // and then rewrap into the box if the potentialMaster wants it
     potentialMaster.updateAtom(iAtom);
   }
   numTrials++;
@@ -102,7 +113,7 @@ void MCMoveMoleculeRotate::acceptNotify() {
   for (int i=0; i<na; i++) {
     int iAtom = iAtomFirst + i;
     double *ri = box.getAtomPosition(iAtom);
-    mat.transformAbout(ri, center, box);
+    transformAbout(ri, oldPositions[i], center);
     potentialMaster.updateAtom(iAtom);
   }
   numAccepted++;

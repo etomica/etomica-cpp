@@ -339,7 +339,7 @@ class PotentialMaster {
     virtual void computeOne(const int iAtom, double &energy);
     // energy of one molecule with the whole box (including itself)
     virtual void computeOneMolecule(int iMolecule, double &energy);
-    virtual void updateAtom(int iAtom) {}
+    virtual void updateAtom(int iAtom);
     virtual void newMolecule(int iSpecies);
     virtual void removeMolecule(int iSpecies, int iMolecule);
     double oldEnergy(int iAtom);
@@ -407,6 +407,8 @@ class PotentialMasterList : public PotentialMasterCell {
     void setDoDownNbrs(bool doDown);
     void checkUpdateNbrs();
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
+    virtual void updateAtom(int iAtom);
+    virtual void computeOneInternal(const int iAtom, const double *ri, double &energy, const int iSpecies, const int iMolecule, const int iFirstAtom, const bool onlyAtom);
 };
 
 class PotentialMasterVirial : public PotentialMaster {

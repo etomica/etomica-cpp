@@ -199,6 +199,9 @@ resetStart:
         }
 
         nbrs[jAtom][maxNab-1-numAtomNbrsDn[jAtom]] = iAtom;
+        // these offsets are actually opposite... we don't have a clean
+        // way to find the opposite offset.
+        nbrBoxOffsets[jAtom][maxNab-1-numAtomNbrsDn[jAtom]] = nbrBoxOffsets[iAtom][j];
         numAtomNbrsDn[jAtom]++;
       }
     }
@@ -223,8 +226,18 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
     }
     numForceAtoms = numAtoms;
   }
+#ifdef DEBUG
+  vector<double> uCheck;
+  vector<double> rhoCheck;
+  uCheck.resize(box.getNumAtoms());
+  if (embeddingPotentials) rhoCheck.resize(box.getNumAtoms());
+#endif
   double uTot=0, virialTot=0;
   for (int i=0; i<numAtoms; i++) {
+#ifdef DEBUG
+    uCheck[i] = uAtom[i];
+    if (embeddingPotentials) rhoCheck[i] = rhoSum[i];
+#endif
     uAtom[i] = 0;
     if (embeddingPotentials) rhoSum[i] = 0;
     if (doForces) for (int k=0; k<3; k++) force[i][k] = 0;
@@ -292,6 +305,27 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
   if (doForces && !pureAtoms) {
     virialTot += computeVirialIntramolecular();
   }
+#ifdef DEBUG
+  if (uCheck[0]!=0) {
+    bool oops = false;
+    for (int i=0; i<numAtoms; i++) {
+      if (fabs(uCheck[i]-uAtom[i]) > 1e-7) {
+        // we've recomputed the energy for this atom and our previous estimate was wrong
+        fprintf(stderr, "PML uAtomCheck oops %d %f %f %f\n", i, uCheck[i], uAtom[i], uCheck[i]-uAtom[i]);
+        oops=true;
+      }
+    }
+    if (embeddingPotentials) {
+      for (int i=0; i<numAtoms; i++) {
+        if (fabs(rhoCheck[i] - rhoSum[i]) > 1e-7) {
+          fprintf(stderr, "PML rhoSumCheck oops %d %e %e %e\n", i, rhoCheck[i], rhoSum[i], rhoCheck[i]-rhoSum[i]);
+          abort();
+        }
+      }
+    }
+    if (oops) abort();
+  }
+#endif
   computeAllTruncationCorrection(uTot, virialTot);
   if (!pureAtoms && !rigidMolecules) {
     computeAllBonds(doForces, uTot);
@@ -300,3 +334,50 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
     if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);
   }
 }
+
+// do nothing.  not going to update cell or wrap inside the box.
+// both of those things will happen during reset.  doing it before
+// that will just confuse us.
+void PotentialMasterList::updateAtom(int iAtom) {
+}
+
+void PotentialMasterList::computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom, const bool onlyAtom) {
+  if (onlyUpNbrs) {
+    fprintf(stderr, "down neighbors must be enabled to use computeOne\n");
+    abort();
+  }
+  const int iType = box.getAtomType(iAtom);
+  const double *iCutoffs = pairCutoffs[iType];
+  Potential** iPotentials = pairPotentials[iType];
+
+  double iRhoCutoff = embeddingPotentials ? rhoCutoffs[iType] : 0;
+  Potential* iRhoPotential = embeddingPotentials ? rhoPotentials[iType] : nullptr;
+  int iNumNbrs = numAtomNbrsUp[iAtom];
+  int* iNbrs = nbrs[iAtom];
+  double** iNbrBoxOffsets = nbrBoxOffsets[iAtom];
+  for (int j=0; j<iNumNbrs; j++) {
+    int jAtom = iNbrs[j];
+    int jType = box.getAtomType(jAtom);
+    Potential* pij = iPotentials[jType];
+    double *rj = box.getAtomPosition(jAtom);
+    double *jbo = iNbrBoxOffsets[j];
+    handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType, false);
+  }
+  iNumNbrs = numAtomNbrsDn[iAtom];
+        //nbrs[jAtom][maxNab-1-numAtomNbrsDn[jAtom]] = iAtom;
+  for (int j=maxNab-1; j>maxNab-1-iNumNbrs; j--) {
+    int jAtom = iNbrs[j];
+    int jType = box.getAtomType(jAtom);
+    Potential* pij = iPotentials[jType];
+    double *rj = box.getAtomPosition(jAtom);
+    double *jbo = iNbrBoxOffsets[j];
+    double ibo[3] = {-jbo[0], -jbo[1], -jbo[2]};
+    handleComputeOne(pij, ri, rj, ibo, iAtom, jAtom, u1, iCutoffs[jType], iRhoCutoff, iRhoPotential, iType, jType, false);
+  }
+  if (embeddingPotentials) {
+    // we just computed new rhoSum[iAtom].  now subtract the old one
+    drhoSum[iAtom] -= rhoSum[iAtom];
+    u1 += embedF[iType]->f(rhoSum[iAtom] + drhoSum[iAtom]);
+  }
+}
+

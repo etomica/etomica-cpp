@@ -120,6 +120,7 @@ class MCMoveMoleculeRotate : public MCMove {
     int iMolecule;
     int iAtomFirst, iAtomLast;
     int iSpecies, mySpecies;
+    void transformAbout(double* r, const double* rOld, double* center);
 
   public:
 

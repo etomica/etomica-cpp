@@ -25,7 +25,6 @@ bool MCMoveDisplacement::doTrial() {
   r[0] += 2*stepSize*(random.nextDouble32()-0.5);
   r[1] += 2*stepSize*(random.nextDouble32()-0.5);
   r[2] += 2*stepSize*(random.nextDouble32()-0.5);
-  box.nearestImage(r);
   potentialMaster.updateAtom(iAtom);
   numTrials++;
   return true;

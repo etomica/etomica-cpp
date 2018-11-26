@@ -61,6 +61,7 @@ int* PotentialMasterCell::getNumCells() {
 }
 
 void PotentialMasterCell::updateAtom(int iAtom) {
+  box.nearestImage(box.getAtomPosition(iAtom));
   cellManager.updateAtom(iAtom);
 }
 
