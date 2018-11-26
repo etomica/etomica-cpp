@@ -33,13 +33,13 @@ void EwaldBase::setCharge(int iType, double q) {
 void EwaldBase::setR6Coeff(int iType, double sigma, double epsilon) {
   int numAtomTypes = speciesList.getNumAtomTypes();
   double sigmak = 1;
+  for (int k=0; k<=6; k++) {
+    int ck = factorial(6)/(factorial(6-k)*factorial(k));
+    b6[iType][k] = 0.25*sigmak*sqrt(ck*epsilon);
+    sigmak *= sigma;
+  }
   for (int jType=0; jType<numAtomTypes; jType++) {
     B6[iType][jType] = 0;
-    for (int k=0; k<=6; k++) {
-      int ck = factorial(6)/(factorial(6-k)*factorial(k));
-      b6[iType][k] = 0.25*sigmak*sqrt(ck*epsilon);
-      sigmak *= sigma;
-    }
     for (int k=0; k<=6; k++) {
       B6[iType][jType] += b6[iType][k]*b6[jType][6-k];
     }
