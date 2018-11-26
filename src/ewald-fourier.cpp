@@ -194,10 +194,10 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
           if (doPhi) {
             double* ri = box.getAtomPosition(iAtom);
             double phiFac = qi*fExp[ik];
-            double phiFac6[7];
+            double phiFac6[7] = {0};
             if (eta>0) {
-              for (int kB=0; kB<=7; kB++) {
-                phiFac6[kB] += f6Exp[ik]*b6[iType][kB];
+              for (int kB=0; kB<=6; kB++) {
+                phiFac6[kB] = f6Exp[ik]*b6[iType][kB];
               }
             }
             double karray[3] = {kx,ky,kz};
@@ -211,7 +211,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
               // cos(kr) ?= f(eik.real,ejk.real)
               double jPhiFac = qj*phiFac;
               if (eta>0) {
-                for (int kB=0; kB<=7; kB++) {
+                for (int kB=0; kB<=6; kB++) {
                   jPhiFac += b6[jType][6-kB]*phiFac6[kB];
                 }
               }
