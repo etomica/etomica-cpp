@@ -362,10 +362,6 @@ double PotentialMasterCell::oldIntraMoleculeEnergyLS(int iAtom, int iLastAtom) {
   return u;
 }
 
-void PotentialMasterCell::removeAtom(int iAtom) {
-  cellManager.removeAtom(iAtom);
-}
-
 void PotentialMasterCell::removeMolecule(int iSpecies, int iMolecule) {
   // our base class fixs up uAtom by filling in the hole left by iMolecule with 
   // the data from the last molecule of iSpecies, and then shifts all other

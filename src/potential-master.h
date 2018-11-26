@@ -377,7 +377,6 @@ class PotentialMasterCell : public PotentialMaster {
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
     virtual void updateAtom(int iAtom);
     virtual void newMolecule(int iSpecies);
-    virtual void removeAtom(int iAtom);
     virtual void removeMolecule(int iSpecies, int iMolecule);
     virtual double oldIntraMoleculeEnergyLS(int iAtom, int iLastAtom);
     int* getNumCells();
