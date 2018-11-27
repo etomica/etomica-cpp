@@ -193,7 +193,7 @@ int Box::getGlobalMoleculeIndex(int iSpecies, int iMoleculeInSpecies) {
   return t + iMoleculeInSpecies;
 }
 
-void Box::getMoleculeInfoAtom(int iAtom, int &iMolecule, int &iSpecies, int &iFirstAtom) {
+void Box::getMoleculeInfoAtom(int iAtom, int &iMoleculeInSpecies, int &iSpecies, int &iFirstAtom) {
 #ifdef DEBUG
   if (iAtom>=getNumAtoms()) {
     printf("getMoleculeInfoAtom oops i %d is more atoms than I have\n", iAtom);
@@ -204,8 +204,8 @@ void Box::getMoleculeInfoAtom(int iAtom, int &iMolecule, int &iSpecies, int &iFi
   for ( ; iSpecies<knownNumSpecies-1 && iAtom >= numAtomsBySpecies[iSpecies]; iSpecies++) {
     iAtom -= numAtomsBySpecies[iSpecies];
   }
-  iMolecule = iAtom/speciesNumAtoms[iSpecies];
-  iFirstAtom = firstAtom[iSpecies][iMolecule];
+  iMoleculeInSpecies = iAtom/speciesNumAtoms[iSpecies];
+  iFirstAtom = firstAtom[iSpecies][iMoleculeInSpecies];
 }
 
 void Box::getMoleculeInfo(int iMolecule, int &iSpecies, int &iMoleculeInSpecies, int &fa, int &la) {
