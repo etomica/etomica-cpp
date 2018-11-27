@@ -55,7 +55,7 @@ double* Species::getMoleculeCOM(Box& box, int iFirstAtom, int iLastAtom) {
     int iType = box.getAtomType(iAtom);
     double mass = atomInfo->getMass(iType);
     totMass += mass;
-    if (totalMass == mass) {
+    if (totMass == mass) {
       for (int k=0; k<3; k++) com[k] = mass*ri[k];
     }
     else {
