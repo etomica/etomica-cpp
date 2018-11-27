@@ -10,6 +10,7 @@
 PotentialMasterList::PotentialMasterList(const SpeciesList& sl, Box& box, bool doEmbed, int cellRange, double nRange) : PotentialMasterCell(sl, box, doEmbed, cellRange), nbrRange(nRange), nbrs(nullptr), onlyUpNbrs(true), numAtomNbrsUp(nullptr), numAtomNbrsDn(nullptr), nbrsNumAtoms(0), maxNab(0), nbrBoxOffsets(nullptr), oldAtomPositions(nullptr), safetyFac(0.1) {
   maxR2 = (double*)malloc(numAtomTypes*sizeof(double));
   maxR2Unsafe = (double*)malloc(numAtomTypes*sizeof(double));
+  moleculeCutoffs = nullptr;
 }
 
 PotentialMasterList::~PotentialMasterList() {
@@ -20,6 +21,7 @@ PotentialMasterList::~PotentialMasterList() {
   free2D((void**)nbrs);
   free2D((void**)nbrBoxOffsets);
   free2D((void**)oldAtomPositions);
+  free2D((void**)moleculeCutoffs);
 }
 
 double PotentialMasterList::getRange() {
@@ -55,12 +57,44 @@ void PotentialMasterList::setDoDownNbrs(bool doDown) {
 }
 
 int PotentialMasterList::checkNbrPair(int iAtom, int jAtom, const bool skipIntra, double *ri, double *rj, double rc2, double minR2, double *jbo) {
-  double r2 = 0;
-  for (int k=0; k<3; k++) {
-    double dr = rj[k]+jbo[k]-ri[k];
-    r2 += dr*dr;
+  if (moleculeCutoffs) {
+    int iSpecies, iMoleculeInSpecies, iFirstAtom;
+    box.getMoleculeInfoAtom(iAtom, iMoleculeInSpecies, iSpecies, iFirstAtom);
+    int iMolecule = box.getGlobalMoleculeIndex(iSpecies, iMoleculeInSpecies);
+    int jSpecies, jMoleculeInSpecies, jFirstAtom;
+    box.getMoleculeInfoAtom(jAtom, jMoleculeInSpecies, jSpecies, jFirstAtom);
+    int jMolecule = box.getGlobalMoleculeIndex(jSpecies, jMoleculeInSpecies);
+
+    if (moleculeNotNbrs[iMolecule].count(jMolecule) > 0) return 0;
+
+    if (moleculeNbrs[iMolecule].count(jMolecule) == 0) {
+      Species* is = speciesList.get(iSpecies);
+      Species* js = speciesList.get(jSpecies);
+      double* iCenter = is->getMoleculeCOM(box, iFirstAtom, iFirstAtom+is->getNumAtoms()-1);
+      double* jCenter = js->getMoleculeCOM(box, jFirstAtom, jFirstAtom+js->getNumAtoms()-1);
+
+      double dr[3];
+      for (int k=0; k<3; k++) dr[k] = iCenter[k]-jCenter[k];
+      // incompatible with a lattice sum
+      // need to handle not only center being on opposite side from atom (and so jbo being wrong)
+      // but also need to remember that i and j are neighbors only for this jbo
+      box.nearestImage(dr);
+      double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
+      if (r2 > moleculeCutoffs[iSpecies][jSpecies]) {
+        moleculeNotNbrs[iMolecule].insert(jMolecule);
+        return 0;
+      }
+      moleculeNbrs[iMolecule].insert(jMolecule);
+    }
   }
-  if (r2 > rc2 || (skipIntra && r2 < minR2)) return 0;
+  else {
+    double r2 = 0;
+    for (int k=0; k<3; k++) {
+      double dr = rj[k]+jbo[k]-ri[k];
+      r2 += dr*dr;
+    }
+    if (r2 > rc2 || (skipIntra && r2 < minR2)) return 0;
+  }
   if (numAtomNbrsUp[iAtom] >= maxNab) return 1;
   nbrs[iAtom][numAtomNbrsUp[iAtom]] = jAtom;
   nbrBoxOffsets[iAtom][numAtomNbrsUp[iAtom]] = jbo;
@@ -99,6 +133,15 @@ void PotentialMasterList::checkUpdateNbrs() {
 }
 
 void PotentialMasterList::reset() {
+  if (moleculeCutoffs) {
+    int nm = box.getTotalNumMolecules();
+    moleculeNbrs.resize(nm);
+    moleculeNotNbrs.resize(nm);
+    for (int i=0; i<nm; i++) {
+      moleculeNbrs[i].clear();
+      moleculeNotNbrs[i].clear();
+    }
+  }
   int boxNumAtoms = box.getNumAtoms();
   if (boxNumAtoms==0) return;
   bool moreAtoms = boxNumAtoms > nbrsNumAtoms;
@@ -381,3 +424,14 @@ void PotentialMasterList::computeOneInternal(const int iAtom, const double *ri, 
   }
 }
 
+void PotentialMasterList::setMoleculePair(int iSpecies, int jSpecies, double rc) {
+  if (!moleculeCutoffs) {
+    moleculeCutoffs = (double**)malloc2D(numAtomTypes, numAtomTypes, sizeof(double));
+    for (int i=0; i<numAtomTypes; i++) {
+      for (int j=0; j<numAtomTypes; j++) {
+        moleculeCutoffs[i][j] = 0;
+      }
+    }
+  }
+  moleculeCutoffs[iSpecies][jSpecies] = moleculeCutoffs[jSpecies][iSpecies] = rc;
+}

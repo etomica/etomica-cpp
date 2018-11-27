@@ -395,13 +395,18 @@ class PotentialMasterList : public PotentialMasterCell {
     double **oldAtomPositions;
     double safetyFac;
     double *maxR2, *maxR2Unsafe;
+    vector<set<int>> moleculeNbrs;
+    vector<set<int>> moleculeNotNbrs;
+    double** moleculeCutoffs;
 
     int checkNbrPair(int iAtom, int jAtom, const bool skipIntra, double *ri, double *rj, double rc2, double minR2, double *jbo);
+
   public:
     PotentialMasterList(const SpeciesList& speciesList, Box& box, bool doEmbed, int cellRange, double nbrRange);
     ~PotentialMasterList();
     virtual double getRange();
     virtual void init();
+    virtual void setMoleculePair(int iSpecies, int jSpecies, double rc);
     void reset();
     void setDoDownNbrs(bool doDown);
     void checkUpdateNbrs();
