@@ -346,21 +346,6 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
   }*/
   // -dFdV = phimm dRdV
   // dRdV = - phimm^-1 dFdV
-  Matrix phit(3*numMolecules,3*numMolecules);
-  double** phitmm = phit.matrix;
-  double* Fmt = (double*)malloc(3*numMolecules* sizeof(double));
-  for (int i=0; i<numMolecules; i++) {
-    for (int k=0; k<3; k++) {
-      for (int j=0; j<numMolecules; j++) {
-        for (int l=0; l<3; l++) {
-          phitmm[3*i+k][3*j+l] = phim[6*i+3+k][6*j+3+l];
-        }
-      }
-      Fmt[3*i+k] = Fm[6*i+3+k];
-    }
-  }
-  phit.invert();
-  phit.transform(Fmt);
   phimall.invert();
   phimall.transform(Fm);
   // Now determine the shift we need to keep COM fixed
