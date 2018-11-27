@@ -388,6 +388,32 @@ void PotentialHS::u012(double r2, double &u, double &du, double &d2u) {
   du = d2u = 0;
 }
 
+PotentialCharge::PotentialCharge(double qq, double core) : Potential(TRUNC_SIMPLE,1), qiqj(qq), rCore(core) {
+}
+
+double PotentialCharge::ur(double r) {
+  if (r<rCore) return INFINITY;
+  return qiqj/r;
+}
+
+double PotentialCharge::u(double r2) {
+  return u(sqrt(r2));
+}
+
+double PotentialCharge::du(double r2) {
+  return -u(r2);
+}
+
+double PotentialCharge::d2u(double r2) {
+  return 2*u(r2);
+}
+
+void PotentialCharge::u012(double r2, double &u, double &du, double &d2u) {
+  u = qiqj/sqrt(r2);
+  du = -u;
+  d2u = 2*u;
+}
+
 PotentialEwald::PotentialEwald(Potential& p2, double a, double qq, double rc) : Potential(TRUNC_SIMPLE, rc), p(p2), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
 }
 
