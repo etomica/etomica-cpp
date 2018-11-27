@@ -382,7 +382,6 @@ double EwaldFourier::computeFourierAtom(int iAtom, bool oldEnergy) {
       eik[a][idx-i] = conj(eik[a][idx+i]);
     }
   }
-  double coeff = 4*M_PI/vol;
   double fourierSum = 0, fourierSum6 = 0;
   int ik = 0;
   for (int i=0; i<3; i++) {
@@ -454,7 +453,7 @@ double EwaldFourier::computeFourierAtom(int iAtom, bool oldEnergy) {
       }
     }
   }
-  u += 0.5*coeff * fourierSum;
+  u += 0.5*fourierSum;
   u += fourierSum6;
   return u;
 }
@@ -517,7 +516,6 @@ double EwaldFourier::oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) {
     u -= sqrt(M_PI)*M_PI/(6*vol*eta3) * sumBij;
     u += 1.0/(12.0*eta3*eta3) * sumBii;
   }
-  double coeff = 4*M_PI/vol;
   double fourierSum = 0, fourierSum6 = 0;
   int ik = 0;
   for (int i=0; i<3; i++) {
@@ -594,8 +592,8 @@ double EwaldFourier::oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) {
       }
     }
   }
-  u += 0.5*coeff * fourierSum;
-  u += 2*sqrt(M_PI)*M_PI/(24.0*vol)*fourierSum6;
+  u += 0.5*fourierSum;
+  u += fourierSum6;
   return u;
 }
 
