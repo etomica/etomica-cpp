@@ -326,8 +326,7 @@ double EwaldFourier::uTotalFromAtoms() {
       }
     }
   }
-  double coeff = 4*M_PI/vol;
-  uTot += 0.5*coeff * fourierSum;
+  uTot += 0.5*fourierSum;
   uTot += fourierSum6;
   return uTot;
 }
