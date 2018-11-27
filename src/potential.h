@@ -135,7 +135,7 @@ class PotentialCharge : public Potential {
     const double qiqj;
     const double rCore;
   public:
-    PotentialCharge(double qiqj, double rc);
+    PotentialCharge(double qiqj, double rCore, double rc);
     virtual ~PotentialCharge() {}
     double ur(double r);
     double u(double r2);

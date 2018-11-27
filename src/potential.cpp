@@ -388,7 +388,7 @@ void PotentialHS::u012(double r2, double &u, double &du, double &d2u) {
   du = d2u = 0;
 }
 
-PotentialCharge::PotentialCharge(double qq, double core) : Potential(TRUNC_SIMPLE,1), qiqj(qq), rCore(core) {
+PotentialCharge::PotentialCharge(double qq, double core, double rc) : Potential(TRUNC_SIMPLE,rc), qiqj(qq), rCore(core) {
 }
 
 double PotentialCharge::ur(double r) {
