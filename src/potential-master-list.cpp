@@ -64,27 +64,30 @@ int PotentialMasterList::checkNbrPair(int iAtom, int jAtom, const bool skipIntra
     int jSpecies, jMoleculeInSpecies, jFirstAtom;
     box.getMoleculeInfoAtom(jAtom, jMoleculeInSpecies, jSpecies, jFirstAtom);
     int jMolecule = box.getGlobalMoleculeIndex(jSpecies, jMoleculeInSpecies);
+    if (iMolecule != jMolecule) {
 
-    if (moleculeNotNbrs[iMolecule].count(jMolecule) > 0) return 0;
+      if (moleculeNotNbrs[iMolecule].count(jMolecule) > 0) return 0;
 
-    if (moleculeNbrs[iMolecule].count(jMolecule) == 0) {
-      Species* is = speciesList.get(iSpecies);
-      Species* js = speciesList.get(jSpecies);
-      double* iCenter = is->getMoleculeCOM(box, iFirstAtom, iFirstAtom+is->getNumAtoms()-1);
-      double* jCenter = js->getMoleculeCOM(box, jFirstAtom, jFirstAtom+js->getNumAtoms()-1);
+      if (moleculeNbrs[iMolecule].count(jMolecule) == 0) {
+        Species* is = speciesList.get(iSpecies);
+        Species* js = speciesList.get(jSpecies);
+        double dr[3];
+        double* c = is->getMoleculeCOM(box, iFirstAtom, iFirstAtom+is->getNumAtoms()-1);
+        for (int k=0; k<3; k++) dr[k] = c[k];
+        c = js->getMoleculeCOM(box, jFirstAtom, jFirstAtom+js->getNumAtoms()-1);
 
-      double dr[3];
-      for (int k=0; k<3; k++) dr[k] = iCenter[k]-jCenter[k];
-      // incompatible with a lattice sum
-      // need to handle not only center being on opposite side from atom (and so jbo being wrong)
-      // but also need to remember that i and j are neighbors only for this jbo
-      box.nearestImage(dr);
-      double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
-      if (r2 > moleculeCutoffs[iSpecies][jSpecies]) {
-        moleculeNotNbrs[iMolecule].insert(jMolecule);
-        return 0;
+        for (int k=0; k<3; k++) dr[k] -= c[k];
+        // incompatible with a lattice sum
+        // need to handle not only center being on opposite side from atom (and so jbo being wrong)
+        // but also need to remember that i and j are neighbors only for this jbo
+        box.nearestImage(dr);
+        double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
+        if (r2 > moleculeCutoffs[iSpecies][jSpecies]*moleculeCutoffs[iSpecies][jSpecies]) {
+          moleculeNotNbrs[iMolecule].insert(jMolecule);
+          return 0;
+        }
+        moleculeNbrs[iMolecule].insert(jMolecule);
       }
-      moleculeNbrs[iMolecule].insert(jMolecule);
     }
   }
   else {
