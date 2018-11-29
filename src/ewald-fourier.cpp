@@ -16,6 +16,17 @@ EwaldFourier::EwaldFourier(const SpeciesList& sl, Box& b) : EwaldBase(sl,b), kCu
 EwaldFourier::~EwaldFourier() {
 }
 
+void EwaldFourier::getOptimalAlpha(double s, double& alpha, double& rc, double& kc) {
+  double numAtoms = box.getNumAtoms();
+  const double* bs = box.getBoxSize();
+  double vol = bs[0]*bs[1]*bs[2];
+  // based on crude benchmarks for etomica-cpp
+  double tauRatio = 4.7;
+  alpha = pow(tauRatio * M_PI*M_PI*M_PI * numAtoms / (vol*vol), 1.0/6.0);
+  rc = s/alpha;
+  kCut = 2 * alpha*alpha * rc;
+}
+
 void EwaldFourier::setCutoff(double kc) {
   kCut = kc;
 }

@@ -69,5 +69,6 @@ class EwaldFourier : public EwaldBase {
     double uTotalFromAtoms();
     void processAtomU(int coeff);
     void resetAtomDU();
+    void getOptimalAlpha(double s, double& alpha, double& rc, double& kc);
 
 };
