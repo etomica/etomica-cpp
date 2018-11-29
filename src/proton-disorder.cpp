@@ -12,6 +12,7 @@ double** ProtonDisorder::go(Box& box, Random& rand, const double drNbrOO, const 
   int N = box.getNumAtoms();
   int** pairOdCoord = (int**)malloc2D(N*2, 3, sizeof(int));
   int* nCoordsO = (int*)malloc(N*sizeof(int));
+  for (int i=0; i<N; i++) nCoordsO[i] = 0;
   double dr[3];
   int nCoordTot = 0;
   double drNbr2 = drNbrOO*drNbrOO;
