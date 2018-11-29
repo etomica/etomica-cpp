@@ -24,7 +24,7 @@ void EwaldFourier::getOptimalAlpha(double s, double& alpha, double& rc, double& 
   double tauRatio = 4.7;
   alpha = pow(tauRatio * M_PI*M_PI*M_PI * numAtoms / (vol*vol), 1.0/6.0);
   rc = s/alpha;
-  kCut = 2 * alpha*alpha * rc;
+  kc = 2 * alpha*alpha * rc;
 }
 
 void EwaldFourier::setCutoff(double kc) {
@@ -269,7 +269,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
             double coeffki = fExp[ik]*charges[iType]*(sFacAtom[iAtom].imag()*sFac[ik].real()
                              -sFacAtom[iAtom].real()*sFac[ik].imag());
             if (eta>0) {
-              for (int kB=0; kB<=7; kB++) {
+              for (int kB=0; kB<=6; kB++) {
                 coeffki += f6Exp[ik]*b6[iType][kB]*(sFacAtom[iAtom].imag()*sFacB[6-kB][ik].real()
                            -sFacAtom[iAtom].real()*sFacB[6-kB][ik].imag());
               }
