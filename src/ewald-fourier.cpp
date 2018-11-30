@@ -129,12 +129,13 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
     double fac = 2.0*M_PI/bs[a];
     eik[a].resize(numAtoms*nk[a]);
     for (int iAtom=0; iAtom<numAtoms; iAtom++) {
-      int iType = box.getAtomType(iAtom);
-      if (charges[iType] == 0 && B6[iType][iType] == 0) continue;
       int idx = iAtom*nk[a];
       if (a>0) idx += kMax[a];
-      double* ri = box.getAtomPosition(iAtom);
       eik[a][idx] = 1;
+      if (nk[a]==1) continue;
+      int iType = box.getAtomType(iAtom);
+      if (charges[iType] == 0 && B6[iType][iType] == 0) continue;
+      double* ri = box.getAtomPosition(iAtom);
       eik[a][idx+1] = std::complex<double>(cos(fac*ri[a]), sin(fac*ri[a]));
       for (int i=2; i<=kMax[a]; i++) {
         eik[a][idx+i] = eik[a][idx+1] * eik[a][idx+i-1];
@@ -495,6 +496,10 @@ double EwaldFourier::oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) {
     double fac = 2.0*M_PI/bs[a];
     eik[a].resize(numAtoms*nk[a]); // way bigger than we need, but OK
     for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+      int idx = iAtom*nk[a];
+      if (a>0) idx += kMax[a];
+      eik[a][idx] = 1;
+      if (nk[a] == 1) continue;
       int iType = box.getAtomType(iAtom);
       double qi = charges[iType];
       if (a==0) q2Sum += qi*qi;
@@ -505,10 +510,7 @@ double EwaldFourier::oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) {
           sumBij += numAtomsByType[jType]*B6[iType][jType];
         }
       }
-      int idx = iAtom*nk[a];
-      if (a>0) idx += kMax[a];
       double* ri = box.getAtomPosition(iAtom);
-      eik[a][idx] = 1;
       eik[a][idx+1] = std::complex<double>(cos(fac*ri[a]), sin(fac*ri[a]));
       for (int i=2; i<=kMax[a]; i++) {
         eik[a][idx+i] = eik[a][idx+1] * eik[a][idx+i-1];
