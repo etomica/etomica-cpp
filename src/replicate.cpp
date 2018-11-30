@@ -6,7 +6,7 @@
 #include "action.h"
 #include "box.h"
 
-void Replicate::go(Box& box, int replicates[3]) {
+void Replicate::go(Box& box, const int replicates[3]) {
   SpeciesList& speciesList = box.getSpeciesList();
   int nRep = replicates[0]*replicates[1]*replicates[2];
   int nm = box.getTotalNumMolecules();

@@ -33,5 +33,5 @@ class ConfigurationFile {
 
 class Replicate {
   public:
-    static void go(Box& box, int replicates[3]);
+    static void go(Box& box, const int replicates[3]);
 };
