@@ -55,8 +55,16 @@ int ParameterMap::getInt(string k) {
   return stoi(values[k],nullptr);
 }
 
+int ParameterMap::getLong(string k) {
+  return stol(values[k],nullptr);
+}
+
 string ParameterMap::getString(string k) {
   return values[k];
+}
+
+bool ParameterMap::getBool(string k) {
+  return values[k] == "true";
 }
 
 bool ParameterMap::hasParameter(string k) {

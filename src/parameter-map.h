@@ -21,6 +21,8 @@ class ParameterMap {
     virtual void parseArgs(const int argc, char** argv);
     virtual double getDouble(string k);
     virtual int getInt(string k);
+    virtual int getLong(string k);
+    virtual bool getBool(string k);
     virtual string getString(string k);
     virtual bool hasParameter(string k);
 };
