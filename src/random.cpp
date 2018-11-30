@@ -55,6 +55,11 @@ int Random::getSeed() {
   return seed;
 }
 
+void Random::setSeed(int s) {
+  seed = s;
+  sfmt_init_gen_rand(&sfmt, seed);
+}
+
 int Random::nextInt(int max) {
   uint32_t maxRand = MAXUINT - ((MAXUINT+1) % max);
   uint32_t s;

@@ -17,6 +17,7 @@ class Random {
     Random(int seed);
     sfmt_t sfmt;
     int getSeed();
+    void setSeed(int seed);
 
     int nextInt(int max);
     double nextDouble();
