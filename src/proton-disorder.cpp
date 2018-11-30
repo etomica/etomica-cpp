@@ -125,5 +125,11 @@ double** ProtonDisorder::go(Box& box, Random& rand, const double drNbrOO, const 
       rH[x*i+1][k] = rOi[k] + bisect[k]*c - perp[k]*s;
     }
   }
+  free2D((void**)pairOdCoord);
+  free2D((void**)OH12);
   return rH;
+}
+
+void ProtonDisorder::freeRH(double** rH) {
+  free2D((void**)rH);
 }
