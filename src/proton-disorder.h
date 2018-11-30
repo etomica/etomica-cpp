@@ -18,6 +18,7 @@ class ProtonDisorder {
    * determined along the water bisector.
    */
   public:
+    static double** go2(const char* fileO, const int num0, const double* L, const int* reps, Random& rand, const double drNbrOO, const double bondLengthOH, const double bondAngleHOH, const double offsetM);
     static double** go(Box& box, Random& rand, const double drNbrOO, const double bondLengthOH, const double bondAngleHOH, const double offsetM);
-    static void freeRH(double** rH);
+    static void freeRHOM(double** rHOM);
 };

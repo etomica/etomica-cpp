@@ -5,8 +5,24 @@
 #include <math.h>
 #include "proton-disorder.h"
 #include "box.h"
+#include "action.h"
 #include "random.h"
 #include "alloc2d.h"
+
+double** ProtonDisorder::go2(const char* configOname, const int num0, const double* L0, const int* reps, Random& rand, const double drNbrOO, const double bondLengthOH, const double bondAngleHOH, const double offsetM) {
+  SpeciesList speciesListO;
+  SpeciesSimple speciesO(1, 16);
+  speciesListO.add(&speciesO);
+  Box boxO(speciesListO);
+  boxO.setBoxSize(L0[0],L0[1],L0[2]);
+  boxO.setNumMolecules(0, num0);
+
+  ConfigurationFile configO(boxO, configOname);
+  configO.go();
+  Replicate::go(boxO, reps);
+
+  return ProtonDisorder::go(boxO, rand, drNbrOO, bondLengthOH, bondAngleHOH, offsetM);
+}
 
 double** ProtonDisorder::go(Box& box, Random& rand, const double drNbrOO, const double bondLengthOH, const double bondAngleHOH, const double offsetM) {
   int N = box.getNumAtoms();
@@ -82,8 +98,8 @@ double** ProtonDisorder::go(Box& box, Random& rand, const double drNbrOO, const 
     }
   }
 
-  int x = offsetM==0 ? 2 : 3;
-  double** rH = (double**)malloc2D(N*x, 3, sizeof(double));
+  int x = offsetM==0 ? 3 : 4;
+  double** rHOM = (double**)malloc2D(N*x, 3, sizeof(double));
   double c = bondLengthOH * cos(0.5*bondAngleHOH);
   double s = bondLengthOH * sin(0.5*bondAngleHOH);
   for (int i=0; i<N; i++) {
@@ -99,37 +115,38 @@ double** ProtonDisorder::go(Box& box, Random& rand, const double drNbrOO, const 
       for (int k=0; k<3; k++) dr[k] /= dr1;
       // put H pointing from Oi to Oj, just need direction for now
       for (int k=0; k<3; k++) {
-        rH[x*i+j][k] = dr[k];
+        rHOM[x*i+j][k] = dr[k];
         bisect[k] += dr[k];
       }
     }
+    for (int k=0; k<3; k++) rHOM[x*i+2][k] = rOi[k];
     double dr2 = bisect[0]*bisect[0] + bisect[1]*bisect[1] + bisect[2]*bisect[2];
     double dr1 = sqrt(dr2);
     for (int k=0; k<3; k++) bisect[k] /= dr1;
     if (offsetM != 0) {
       // place M
-      for (int k=0; k<3; k++) rH[x*i+2][k] = rOi[k] + bisect[k]*offsetM;
+      for (int k=0; k<3; k++) rHOM[x*i+3][k] = rOi[k] + bisect[k]*offsetM;
     }
     double perp[3];
     double dot = 0;
-    for (int k=0; k<3; k++) dot += bisect[k]*rH[x*i][k];
+    for (int k=0; k<3; k++) dot += bisect[k]*rHOM[x*i][k];
     dr2 = 0;
     for (int k=0; k<3; k++) {
-      perp[k] = rH[x*i][k] - bisect[k]*dot;
+      perp[k] = rHOM[x*i][k] - bisect[k]*dot;
       dr2 += perp[k]*perp[k];
     }
     dr1 = sqrt(dr2);
     for (int k=0; k<3; k++) perp[k] /= dr1;
     for (int k=0; k<3; k++) {
-      rH[x*i][k] = rOi[k] + bisect[k]*c + perp[k]*s;
-      rH[x*i+1][k] = rOi[k] + bisect[k]*c - perp[k]*s;
+      rHOM[x*i][k] = rOi[k] + bisect[k]*c + perp[k]*s;
+      rHOM[x*i+1][k] = rOi[k] + bisect[k]*c - perp[k]*s;
     }
   }
   free2D((void**)pairOdCoord);
   free2D((void**)OH12);
-  return rH;
+  return rHOM;
 }
 
-void ProtonDisorder::freeRH(double** rH) {
-  free2D((void**)rH);
+void ProtonDisorder::freeRHOM(double** rHOM) {
+  free2D((void**)rHOM);
 }
