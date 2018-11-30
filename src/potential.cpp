@@ -397,7 +397,7 @@ double PotentialCharge::ur(double r) {
 }
 
 double PotentialCharge::u(double r2) {
-  return u(sqrt(r2));
+  return ur(sqrt(r2));
 }
 
 double PotentialCharge::du(double r2) {
