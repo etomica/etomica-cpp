@@ -5,6 +5,8 @@
 #pragma once
 
 #include <sys/time.h>
+#include <string.h>
+#include <ctype.h>
 
 inline double getTime() {
   struct timeval t;
@@ -30,3 +32,12 @@ inline long factorial(int i) {
   for (int j=2; j<=i; j++) f *= j;
   return f;
 }
+
+inline char* trim(char* s) {
+  while (*s && isspace(*s)) s++;
+  char* end = s + strlen(s) - 1;
+  while (end > s && isspace(*end)) end--;
+  *(end+1) = '\0';
+  return s;
+}
+

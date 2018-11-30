@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include "species.h"
 #include "rigid-constraint.h"
+#include "util.h"
 
 SpeciesFile::SpeciesFile(const char* filename) : Species(0,0), typeOffset(0) {
   FILE* f;
@@ -83,14 +84,6 @@ void SpeciesFile::readAtomTypes(FILE* f, const char* filename) {
     fprintf(stderr, "Did not find any atom types in file %s\n", filename);
     abort();
   }
-}
-
-char* SpeciesFile::trim(char* s) {
-  while (*s && isspace(*s)) s++;
-  char* end = s + strlen(s) - 1;
-  while (end > s && isspace(*end)) end--;
-  *(end+1) = '\0';
-  return s;
 }
 
 char* SpeciesFile::readAtoms(FILE* f, const char* filename, vector<double*> &tmpPositions) {

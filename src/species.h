@@ -61,7 +61,6 @@ class SpeciesFile : public Species {
     char* readAtoms(FILE* f, const char* filename, vector<double*> &tmpPositions);
     char* readOrientations(FILE* f, const char* filename);
     char* readConstraints(FILE* f, const char* filename);
-    char* trim(char* s);
 
   public:
     SpeciesFile(const char *filename);
