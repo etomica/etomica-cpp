@@ -151,6 +151,7 @@ class PotentialEwaldBare : public Potential {
     const double twoosqrtpi;
   public:
     PotentialEwaldBare(double alpha, double qiqj, double rc);
+    PotentialEwaldBare(double alpha, double qiqj, double rc, int truncType);
     virtual ~PotentialEwaldBare();
     double ur(double r);
     double u(double r2);
@@ -167,6 +168,7 @@ class PotentialEwald : public Potential {
     const double twoosqrtpi;
   public:
     PotentialEwald(Potential& p2, double alpha, double qiqj, double rc);
+    PotentialEwald(Potential& p2, double alpha, double qiqj, double rc, int truncType);
     virtual ~PotentialEwald();
     double ur(double r);
     double u(double r2);

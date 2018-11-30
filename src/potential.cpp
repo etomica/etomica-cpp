@@ -417,6 +417,9 @@ void PotentialCharge::u012(double r2, double &u, double &du, double &d2u) {
 PotentialEwald::PotentialEwald(Potential& p2, double a, double qq, double rc) : Potential(TRUNC_SIMPLE, rc), p(p2), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
 }
 
+PotentialEwald::PotentialEwald(Potential& p2, double a, double qq, double rc, int tt) : Potential(tt, rc), p(p2), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
+}
+
 PotentialEwald::~PotentialEwald() {}
 
 double PotentialEwald::ur(double r) {
@@ -510,6 +513,9 @@ void PotentialEwald6::u012TC(double &u, double &du, double &d2u) {
 }
 
 PotentialEwaldBare::PotentialEwaldBare(double a, double qq, double rc) : Potential(TRUNC_SIMPLE, rc), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
+}
+
+PotentialEwaldBare::PotentialEwaldBare(double a, double qq, double rc, int truncType) : Potential(TRUNC_SIMPLE, rc), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
 }
 
 PotentialEwaldBare::~PotentialEwaldBare() {}
