@@ -11,6 +11,7 @@ PotentialMasterList::PotentialMasterList(const SpeciesList& sl, Box& box, bool d
   maxR2 = (double*)malloc(numAtomTypes*sizeof(double));
   maxR2Unsafe = (double*)malloc(numAtomTypes*sizeof(double));
   moleculeCutoffs = nullptr;
+  shortNbrs = false;
 }
 
 PotentialMasterList::~PotentialMasterList() {
@@ -25,6 +26,7 @@ PotentialMasterList::~PotentialMasterList() {
 }
 
 double PotentialMasterList::getRange() {
+  shortNbrs = PotentialMasterCell::getRange() > nbrRange;
   return nbrRange;
 }
 
@@ -437,4 +439,13 @@ void PotentialMasterList::setMoleculePair(int iSpecies, int jSpecies, double rc)
     }
   }
   moleculeCutoffs[iSpecies][jSpecies] = moleculeCutoffs[jSpecies][iSpecies] = rc;
+}
+
+double PotentialMasterList::oldIntraMoleculeEnergyLS(int iAtom, int iLastAtom) {
+  if (shortNbrs) {
+    // if we have a static list with individual pair potentials with a longer range
+    // then we can't compute this energy correctly.  let's hope it's not needed.
+    return 0;
+  }
+  return PotentialMasterCell::oldIntraMoleculeEnergyLS(iAtom, iLastAtom);
 }

@@ -398,6 +398,7 @@ class PotentialMasterList : public PotentialMasterCell {
     vector<set<int>> moleculeNbrs;
     vector<set<int>> moleculeNotNbrs;
     double** moleculeCutoffs;
+    bool shortNbrs;
 
     int checkNbrPair(int iAtom, int jAtom, const bool skipIntra, double *ri, double *rj, double rc2, double minR2, double *jbo);
 
@@ -413,6 +414,7 @@ class PotentialMasterList : public PotentialMasterCell {
     virtual void computeAll(vector<PotentialCallback*> &callbacks);
     virtual void updateAtom(int iAtom);
     virtual void computeOneInternal(const int iAtom, const double *ri, double &energy, const int iSpecies, const int iMolecule, const int iFirstAtom, const bool onlyAtom);
+    virtual double oldIntraMoleculeEnergyLS(int iAtom, int iLastAtom);
 };
 
 class PotentialMasterVirial : public PotentialMaster {
