@@ -86,7 +86,12 @@ void IntegratorMC::doStep() {
     double x = potentialMaster.uTotalFromAtoms();
     double y = energy;
     reset();
-    printf("uAtoms! %ld: %e %e %e %e %e\n", stepCount, y, x, energy, energy-y, y-x);
+    printf("uAtoms trouble! step %ld:\n", stepCount);
+    printf("incrementally updated:  % e\n", y);
+    printf("uTotalFromAtoms:        % e\n", x);
+    printf("actual energy:          % e\n", energy);
+    printf("incremental off by:     % e\n", y-energy);
+    printf("uTotalFromAtoms off by: % e\n", x-energy);
     abort();
   }
   if (stepCount%100==0) {
