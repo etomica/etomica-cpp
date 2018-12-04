@@ -13,6 +13,8 @@ Minimize::Minimize(PotentialMaster& pm) : PotentialCallbackMoleculePhi(pm), step
   int numMolecules = box.getTotalNumMolecules();
   fMolecule = (double*)malloc(nmap[numMolecules]*sizeof(double));
   lastU = 0;
+  lastStep = 0;
+  sdStep = false;
 }
 
 Minimize::~Minimize() {
@@ -25,6 +27,8 @@ void Minimize::doStep() {
   selfPotentialCallbackVec.push_back(this);
   potentialMaster.computeAll(selfPotentialCallbackVec);
   stepCount++;
+
+  if (sdStep && lastDU>0) lastStep *= 0.2;
 
   // F, phi
   // F + dF = 0
@@ -39,15 +43,16 @@ void Minimize::doStep() {
     //printf("F %d %f %f %f  %f %f %f\n", iMolecule, iF[0], iF[1], iF[2], iF[3], iF[4], iF[5]);
     lastF += iF[0]*iF[0] + iF[1]*iF[1] + iF[2]*iF[2] + iF[3]*iF[3] + iF[4]*iF[4] + iF[5]*iF[5];
   }
+  lastF = sqrt(lastF)/box.getNumAtoms();
+  //printf("RMS F %e\n", lastF);
 
   Matrix phiMat(nmap[nm], nmap[nm], moleculePhiTotal);
-#ifdef UCHECK
+#ifdef MIN_UCHECK
   Matrix phiMat0(nmap[nm], nmap[nm]);
   phiMat0.E(phiMat);
   double* fMolecule0 = (double*)malloc(nmap[nm]*sizeof(double));
   for (int i=0; i<nmap[nm]; i++) fMolecule0[i] = fMolecule[i];
 #endif
-
   // We can't solve all 3N translation DOF based on phi and dFdV because
   // the COM mode is free.  Instead enforce that molecule 0 translates to
   // satisfy fixed COM.
@@ -69,7 +74,8 @@ void Minimize::doStep() {
   //fMolecule[2] = 0.00001; fMolecule[0]=fMolecule[1] = 0;
   //for (int k=0; k<3; k++) fMolecule[k] *= 0.1;
   //printf("dtheta %d %f %f %f\n", 0, fMolecule[0], fMolecule[1], fMolecule[2]);
-#ifdef UCHECK
+  sdStep = false;
+#ifdef MIN_UCHECK
   double estDU = 0;
   for (int i=0; i<nmap[nm]; i++) {
     estDU -= fMolecule0[i]*fMolecule[i];
@@ -77,7 +83,30 @@ void Minimize::doStep() {
       estDU += 0.5*phiMat0.matrix[i][j]*fMolecule[i]*fMolecule[j];
     }
   }
-  printf("estimated DU: %f\n", estDU);
+  printf("estimated DU: %e\n", estDU/nm);
+  if (estDU > 0) {
+    sdStep = true;
+    double fmag = 0;
+    for (int i=0; i<nmap[nm]; i++) {
+      fmag += fMolecule0[i]*fMolecule0[i];
+    }
+    fmag = sqrt(fmag);
+    if (lastStep==0) lastStep = 0.1;
+    while (estDU>0) {
+      for (int i=0; i<nmap[nm]; i++) {
+        fMolecule[i] = fMolecule0[i]/fmag*lastStep;
+      }
+      estDU = 0;
+      for (int i=0; i<nmap[nm]; i++) {
+        estDU -= fMolecule0[i]*fMolecule[i];
+        for (int j=0; j<nmap[nm]; j++) {
+          estDU += 0.5*phiMat0.matrix[i][j]*fMolecule[i]*fMolecule[j];
+        }
+      }
+      printf("reestimated DU: %e\n", estDU/nm);
+      if (estDU>0) lastStep *= 0.2;
+    }
+  }
 #endif
   lastDR = 0;
   // fMolecule is now dR
@@ -117,7 +146,7 @@ void Minimize::doStep() {
         box.nearestImage(idr);
         for (int k=0; k<3; k++) idr2[k] = idr[k];
         rot.transform(idr);
-        //printf("idr %f %f %f\n", idr[0]-idr2[0], idr[1]-idr2[1], idr[2]-idr[2]);
+        //printf("idr %d %f %f %f\n", iAtom, idr[0]-idr2[0], idr[1]-idr2[1], idr[2]-idr2[2]);
         for (int k=0; k<3; k++) {
           idr2[k] = idr[k] - idr2[k];
           ri[k] = center[k] + idr[k];
@@ -134,7 +163,6 @@ void Minimize::doStep() {
     }
   }
   lastDR = sqrt(lastDR)/box.getNumAtoms();
-  lastF = sqrt(lastF)/box.getNumAtoms();
   //printf("step %ld %f %f %f\n", stepCount-1, lastDU, lastDR, lastF);
   potentialMaster.init();
 }

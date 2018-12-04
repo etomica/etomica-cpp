@@ -19,6 +19,8 @@ class Minimize : public PotentialCallbackMoleculePhi {
     double* fMolecule;
     double lastDR;
     double lastU, lastDU;
+    double lastStep;
+    bool sdStep;
   public:
     Minimize(PotentialMaster& potentialMaster);
     virtual ~Minimize();
