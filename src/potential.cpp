@@ -512,6 +512,31 @@ void PotentialEwald6::u012TC(double &u, double &du, double &d2u) {
   pShort.u012TC(u, du, d2u);
 }
 
+double PotentialEwald6::getEta(double rc, double uOverB) {
+  double c2 = 1/(rc*rc);
+  double c6 = c2*c2*c2;
+  double rc2 = rc*rc;
+  double check = exp(-rc2*c2)*c6;
+  double step = 2;
+  bool prevExceeded = false;
+  while (true) {
+    if (check > uOverB) {
+      if (!prevExceeded) step = sqrt(step);
+      c2 *= step;
+      prevExceeded = true;
+    }
+    else {
+      if (prevExceeded) step = sqrt(step);
+      c2 /= step;
+      prevExceeded = false;
+    }
+    c6 = c2*c2*c2;
+    if (step == 1) break;
+    check = exp(-rc2*c2)*c6;
+  }
+  return 1/sqrt(c2);
+}
+
 PotentialEwaldBare::PotentialEwaldBare(double a, double qq, double rc) : Potential(TRUNC_SIMPLE, rc), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
 }
 
