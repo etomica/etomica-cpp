@@ -167,12 +167,12 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     }
 #endif
     while ((jAtom = cellNextAtom[jAtom]) > -1) {
-      if (checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms)) continue;
+      bool skipIntra = checkSkip(jAtom, iSpecies, iMolecule, iBondedAtoms);
       const int jType = box.getAtomType(jAtom);
       Potential* pij = iPotentials[jType];
       if (!pij) continue;
       const double *rj = box.getAtomPosition(jAtom);
-      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces, false);
+      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces, skipIntra);
     }
     const int iCell = atomCell[iAtom];
     for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
