@@ -184,6 +184,7 @@ class PotentialEwald6 : public Potential {
     double Bij;
     double eta, eta2, eta6r;
   public:
+    PotentialEwald6(Potential& pShort, double sigmai, double epsiloni, double sigmaj, double epsilonj, double eta, double rc, int truncType);
     PotentialEwald6(Potential& pShort, double sigmai, double epsiloni, double sigmaj, double epsilonj, double eta, double rc);
     virtual ~PotentialEwald6();
     double ur(double r);

@@ -418,6 +418,7 @@ PotentialEwald::PotentialEwald(Potential& p2, double a, double qq, double rc) : 
 }
 
 PotentialEwald::PotentialEwald(Potential& p2, double a, double qq, double rc, int tt) : Potential(tt, rc), p(p2), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
+  init();
 }
 
 PotentialEwald::~PotentialEwald() {}
@@ -454,6 +455,19 @@ void PotentialEwald::u012(double r2, double &u, double &du, double &d2u) {
 
 void PotentialEwald::u012TC(double &u, double &du, double &d2u) {
   p.u012TC(u, du, d2u);
+}
+
+PotentialEwald6::PotentialEwald6(Potential& p, double si, double ei, double sj, double ej, double eta, double rc, int tt) : Potential(tt, rc), pShort(p), eta(eta) {
+  eta2 = eta*eta;
+  eta6r = 1/(eta2*eta2*eta2);
+  Bij = 0;
+  for (int k=0; k<=6; k++) {
+    int ck = factorial(6)/(factorial(6-k)*factorial(k));
+    double bik = 0.25*pow(si, k)*sqrt(ck*ei);
+    double bjk = 0.25*pow(sj, 6-k)*sqrt(ck*ej);
+    Bij += bik*bjk;
+  }
+  init();
 }
 
 PotentialEwald6::PotentialEwald6(Potential& p, double si, double ei, double sj, double ej, double eta, double rc) : Potential(TRUNC_SIMPLE, rc), pShort(p), eta(eta) {
@@ -538,6 +552,7 @@ double PotentialEwald6::getEta(double rc, double uOverB) {
 }
 
 PotentialEwaldBare::PotentialEwaldBare(double a, double qq, double rc) : Potential(TRUNC_SIMPLE, rc), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
+  init();
 }
 
 PotentialEwaldBare::PotentialEwaldBare(double a, double qq, double rc, int truncType) : Potential(TRUNC_SIMPLE, rc), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
