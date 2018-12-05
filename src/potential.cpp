@@ -424,17 +424,18 @@ PotentialEwald::PotentialEwald(Potential& p2, double a, double qq, double rc, in
 PotentialEwald::~PotentialEwald() {}
 
 double PotentialEwald::ur(double r) {
-  return qiqj*erfc(alpha*r)/r + p.ur(r);
+  return qiqj*erfc(alpha*r)/r + uShift + p.ur(r);
 }
 
 double PotentialEwald::u(double r2) {
-  double r = sqrt(r2);
-  return ur(r);
+  return ur(sqrt(r2));
 }
 
 double PotentialEwald::du(double r2) {
   double r = sqrt(r2);
-  return -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *alpha + erfc(alpha*r)/r) + p.du(r2);
+  double du = -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *alpha + erfc(alpha*r)/r) + p.du(r2);
+  if (ufShift!=0) du += ufShift*sqrt(r2);
+  return du;
 }
 
 double PotentialEwald::d2u(double r2) {
@@ -447,9 +448,9 @@ void PotentialEwald::u012(double r2, double &u, double &du, double &d2u) {
   p.u012(r2, pu, pdu, pd2u);
   double r = sqrt(r2);
   double uq = qiqj*erfc(alpha*r)/r;
-  u = uq + pu;
+  u = uq + pu + uShift * r*ufShift;
   double derfc = -qiqj*twoosqrtpi * exp(-alpha*alpha*r2) * alpha;
-  du = derfc - uq + pdu;
+  du = derfc - uq + pdu + r*ufShift;
   d2u = - derfc * (2 + alpha*alpha*2*r2) + 2*uq + pd2u;
 }
 
@@ -485,13 +486,19 @@ PotentialEwald6::PotentialEwald6(Potential& p, double si, double ei, double sj, 
 PotentialEwald6::~PotentialEwald6() {}
 
 double PotentialEwald6::ur(double r) {
-  return u(r*r);
+  double r2 = r*r;
+  double a2 = r2/eta2;
+  double a4 = a2*a2;
+  double u = pShort.u(r2) - Bij*eta6r*(1+a2+a4/2)*exp(-a2)/(a4*a2) + uShift + ufShift*r;
+  return u;
 }
 
 double PotentialEwald6::u(double r2) {
   double a2 = r2/eta2;
   double a4 = a2*a2;
-  return pShort.u(r2) - Bij*eta6r*(1+a2+a4/2)*exp(-a2)/(a4*a2);
+  double u = pShort.u(r2) - Bij*eta6r*(1+a2+a4/2)*exp(-a2)/(a4*a2) + uShift;
+  if (ufShift!=0) u += ufShift*sqrt(r2);
+  return u;
 }
 
 double PotentialEwald6::du(double r2) {
@@ -500,7 +507,9 @@ double PotentialEwald6::du(double r2) {
   double a6 = a4*a2;
   double e = exp(-a2);
   // (2a + 2a3) e/a6 - 2(1 + a2 + a4/2) e/a5 - 6(1 + a2 + a4/2) e/a7
-  return pShort.du(r2) + Bij*eta6r*(6 + 6*a2 + 3*a4 + a6)*e/a6;
+  double du = pShort.du(r2) + Bij*eta6r*(6 + 6*a2 + 3*a4 + a6)*e/a6;
+  if (ufShift!=0) du += ufShift*sqrt(r2);
+  return du;
 }
 
 double PotentialEwald6::d2u(double r2) {
@@ -517,8 +526,13 @@ void PotentialEwald6::u012(double r2, double &u, double &du, double &d2u) {
   double a4 = a2*a2;
   double a6 = a4*a2;
   double e = exp(-a2);
-  u += -Bij*eta6r*(1+a2+a4/2)*e/a6;
+  u += -Bij*eta6r*(1+a2+a4/2)*e/a6 + uShift;
   du += Bij*eta6r*(6 + 6*a2 + 3*a4 + a6)*e/a6;
+  if (ufShift != 0) {
+    double r = sqrt(r2);
+    u += r*ufShift;
+    du += r*ufShift;
+  }
   d2u += -Bij * eta6r*(42 + 42*a2 + 21*a4 + (7+2*a2)*a6)*e/a6;
 }
 
@@ -527,41 +541,51 @@ void PotentialEwald6::u012TC(double &u, double &du, double &d2u) {
 }
 
 double PotentialEwald6::getEta(double rc, double uOverB) {
-  double c2 = 1/(rc*rc);
-  double c6 = c2*c2*c2;
   double rc2 = rc*rc;
-  double check = exp(-rc2*c2)*c6;
-  double step = 2;
+  double rc4 = rc2*rc2;
+  double rc6 = rc2*rc4;
+  double eta2 = rc2;
+  double eta4 = eta2*eta2;
+  double a2 = rc2/eta2;
+  double a4 = rc4/eta4;
+  double err = (1+a2+a4/2)*exp(-a2)/rc6;
+  double step = 1.2;
   bool prevExceeded = false;
   while (true) {
-    if (check > uOverB) {
+    if (err > uOverB) {
+      // err is too high, try increasing c2 (decrease eta)
       if (!prevExceeded) step = sqrt(step);
-      c2 *= step;
+      eta2 /= step;
       prevExceeded = true;
     }
     else {
+      // err is too low, try increase eta
+      if (eta2 == rc2) return sqrt(eta2);
       if (prevExceeded) step = sqrt(step);
-      c2 /= step;
+      eta2 *= step;
       prevExceeded = false;
     }
-    c6 = c2*c2*c2;
+    //printf("%e %e => %e\n", uOverB, err, sqrt(eta2));
+    eta4 = eta2*eta2;
+    a2 = rc2/eta2;
+    a4 = rc4/eta4;
     if (step == 1) break;
-    check = exp(-rc2*c2)*c6;
+    err = (1+a2+a4/2)*exp(-a2)/rc6;
   }
-  return 1/sqrt(c2);
+  return sqrt(eta2);
 }
 
 PotentialEwaldBare::PotentialEwaldBare(double a, double qq, double rc) : Potential(TRUNC_SIMPLE, rc), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
-  init();
 }
 
-PotentialEwaldBare::PotentialEwaldBare(double a, double qq, double rc, int truncType) : Potential(TRUNC_SIMPLE, rc), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
+PotentialEwaldBare::PotentialEwaldBare(double a, double qq, double rc, int tt) : Potential(tt, rc), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {
+  init();
 }
 
 PotentialEwaldBare::~PotentialEwaldBare() {}
 
 double PotentialEwaldBare::ur(double r) {
-  return qiqj*erfc(alpha*r)/r;
+  return qiqj*erfc(alpha*r)/r + uShift + r*ufShift;
 }
 
 double PotentialEwaldBare::u(double r2) {
@@ -571,7 +595,8 @@ double PotentialEwaldBare::u(double r2) {
 
 double PotentialEwaldBare::du(double r2) {
   double r = sqrt(r2);
-  return -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *alpha + erfc(alpha*r)/r);
+  double du = -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *alpha + erfc(alpha*r)/r) + r*ufShift;
+  return du;
 }
 
 double PotentialEwaldBare::d2u(double r2) {
@@ -582,8 +607,8 @@ double PotentialEwaldBare::d2u(double r2) {
 void PotentialEwaldBare::u012(double r2, double &u, double &du, double &d2u) {
   double r = sqrt(r2);
   double uq = qiqj*erfc(alpha*r)/r;
-  u = uq;
+  u = uq + uShift + r*ufShift;
   double derfc = -qiqj*twoosqrtpi * exp(-alpha*alpha*r2) * alpha;
-  du = derfc - uq;
+  du = derfc - uq + r*ufShift;
   d2u = - derfc * (2 + alpha*alpha*2*r2) + 2*uq;
 }
