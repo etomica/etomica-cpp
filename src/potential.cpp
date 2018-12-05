@@ -481,6 +481,7 @@ PotentialEwald6::PotentialEwald6(Potential& p, double si, double ei, double sj, 
     double bjk = 0.25*pow(sj, 6-k)*sqrt(ck*ej);
     Bij += bik*bjk;
   }
+  init();
 }
 
 PotentialEwald6::~PotentialEwald6() {}
@@ -540,7 +541,10 @@ void PotentialEwald6::u012TC(double &u, double &du, double &d2u) {
   pShort.u012TC(u, du, d2u);
 }
 
-double PotentialEwald6::getEta(double rc, double uOverB) {
+double PotentialEwald6::getEta(double rc, double sigma, double epsilon, double uTol) {
+  double B = 4*epsilon*pow(sigma, 6);
+  if (uTol < epsilon*1e-13) uTol = epsilon*1e-13;
+  double uOverB = uTol/B;
   double rc2 = rc*rc;
   double rc4 = rc2*rc2;
   double rc6 = rc2*rc4;

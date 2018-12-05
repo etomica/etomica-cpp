@@ -194,6 +194,6 @@ class PotentialEwald6 : public Potential {
     void u012(double r2, double &u, double &du, double &d2u);
     virtual void u012TC(double &u, double &du, double &d2u);
     // returns eta needed to yield desired accuracy (in terms of u(rc)/B)
-    static double getEta(double rc, double uOverB);
+    static double getEta(double rc, double sigma, double epsilon, double uTol);
 };
 
