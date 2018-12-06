@@ -35,3 +35,8 @@ class Replicate {
   public:
     static void go(Box& box, const int replicates[3]);
 };
+
+class WriteXYZ {
+  public:
+    static void go(const char* filename, Box& box, char** symbols, bool append);
+};
