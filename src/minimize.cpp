@@ -15,6 +15,8 @@ Minimize::Minimize(PotentialMaster& pm) : PotentialCallbackMoleculePhi(pm), step
   lastU = 0;
   lastStep = 0;
   sdStep = false;
+  maxDR = 0.3;
+  maxDtheta = 0.1;
 }
 
 Minimize::~Minimize() {
@@ -47,7 +49,7 @@ void Minimize::doStep() {
   //printf("RMS F %e\n", lastF);
 
   Matrix phiMat(nmap[nm], nmap[nm], moleculePhiTotal);
-#ifdef MIN_UCHECK
+#ifndef MIN_SKIP_UCHECK
   Matrix phiMat0(nmap[nm], nmap[nm]);
   phiMat0.E(phiMat);
   double* fMolecule0 = (double*)malloc(nmap[nm]*sizeof(double));
@@ -68,6 +70,24 @@ void Minimize::doStep() {
   phiMat.invert();
 
   phiMat.transform(fMolecule);
+  double mr = 0, mt = 0;
+  for (int iMolecule=0; iMolecule<nm; iMolecule++) {
+    for (int k=nmap[iMolecule]; k<nmap[iMolecule]+3; k++) {
+      if (fabs(fMolecule[k]) > mr) mr = fabs(fMolecule[k]);
+    }
+    for (int k=nmap[iMolecule]+3; k<nmap[iMolecule+1]; k++) {
+      if (fabs(fMolecule[k]) > mt) mt = fabs(fMolecule[k]);
+    }
+  }
+  double scaleback = 1;
+  if (mr > maxDR) scaleback = maxDR/mr;
+  if (mt > maxDtheta && maxDtheta/mt<scaleback) scaleback = maxDtheta/mt;
+  if (scaleback<1) {
+    //printf("scaleback %f\n", scaleback);
+    for (int i=0; i<nmap[nm]; i++) {
+      fMolecule[i] *= scaleback;
+    }
+  }
   //for  (int i=0; i<nmap[N]; i++) fMolecule[i] = 0;
   //fMolecule[3] = 0.00001;
   //fMolecule[3] = fMolecule[4] = fMolecule[5] = 0;
@@ -75,16 +95,17 @@ void Minimize::doStep() {
   //for (int k=0; k<3; k++) fMolecule[k] *= 0.1;
   //printf("dtheta %d %f %f %f\n", 0, fMolecule[0], fMolecule[1], fMolecule[2]);
   sdStep = false;
-#ifdef MIN_UCHECK
-  double estDU = 0;
+  double estDU0 = 0;
+#ifndef MIN_SKIP_UCHECK
   for (int i=0; i<nmap[nm]; i++) {
-    estDU -= fMolecule0[i]*fMolecule[i];
+    estDU0 -= fMolecule0[i]*fMolecule[i];
     for (int j=0; j<nmap[nm]; j++) {
-      estDU += 0.5*phiMat0.matrix[i][j]*fMolecule[i]*fMolecule[j];
+      estDU0 += 0.5*phiMat0.matrix[i][j]*fMolecule[i]*fMolecule[j];
     }
   }
-  printf("estimated DU: %e\n", estDU/nm);
-  if (estDU > 0) {
+  //printf("estimated DU: %e\n", estDU/nm);
+  double estDU1 = estDU0;
+  if (estDU0 > 0) {
     sdStep = true;
     double fmag = 0;
     for (int i=0; i<nmap[nm]; i++) {
@@ -92,19 +113,20 @@ void Minimize::doStep() {
     }
     fmag = sqrt(fmag);
     if (lastStep==0) lastStep = 0.1;
-    while (estDU>0) {
+    
+    while (estDU1>0) {
       for (int i=0; i<nmap[nm]; i++) {
         fMolecule[i] = fMolecule0[i]/fmag*lastStep;
       }
-      estDU = 0;
+      estDU1 = 0;
       for (int i=0; i<nmap[nm]; i++) {
-        estDU -= fMolecule0[i]*fMolecule[i];
+        estDU1 -= fMolecule0[i]*fMolecule[i];
         for (int j=0; j<nmap[nm]; j++) {
-          estDU += 0.5*phiMat0.matrix[i][j]*fMolecule[i]*fMolecule[j];
+          estDU1 += 0.5*phiMat0.matrix[i][j]*fMolecule[i]*fMolecule[j];
         }
       }
-      printf("reestimated DU: %e\n", estDU/nm);
-      if (estDU>0) lastStep *= 0.2;
+      //printf("reestimated DU: %e\n", estDU1/nm);
+      if (estDU1>0) lastStep *= 0.2;
     }
   }
 #endif
