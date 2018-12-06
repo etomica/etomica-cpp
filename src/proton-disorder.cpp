@@ -9,7 +9,7 @@
 #include "random.h"
 #include "alloc2d.h"
 
-double** ProtonDisorder::go2(const char* configOname, const int num0, const double* L0, const int* reps, Random& rand, const double drNbrOO, const double bondLengthOH, const double bondAngleHOH, const double offsetM) {
+double** ProtonDisorder::go2(const char* configOname, const int num0, double* L0, const int* reps, Random& rand, const double drNbrOO, const double bondLengthOH, const double bondAngleHOH, const double offsetM) {
   SpeciesList speciesListO;
   SpeciesSimple speciesO(1, 16);
   speciesListO.add(&speciesO);
@@ -19,6 +19,8 @@ double** ProtonDisorder::go2(const char* configOname, const int num0, const doub
 
   ConfigurationFile configO(boxO, configOname);
   configO.go();
+  const double* bs = boxO.getBoxSize();
+  L0[0] = bs[0]; L0[1] = bs[1]; L0[2] = bs[2];
   Replicate::go(boxO, reps);
 
   return ProtonDisorder::go(boxO, rand, drNbrOO, bondLengthOH, bondAngleHOH, offsetM);
