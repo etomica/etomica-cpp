@@ -41,6 +41,11 @@ void ParameterMap::parseArgs(const int argc, char** argv) {
       abort();
     }
 
+    if (strcmp(argv[i], "-in") == 0) {
+      readFile(argv[i+1]);
+      continue;
+    }
+
     string keyS = string(argv[i]+1);
     string valueS = string(argv[i+1]);
     values[keyS] = valueS;
