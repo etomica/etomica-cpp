@@ -152,3 +152,53 @@ double** ProtonDisorder::go(Box& box, Random& rand, const double drNbrOO, const 
 void ProtonDisorder::freeRHOM(double** rHOM) {
   free2D((void**)rHOM);
 }
+
+void ProtonDisorder::snapWater(Box& box, Random& rand, const double bondLengthOH, const double bondAngleHOH, const double offsetM) {
+  int N = box.getTotalNumMolecules();
+  double c = bondLengthOH * cos(0.5*bondAngleHOH);
+  double s = bondLengthOH * sin(0.5*bondAngleHOH);
+  for (int iMolecule=0; iMolecule<N; iMolecule++) {
+    int iFirstAtom = 3*iMolecule;
+    double* rOi = box.getAtomPosition(iFirstAtom+2);
+    double bisect[3] = {0,0,0};
+    double rH0[3] = {0,0,0};
+    for (int j=0; j<2; j++) {
+      double* rHj = box.getAtomPosition(iFirstAtom+1+j);
+      double dr[3];
+      for (int k=0; k<3; k++) dr[k] = rHj[k] - rOi[k];
+      box.nearestImage(dr);
+      double dr2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
+      double dr1 = sqrt(dr2);
+      for (int k=0; k<3; k++) dr[k] /= dr1;
+      // just need direction for now
+      for (int k=0; k<3; k++) {
+        if (j==0) rH0[k] = dr[k];
+        bisect[k] += dr[k];
+      }
+    }
+    double dr2 = bisect[0]*bisect[0] + bisect[1]*bisect[1] + bisect[2]*bisect[2];
+    double dr1 = sqrt(dr2);
+    for (int k=0; k<3; k++) bisect[k] /= dr1;
+    if (offsetM != 0) {
+      // place M
+      double* rMi = box.getAtomPosition(iFirstAtom+3);
+      for (int k=0; k<3; k++) rMi[k] = rOi[k] + bisect[k]*offsetM;
+    }
+    double perp[3];
+    double dot = 0;
+    for (int k=0; k<3; k++) dot += bisect[k]*rH0[k];
+    dr2 = 0;
+    for (int k=0; k<3; k++) {
+      perp[k] = rH0[k] - bisect[k]*dot;
+      dr2 += perp[k]*perp[k];
+    }
+    dr1 = sqrt(dr2);
+    for (int k=0; k<3; k++) perp[k] /= dr1;
+    double* rH1i = box.getAtomPosition(iFirstAtom);
+    double* rH2i = box.getAtomPosition(iFirstAtom+1);
+    for (int k=0; k<3; k++) {
+      rH1i[k] = rOi[k] + bisect[k]*c + perp[k]*s;
+      rH2i[k] = rOi[k] + bisect[k]*c - perp[k]*s;
+    }
+  }
+}
