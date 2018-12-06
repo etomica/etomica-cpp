@@ -15,6 +15,7 @@ class PotentialCallback {
     bool takesForces;
     bool takesPhi;
     bool takesDFDV;
+    bool takesVirialTensor;
 
     PotentialCallback();
     virtual ~PotentialCallback() {}
@@ -22,7 +23,7 @@ class PotentialCallback {
     virtual void pairCompute(int iAtom, int jAtom, double* dr, double u, double du, double d2u) {}
     virtual void pairComputePhi(int iAtom, int jAtom, double phi[3][3]) {}
     virtual void computeDFDV(int iAtom, double* dFdV) {}
-    virtual void allComputeFinished(double uTot, double virialTot, double** f) {}
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double *virialTensor) {}
     virtual int getNumData() {return 0;}
     virtual double* getData() {return nullptr;}
 };
@@ -35,7 +36,7 @@ class PotentialCallbackPressure : public PotentialCallback {
   public:
     PotentialCallbackPressure(Box& box, double temperature, bool takesForces);
     virtual ~PotentialCallbackPressure() {}
-    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     virtual int getNumData();
     virtual double* getData();
 };
@@ -46,7 +47,7 @@ class PotentialCallbackEnergy : public PotentialCallback {
   public:
     PotentialCallbackEnergy();
     virtual ~PotentialCallbackEnergy() {}
-    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     virtual int getNumData();
     virtual double* getData();
 };
@@ -67,7 +68,7 @@ class PotentialCallbackHMA : public PotentialCallback {
     PotentialCallbackHMA(Box& box, double temperature, double Pharm, bool doD2);
     virtual ~PotentialCallbackHMA();
     virtual void pairCompute(int iAtom, int jAtom, double* dr, double u, double du, double d2u);
-    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     virtual int getNumData();
     virtual double* getData();
     void setReturnAnharmonic(bool returnAnharmonic, PotentialMaster* potentialMaster);
@@ -100,7 +101,7 @@ class PotentialCallbackMoleculeHMA : public PotentialCallback {
     virtual void pairCompute(int iAtom, int jAtom, double* dr, double u, double du, double d2u);
     virtual void pairComputePhi(int iAtom, int jAtom, double phi[3][3]);
     virtual void computeDFDV(int iAtom, double* idFdV);
-    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     virtual int getNumData();
     virtual double* getData();
     void setReturnAnharmonic(bool returnAnharmonic);
@@ -117,7 +118,7 @@ class PotentialCallbackBulkModulus : public PotentialCallback {
     virtual int getNumData();
     virtual void reset();
     virtual void pairCompute(int iAtom, int jAtom, double* dr, double u, double du, double d2u);
-    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     virtual double* getData();
 };
 
@@ -138,6 +139,6 @@ class PotentialCallbackMoleculePhi : public PotentialCallback {
     virtual void reset();
     virtual void pairCompute(int iAtom, int jAtom, double* dr, double u, double du, double d2u);
     virtual void pairComputePhi(int iAtom, int jAtom, double phi[3][3]);
-    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     double** getMoleculePhi();
 };

@@ -10,7 +10,7 @@ Integrator::Integrator(PotentialMaster& p) : potentialMaster(p), temperature(1),
   selfPotentialCallbackVec.push_back(this);
 }
 
-void Integrator::allComputeFinished(double uTotNew, double virialTotNew, double **f) {
+void Integrator::allComputeFinished(double uTotNew, double virialTotNew, double **f, double* virialTensor) {
   energy = uTotNew;
 }
 

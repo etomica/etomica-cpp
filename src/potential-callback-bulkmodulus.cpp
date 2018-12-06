@@ -27,7 +27,7 @@ void PotentialCallbackBulkModulus::pairCompute(int iAtom, int jAtom, double* dri
   data[1] -= d2u;
 }
 
-void PotentialCallbackBulkModulus::allComputeFinished(double uTot, double virialTot, double** f) {
+void PotentialCallbackBulkModulus::allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor) {
   const double* bs = box.getBoxSize();
   double vol = bs[0]*bs[1]*bs[2];
   int numMolecules = box.getTotalNumMolecules();

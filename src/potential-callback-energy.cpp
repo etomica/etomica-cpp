@@ -12,7 +12,7 @@ PotentialCallbackEnergy::PotentialCallbackEnergy() {
 
 int PotentialCallbackEnergy::getNumData() {return 1;}
 
-void PotentialCallbackEnergy::allComputeFinished(double uTot, double virialTot, double** f) {
+void PotentialCallbackEnergy::allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor) {
   data[0] = uTot;
 }
 

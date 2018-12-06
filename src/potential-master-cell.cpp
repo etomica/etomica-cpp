@@ -102,12 +102,13 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
   for (int k=1; k<3; k++) minR2 = bs[k]<minR2 ? 0.5*bs[k] : minR2;
   minR2 *= minR2;
   pairCallbacks.resize(0);
-  bool doForces = false, doPhi = false, doDFDV = false;
+  bool doForces = false, doPhi = false, doDFDV = false, doVirialTensor = false;
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if (!embeddingPotentials && (*it)->callPair) pairCallbacks.push_back(*it);
     if ((*it)->takesForces) doForces = true;
     if ((*it)->takesPhi) doPhi = true;
     if ((*it)->takesDFDV) doDFDV = true;
+    if ((*it)->takesVirialTensor) doVirialTensor = true;
   }
   const int numAtoms = box.getNumAtoms();
   if (doForces && numAtoms > numForceAtoms) {
@@ -123,6 +124,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
     rhoSum = (double*)realloc(rhoSum, numAtoms*sizeof(double));
   }
   double uTot=0, virialTot=0;
+  double virialTensor[6] = {0,0,0,0,0,0};
 #ifdef DEBUG
   vector<double> uCheck;
   vector<double> rhoCheck;
@@ -172,7 +174,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
       Potential* pij = iPotentials[jType];
       if (!pij) continue;
       const double *rj = box.getAtomPosition(jAtom);
-      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces, skipIntra);
+      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, virialTensor, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces, doVirialTensor, skipIntra);
     }
     const int iCell = atomCell[iAtom];
     for (vector<int>::const_iterator it = cellOffsets.begin(); it!=cellOffsets.end(); ++it) {
@@ -191,7 +193,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
         Potential* pij = iPotentials[jType];
         if (!pij) continue;
         const double *rj = box.getAtomPosition(jAtom);
-        handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces, skipIntra);
+        handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, virialTensor, iCutoffs[jType], iRhoPotential, iRhoCutoff, iType, jType, doForces, doVirialTensor, skipIntra);
       }
     }
   }
@@ -266,7 +268,7 @@ void PotentialMasterCell::computeAll(vector<PotentialCallback*> &callbacks) {
 #endif
   computeAllTruncationCorrection(uTot, virialTot);
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
-    if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);
+    if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force, virialTensor);
   }
 }
 

@@ -13,7 +13,7 @@ PotentialCallbackPressure::PotentialCallbackPressure(Box& b, double T, bool tf) 
 
 int PotentialCallbackPressure::getNumData() {return 1;}
 
-void PotentialCallbackPressure::allComputeFinished(double uTot, double virialTot, double** f) {
+void PotentialCallbackPressure::allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor) {
   const double* bs = box.getBoxSize();
   double vol = bs[0]*bs[1]*bs[2];
   int numMolecules = box.getTotalNumMolecules();

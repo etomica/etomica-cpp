@@ -142,8 +142,8 @@ donef:  if (flip) {
   potentialMaster.computeAll(pcs);
 }
 
-void LatticeDynamicsFull::allComputeFinished(double uTot, double virialTot, double** f) {
-  PotentialCallbackMoleculePhi::allComputeFinished(uTot, virialTot, f);
+void LatticeDynamicsFull::allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor) {
+  PotentialCallbackMoleculePhi::allComputeFinished(uTot, virialTot, f, virialTensor);
   int nCells = numCells[0]*numCells[1]*numCells[2];
   int numMolecules = box.getTotalNumMolecules();
   int nBasis = numMolecules/nCells;

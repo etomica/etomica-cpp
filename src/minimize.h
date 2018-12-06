@@ -28,7 +28,7 @@ class Minimize : public PotentialCallbackMoleculePhi {
     void doStep();
     void doSteps(int steps, double uTol, double rTol);
     long getStepCount();
-    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     double getLastDR();
     double getLastU();
     double getLastDU();

@@ -26,7 +26,7 @@ class LatticeDynamicsFull : public PotentialCallbackMoleculePhi {
   public:
     LatticeDynamicsFull(PotentialMaster& potentialMaster);
     virtual ~LatticeDynamicsFull();
-    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     void setNumCells(int x, int y, int z);
     void compute();
     bool getUnstable() {return unstable;}

@@ -71,7 +71,7 @@ void PotentialCallbackHMA::pairCompute(int iAtom, int jAtom, double* drij, doubl
   }
 }
 
-void PotentialCallbackHMA::allComputeFinished(double uTot, double virialTot, double** f) {
+void PotentialCallbackHMA::allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor) {
   const double* bs = box.getBoxSize();
   double vol = bs[0]*bs[1]*bs[2];
   if (computingLat) {

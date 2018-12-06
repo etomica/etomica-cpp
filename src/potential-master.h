@@ -138,7 +138,7 @@ class PotentialMaster {
       if (rigidMolecules) return true;
       return binary_search(iBondedAtoms->begin(), iBondedAtoms->end(), jAtom-jFirstAtom);
     }
-    void handleComputeAll(int iAtom, int jAtom, const double *ri, const double *rj, const double *jbo, Potential* pij, double &ui, double &uj, double* fi, double* fj, double& uTot, double& virialTot, const double rc2, Potential* iRhoPotential, const double iRhoCutoff, const int iType, const int jType, const bool doForces, const bool skipIntra) {
+    void handleComputeAll(int iAtom, int jAtom, const double *ri, const double *rj, const double *jbo, Potential* pij, double &ui, double &uj, double* fi, double* fj, double& uTot, double& virialTot, double virialTensor[6], const double rc2, Potential* iRhoPotential, const double iRhoCutoff, const int iType, const int jType, const bool doForces, const bool doVirialTensor, const bool skipIntra) {
       double dr[3];
       dr[0] = (rj[0]+jbo[0])-ri[0];
       dr[1] = (rj[1]+jbo[1])-ri[1];
@@ -168,6 +168,14 @@ class PotentialMaster {
           x = dr[2]*du;
           fi[2] += x;
           fj[2] -= x;
+          if (doVirialTensor) {
+            virialTensor[0] += dr[0]*dr[0]*du;
+            virialTensor[1] += dr[0]*dr[1]*du;
+            virialTensor[2] += dr[0]*dr[2]*du;
+            virialTensor[3] += dr[1]*dr[1]*du;
+            virialTensor[4] += dr[1]*dr[2]*du;
+            virialTensor[5] += dr[2]*dr[2]*du;
+          }
         }
       }
       if (embeddingPotentials) {

@@ -55,7 +55,7 @@ class Integrator : public PotentialCallback {
     double getPotentialEnergy();
     virtual void addListener(IntegratorListener* listener);
     virtual void removeListener(IntegratorListener* listener);
-    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
 };
 
 class IntegratorMC : public Integrator {
@@ -109,7 +109,7 @@ class IntegratorMD : public Integrator {
     void setTimeStep(double tStep);
     double getTimeStep();
     void setNbrCheckInterval(int interval);
-    virtual void allComputeFinished(double uTot, double virialTot, double** f);
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     virtual void doStep() = 0;
     virtual void reset();
     void addPotentialCallback(PotentialCallback* callback, int interval=1);

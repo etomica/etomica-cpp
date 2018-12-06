@@ -28,7 +28,7 @@ void IntegratorMD::setNbrCheckInterval(int i) {
   neighborUpdateListener->setInterval(i);
 }
 
-void IntegratorMD::allComputeFinished(double uTotNew, double virialTotNew, double **f) {
+void IntegratorMD::allComputeFinished(double uTotNew, double virialTotNew, double **f, double* virialTensor) {
   energy = uTotNew;
   forces = f;
 }

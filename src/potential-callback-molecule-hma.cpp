@@ -366,7 +366,7 @@ double** PotentialCallbackMoleculeHMA::getDRDV() {
   return dRdV;
 }
 
-void PotentialCallbackMoleculeHMA::allComputeFinished(double uTot, double virialTot, double** f) {
+void PotentialCallbackMoleculeHMA::allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor) {
   if (computingPshift) {
     computeShift(f);
     return;

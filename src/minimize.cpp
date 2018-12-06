@@ -211,11 +211,11 @@ double Minimize::getLastDR() {
   return lastDR;
 }
 
-void Minimize::allComputeFinished(double uTot, double virialTot, double** f) {
+void Minimize::allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor) {
   lastDU = uTot - lastU;
   //printf("DU %f\n", lastDU);
   lastU = uTot;
-  PotentialCallbackMoleculePhi::allComputeFinished(uTot, virialTot, f);
+  PotentialCallbackMoleculePhi::allComputeFinished(uTot, virialTot, f, virialTensor);
 
   // compute molecular force, torque
   int numMolecules = box.getTotalNumMolecules();

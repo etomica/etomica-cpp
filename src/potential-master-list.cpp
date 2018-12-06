@@ -258,12 +258,13 @@ resetStart:
 
 void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
   pairCallbacks.resize(0);
-  bool doForces = false, doPhi = false, doDFDV = false;
+  bool doForces = false, doPhi = false, doDFDV = false, doVirialTensor = false;
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if (!embeddingPotentials && (*it)->callPair) pairCallbacks.push_back(*it);
     if ((*it)->takesForces) doForces = true;
     if ((*it)->takesPhi) doPhi = true;
     if ((*it)->takesDFDV) doDFDV = true;
+    if ((*it)->takesVirialTensor) doVirialTensor = true;
   }
   int numAtoms = box.getNumAtoms();
   if (doForces && numAtoms > numForceAtoms) {
@@ -281,6 +282,7 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
   if (embeddingPotentials) rhoCheck.resize(box.getNumAtoms());
 #endif
   double uTot=0, virialTot=0;
+  double virialTensor[6] = {0,0,0,0,0,0};
   for (int i=0; i<numAtoms; i++) {
 #ifdef DEBUG
     uCheck[i] = uAtom[i];
@@ -308,7 +310,7 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
       Potential* pij = iPotentials[jType];
       double *rj = box.getAtomPosition(jAtom);
       double *jbo = iNbrBoxOffsets[j];
-      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, rc2, iRhoPotential, iRhoCutoff, iType, jType, doForces, false);
+      handleComputeAll(iAtom, jAtom, ri, rj, jbo, pij, uAtom[iAtom], uAtom[jAtom], fi, doForces?force[jAtom]:nullptr, uTot, virialTot, virialTensor, rc2, iRhoPotential, iRhoCutoff, iType, jType, doForces, doVirialTensor, false);
     }
   }
   if (embeddingPotentials) {
@@ -379,7 +381,7 @@ void PotentialMasterList::computeAll(vector<PotentialCallback*> &callbacks) {
     computeAllBonds(doForces, uTot);
   }
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
-    if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);
+    if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force, virialTensor);
   }
 }
 

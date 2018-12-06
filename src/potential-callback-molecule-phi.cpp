@@ -89,7 +89,7 @@ void PotentialCallbackMoleculePhi::pairCompute(int iAtom, int jAtom, double* dri
   }
 }
 
-void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virialTot, double** f) {
+void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor) {
   // compute self phi
   int numAtoms = box.getNumAtoms();
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {

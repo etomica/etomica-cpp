@@ -9,7 +9,7 @@
 #include "alloc2d.h"
 #include "util.h"
 
-PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false), takesPhi(false), takesDFDV(false) {}
+PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false), takesPhi(false), takesDFDV(false), takesVirialTensor(false) {}
 
 PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed), charges(nullptr), sFacAtom(nullptr), doEwald(false), ewald(nullptr) {
 
@@ -191,12 +191,13 @@ Box& PotentialMaster::getBox() {
 
 void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   pairCallbacks.resize(0);
-  bool doForces = false, doPhi = false, doDFDV = false;
+  bool doForces = false, doPhi = false, doDFDV = false, doVirialTensor = false;
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
     if (!embeddingPotentials && (*it)->callPair) pairCallbacks.push_back(*it);
     if ((*it)->takesForces) doForces = true;
     if ((*it)->takesPhi) doPhi = true;
     if ((*it)->takesDFDV) doDFDV = true;
+    if ((*it)->takesVirialTensor) doVirialTensor = true;
   }
   int numAtoms = box.getNumAtoms();
   if (doForces && numAtoms > numForceAtoms) {
@@ -216,6 +217,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   }
 
   double uTot = 0, virialTot = 0;
+  double virialTensor[6] = {0,0,0,0,0,0};
   double dr[3];
   double zero[3];
   zero[0] = zero[1] = zero[2] = 0;
@@ -248,7 +250,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
       double *rj = box.getAtomPosition(j);
       for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
       box.nearestImage(dr);
-      handleComputeAll(i, j, zero, dr, zero, pij, uAtom[i], uAtom[j], doForces?force[i]:nullptr, doForces?force[j]:nullptr, uTot, virialTot, pairCutoffs[iType][jType], iRhoPotential, iRhoCutoff, iType, jType, doForces, false);
+      handleComputeAll(i, j, zero, dr, zero, pij, uAtom[i], uAtom[j], doForces?force[i]:nullptr, doForces?force[j]:nullptr, uTot, virialTot, virialTensor, pairCutoffs[iType][jType], iRhoPotential, iRhoCutoff, iType, jType, doForces, doVirialTensor, false);
     }
   }
   if (embeddingPotentials) {
@@ -289,7 +291,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   }
   computeAllTruncationCorrection(uTot, virialTot);
   for (vector<PotentialCallback*>::iterator it = callbacks.begin(); it!=callbacks.end(); it++) {
-    if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force);
+    if ((*it)->callFinished) (*it)->allComputeFinished(uTot, virialTot, force, virialTensor);
   }
 }
 
