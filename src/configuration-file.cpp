@@ -3,6 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
+#include <string.h>
+#include <stdlib.h>
 #include "action.h"
 #include "box.h"
 
@@ -24,6 +26,22 @@ void ConfigurationFile::go() {
     if (!fgets(buf, 510, inp)) {
       fprintf(stderr, "Not enough atoms in config file.  I only found %d\n", iAtom);
       abort();
+    }
+    if (iAtom==0 && strncmp(buf, "box ", 4)==0) {
+      char* c = buf + 4;
+      double L[3];
+      for (int j=0; j<3; j++) {
+        char* c2;
+        L[j] = strtod(c, &c2);
+        if (c == c2) {
+          fprintf(stderr, "Could not parse box line from config file\n");
+          abort();
+        }
+        c = c2;
+      }
+      box.setBoxSize(L[0], L[1], L[2]);
+      iAtom--;
+      continue;
     }
     double *ri = box.getAtomPosition(iAtom);
     char* c = buf;
