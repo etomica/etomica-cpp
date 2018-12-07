@@ -12,11 +12,11 @@
 #include <complex>
 #include "box.h"
 #include "potential.h"
-#include "potential-angle.h"
-#include "potential-molecular.h"
 #include "potential-callback.h"
 
 class EwaldBase;
+class PotentialAngle;
+class PotentialMolecular;
 
 using namespace std;
 

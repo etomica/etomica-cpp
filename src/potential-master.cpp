@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <stdio.h>
 #include "potential-master.h"
+#include "potential-angle.h"
 #include "ewald.h"
 #include "alloc2d.h"
 #include "util.h"
