@@ -52,6 +52,19 @@ class PotentialCallbackEnergy : public PotentialCallback {
     virtual double* getData();
 };
 
+class PotentialCallbackVirialTensor : public PotentialCallback {
+  protected:
+    Box& box;
+    double temperature;
+    double data[6];
+  public:
+    PotentialCallbackVirialTensor(Box& box);
+    virtual ~PotentialCallbackVirialTensor() {}
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
+    virtual int getNumData();
+    virtual double* getData();
+};
+
 class PotentialCallbackHMA : public PotentialCallback {
   protected:
     Box& box;
