@@ -24,7 +24,7 @@ void EwaldFourier::getOptimalAlpha(double s, double& alpha, double& rc, double& 
   double tauRatio = 16;
   alpha = pow(tauRatio * M_PI*M_PI*M_PI * numAtoms / (vol*vol), 1.0/6.0);
   rc = s/alpha;
-  kc = 2 * alpha*alpha * rc;
+  kc = 2 * alpha*s;
 }
 
 void EwaldFourier::setCutoff(double kc) {
@@ -72,7 +72,7 @@ void EwaldFourier::computeFourierIntramolecular(int iMolecule, const bool doForc
   }
 }
 
-void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot, double** force, vector<PotentialCallback*>* pairCallbacks) {
+void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, const bool doVirialTensor, double &uTot, double &virialTot, double** force, double* virialTensor, vector<PotentialCallback*>* pairCallbacks) {
   const int numAtoms = box.getNumAtoms();
   double q2sum = 0, sumBij = 0, sumBii = 0;
   int numAtomTypes = speciesList.getNumAtomTypes();
@@ -250,7 +250,26 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
         //             dfExp/dk (-2k/3V)
         //             (-2 exp/k^2 - 0.5/alpha^2 exp/k) (-2k/3V)
         //             (2 exp/3V) (2/k + 0.5/alpha^2)
-        if (alpha>0) virialSum += 2*expthing * (2/kxyz2 + 0.5/(alpha*alpha))*x;
+        if (alpha>0) {
+          double foo = 2*expthing * (2/kxyz2 + 0.5/(alpha*alpha))*x;
+          virialSum += foo;
+          if (doVirialTensor) {
+            // dFS/dLx += dfExp/dLx * x
+            //            dfExp/dk dk/dkx dkx/dLx
+            // kx = 2 pi ikx / Lx
+            // dkx/dLx = -2 pi ikx / Lx^2
+            //         = -2 kx / L
+            // dFS/dLx += dfExp/dk  (kx/k) (-2kx/Lx)
+            //             (2 exp) (2/k + 0.5/alpha^2) (kx/k)^2
+            foo *= 0.5*coeff/kxyz2;
+            virialTensor[0] += kx*kx * foo;
+            virialTensor[1] += ky*kx * foo;
+            virialTensor[2] += kz*kx * foo;
+            virialTensor[3] += ky*ky * foo;
+            virialTensor[4] += kz*ky * foo;
+            virialTensor[5] += kz*kz * foo;
+          }
+        }
         // f6Exp = coeffB k^3 (pi^.5 erfc(a) + (0.5/a^3 - 1/a) exp(-a2))
         // dFS6/dV += df6Exp/dV * y
         // df6Exp/dV = df6Exp/dk dk/dV
@@ -293,8 +312,12 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
   fill(fExp.begin()+ik, fExp.end(), 0);
   fill(sFac.begin()+ik, sFac.end(), 0);
   uTot += 0.5*fourierSum;
-  // extra factor of 2 here from????
   uTot += fourierSum6;
+  if (doVirialTensor) {
+    virialTensor[0] += -0.5*fourierSum;
+    virialTensor[1] += -0.5*fourierSum;
+    virialTensor[2] += -0.5*fourierSum;
+  }
   // dU/dV = -0.5*coeff*fourierSum/V
   // virialTot = dU/dV *3V
   virialTot += -3*0.5* fourierSum + 0.5*coeff*virialSum  -3*fourierSum6 + virialSum6;

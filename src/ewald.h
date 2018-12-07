@@ -30,7 +30,7 @@ class EwaldBase {
     virtual void init() {}
     void setRigidMolecules(bool rigidMolecules);
     void setNumAtomsByType(int* numAtomsByType);
-    virtual void computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot, double** force, vector<PotentialCallback*>* pairCallbacks) = 0;
+    virtual void computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, const bool doVirialTensor, double &uTot, double &virialTot, double** force, double* virialTensor, vector<PotentialCallback*>* pairCallbacks) = 0;
     virtual void computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot, double** force) = 0;
     virtual double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) = 0;
     virtual double computeFourierAtom(int iAtom, bool oldEnergy) = 0;
@@ -58,7 +58,7 @@ class EwaldFourier : public EwaldBase {
   public:
     EwaldFourier(const SpeciesList &speciesList, Box& box);
     virtual ~EwaldFourier();
-    void computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, double &uTot, double &virialTot, double** force, vector<PotentialCallback*>* pairCallbacks);
+    void computeAllFourier(const bool doForces, const bool doPhi, const bool doDFDV, const bool doVirialTensor, double &uTot, double &virialTot, double** force, double* virialTensor, vector<PotentialCallback*>* pairCallbacks);
     void computeFourierIntramolecular(int iMolecule, const bool doForces, const bool doPhi, double &uTot, double &virialTot, double** force);
     double oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy);
     double computeFourierAtom(int iAtom, bool oldEnergy);
