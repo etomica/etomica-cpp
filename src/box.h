@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include "species.h"
 
 class SpeciesList;
