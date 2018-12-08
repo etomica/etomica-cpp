@@ -105,7 +105,7 @@ void CellManager::init() {
           int ixm1 = ix==0 ? 0 : (abs(ix)-1);
           int ixm1Sq = ixm1*ixm1;
           if (ixm1Sq+iym1Sq+izm1Sq >= cellRange*cellRange) continue;
-          int mv = ix+(iy+iz*numCells[1])*numCells[0];
+          int mv = iz+(iy+ix*numCells[1])*numCells[2];
           cellOffsets.push_back(mv);
           dCell++;
         }
