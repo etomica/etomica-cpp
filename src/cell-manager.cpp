@@ -183,6 +183,12 @@ void CellManager::assignCells() {
       else if (y==cellRange-1) y++;
       cellNum += y*jump[i];
     }
+#ifdef DEBUG
+    if (wrapMap[cellNum] != cellNum) {
+      fprintf(stderr, "iCell %d wraps to %d for atom %d\n", cellNum, wrapMap[cellNum], iAtom);
+      abort();
+    }
+#endif
     atomCell[iAtom] = cellNum;
     cellNextAtom[iAtom] = cellLastAtom[cellNum];
     cellLastAtom[cellNum] = iAtom;
