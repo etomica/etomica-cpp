@@ -326,7 +326,7 @@ class PotentialMaster {
     }
     virtual void computeOneInternal(const int iAtom, const double *ri, double &u1, const int iSpecies, const int iMolecule, const int iFirstAtom, const bool onlyAtom);
     virtual double oldEmbeddingEnergy(int iAtom);
-    double computeVirialIntramolecular();
+    double computeVirialIntramolecular(const bool doVirialTensor, double virialTensor[6]);
 
   public:
     PotentialMaster(const SpeciesList &speciesList, Box& box, bool doEmbed);

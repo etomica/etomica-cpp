@@ -285,7 +285,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
     ewald->computeAllFourier(doForces, doPhi, doDFDV, doVirialTensor, uTot, virialTot, force, virialTensor, &pairCallbacks);
   }
   if (doForces && !pureAtoms) {
-    virialTot += computeVirialIntramolecular();
+    virialTot += computeVirialIntramolecular(doVirialTensor, virialTensor);
   }
   if (!pureAtoms && !rigidMolecules) {
     computeAllBonds(doForces, uTot);
@@ -296,7 +296,7 @@ void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   }
 }
 
-double PotentialMaster::computeVirialIntramolecular() {
+double PotentialMaster::computeVirialIntramolecular(const bool doVirialTensor, double virialTensor[6]) {
   double virialTot = 0;
   for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
     int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
@@ -309,6 +309,15 @@ double PotentialMaster::computeVirialIntramolecular() {
       for (int k=0; k<3; k++) dr[k] = ri[k]-center[k];
       box.nearestImage(dr);
       for (int k=0; k<3; k++) virialTot += force[iAtom][k] * dr[k];
+      if (doVirialTensor) {
+        int l = 0;
+        for (int k=0; k<3; k++) {
+          for (int m=k; m<3; m++) {
+            virialTensor[l] += force[iAtom][k] * dr[m];
+            l++;
+          }
+        }
+      }
     }
   }
   return virialTot;
