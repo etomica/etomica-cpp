@@ -96,6 +96,11 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
     double eta3 = eta*eta*eta;
     uTot -= sqrt(M_PI)*M_PI/(6*vol*eta3) * sumBij;
     virialTot += 3*sqrt(M_PI)*M_PI/(6*vol*eta3) * sumBij;
+    if (doVirialTensor) {
+      virialTensor[0] += sqrt(M_PI)*M_PI/(6*vol*eta3) * sumBij;
+      virialTensor[3] += sqrt(M_PI)*M_PI/(6*vol*eta3) * sumBij;
+      virialTensor[5] += sqrt(M_PI)*M_PI/(6*vol*eta3) * sumBij;
+    }
     uTot += 1.0/(12.0*eta3*eta3) * sumBii;
   }
 
