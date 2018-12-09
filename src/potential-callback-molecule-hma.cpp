@@ -141,29 +141,7 @@ void PotentialCallbackMoleculeHMA::computeShift(double** f) {
     }
   }
 
-  // compute molecular force, torque
   int numMolecules = box.getTotalNumMolecules();
-  for (int i=0; i<numMolecules; i++) {
-    int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
-    box.getMoleculeInfo(i, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
-    Species* species = speciesList.get(iSpecies);
-    double* ri = species->getMoleculeCOM(box, iFirstAtom, iLastAtom);
-    double fi[3] = {0,0,0};
-    double torque[3] = {0,0,0};
-    double atomTorque[3] = {0,0,0};
-    for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
-      for (int j=0; j<3; j++) fi[j] += f[iAtom][j];
-      if (iLastAtom>iFirstAtom) {
-        double* riAtom = box.getAtomPosition(iAtom);
-        double drAtom[3] = {riAtom[0]-ri[0], riAtom[1]-ri[1], riAtom[2]-ri[2]};
-        box.nearestImage(drAtom);
-        Vector::cross(drAtom, f[iAtom], atomTorque);
-        for (int j=0; j<3; j++) torque[j] += atomTorque[j];
-      }
-    }
-    //printf("F %2d  % 15.8f % 15.8f % 15.8f  % 15.8f % 15.8f % 15.8f\n", i, fi[0], fi[1], fi[2], torque[0], torque[1], torque[2]);
-  }
-
   for (int iMolecule=0; iMolecule<box.getTotalNumMolecules(); iMolecule++) {
     int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
     box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
