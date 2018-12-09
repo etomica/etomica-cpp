@@ -13,11 +13,12 @@
 /**
  * Computes energy with mapped averaging for rigid molecular system.  Also handles atoms.
  */
-PotentialCallbackMoleculePhi::PotentialCallbackMoleculePhi(PotentialMaster& pm) : box(pm.getBox()), speciesList(pm.getBox().getSpeciesList()), potentialMaster(pm) {
+PotentialCallbackMoleculePhi::PotentialCallbackMoleculePhi(PotentialMaster& pm, bool fb) : box(pm.getBox()), speciesList(pm.getBox().getSpeciesList()), potentialMaster(pm), flexBox(fb) {
   callFinished = true;
   callPair = true;
   takesForces = true;
   takesPhi = true;
+  takesDFDV = flexBox;
 
   int numAtoms = box.getNumAtoms();
   int N = box.getTotalNumMolecules();
@@ -32,7 +33,12 @@ PotentialCallbackMoleculePhi::PotentialCallbackMoleculePhi(PotentialMaster& pm) 
     n += 3;
   }
   nmap[N] = n;
-  atomPhiTotal = (double**)malloc2D(3*numAtoms, 3*numAtoms, sizeof(double));
+  atomDOF = 3*numAtoms;
+  if (flexBox) {
+    atomDOF += 3;
+    n += 3;
+  }
+  atomPhiTotal = (double**)malloc2D(atomDOF, atomDOF, sizeof(double));
   moleculePhiTotal = (double**)malloc2D(n, n, sizeof(double));
   com = (double**)malloc2D(N, 3, sizeof(double));
 }
@@ -52,14 +58,11 @@ void PotentialCallbackMoleculePhi::reset() {
     double* x = speciesList.get(iSpecies)->getMoleculeCOM(box, iFirstAtom, iLastAtom);
     for (int k=0; k<3; k++) com[iMolecule][k] = x[k];
   }
-  int numAtoms = box.getNumAtoms();
-  for (int i=0; i<numAtoms; i++) {
-    for (int k=0; k<3; k++) {
-      for (int j=0; j<numAtoms; j++) {
-        for (int l=0; l<3; l++) {
-          atomPhiTotal[3*i + k][3*j + l] = 0;
-        }
-      }
+  int m = 3*box.getNumAtoms();
+  if (flexBox) m += 3;
+  for (int i=0; i<m; i++) {
+    for (int j=0; j<m; j++) {
+      atomPhiTotal[i][j] = 0;
     }
   }
 }
@@ -86,6 +89,14 @@ void PotentialCallbackMoleculePhi::pairCompute(int iAtom, int jAtom, double* dri
       atomPhiTotal[3*iAtom+k][3*jAtom+l] += der2;
       atomPhiTotal[3*jAtom+l][3*iAtom+k] += der2;
     }
+    if (flexBox) {
+      // handle this here since pair separation depends directly on V
+      int na = box.getNumAtoms();
+      for (int l=0; l<3; l++) {
+        atomPhiTotal[3*iAtom+k][3*na+l] += (d2u - du) * drij[l]*drij[l]*drij[k] / (r2*r2)
+                                         + du * drij[l] / r2;
+      }
+    }
   }
 }
 
@@ -103,11 +114,41 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
     }
   }
   int numMolecules = box.getTotalNumMolecules();
-  for (int iMolecule=0; iMolecule<numMolecules; iMolecule++) {
-    for (int k=nmap[iMolecule]; k<nmap[iMolecule+1]; k++) {
-      for (int jMolecule=0; jMolecule<numMolecules; jMolecule++) {
-        for (int l=nmap[jMolecule]; l<nmap[jMolecule+1]; l++) {
-          moleculePhiTotal[k][l] = 0;
+  int m = nmap[numMolecules+1];
+  if (flexBox) m += 3;
+  for (int i=0; i<m; i++) {
+    for (int j=0; j<m; j++) {
+      moleculePhiTotal[i][j] = 0;
+    }
+  }
+
+  if (flexBox) {
+    int offset = nmap[numMolecules+1];
+    // transform atomic dFdL into molecular dFdL
+    for (int iMolecule=0; iMolecule<numMolecules; iMolecule++) {
+      int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+      box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
+      Species* species = speciesList.get(iSpecies);
+      double* ri = species->getMoleculeCOM(box, iFirstAtom, iLastAtom);
+      double atomTorque[3] = {0,0,0};
+      for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+        for (int k=0; k<3; k++) {
+          for (int l=0; l<3; l++) {
+            moleculePhiTotal[offset+k][nmap[iMolecule]+l] += f[iAtom][l];
+            moleculePhiTotal[nmap[iMolecule]+l][offset+k] += f[iAtom][l];
+          }
+        }
+        if (iLastAtom>iFirstAtom) {
+          double* riAtom = box.getAtomPosition(iAtom);
+          double drAtom[3] = {riAtom[0]-ri[0], riAtom[1]-ri[1], riAtom[2]-ri[2]};
+          box.nearestImage(drAtom);
+          Vector::cross(drAtom, f[iAtom], atomTorque);
+          for (int k=0; k<3; k++) {
+            for (int l=0; l<3; l++) {
+              moleculePhiTotal[offset+k][nmap[iMolecule]+l+3] += atomTorque[l];
+              moleculePhiTotal[nmap[iMolecule]+l+3][offset+k] += atomTorque[l];
+            }
+          }
         }
       }
     }

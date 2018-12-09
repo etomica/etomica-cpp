@@ -23,13 +23,32 @@ class Minimize : public PotentialCallbackMoleculePhi {
     double maxDR, maxDtheta;
     bool sdStep;
   public:
-    Minimize(PotentialMaster& potentialMaster);
+    Minimize(PotentialMaster& potentialMaster, bool flexBox);
     virtual ~Minimize();
     void doStep();
     void doSteps(int steps, double uTol, double rTol);
     long getStepCount();
     virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     double getLastDR();
+    double getLastU();
+    double getLastDU();
+};
+
+class OptimizeBoxShape : public PotentialCallback {
+  protected:
+    PotentialMaster& potentialMaster;
+    long stepCount;
+    vector<PotentialCallback*> selfPotentialCallbackVec;
+    double lastU, lastDU;
+    double stepSize;
+    double virialTensor[6];
+  public:
+    OptimizeBoxShape(PotentialMaster& potentialMaster);
+    virtual ~OptimizeBoxShape();
+    void doStep();
+    void doSteps(int steps, double uTol);
+    long getStepCount();
+    virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     double getLastU();
     double getLastDU();
 };

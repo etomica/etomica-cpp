@@ -9,9 +9,12 @@
 #include "matrix.h"
 #include "rotation-matrix.h"
 
-Minimize::Minimize(PotentialMaster& pm) : PotentialCallbackMoleculePhi(pm), stepCount(0) {
+Minimize::Minimize(PotentialMaster& pm, bool fb) : PotentialCallbackMoleculePhi(pm, fb), stepCount(0) {
+  takesVirialTensor = flexBox;
   int numMolecules = box.getTotalNumMolecules();
-  fMolecule = (double*)malloc(nmap[numMolecules]*sizeof(double));
+  int n = nmap[numMolecules];
+  if (flexBox) n += 3;
+  fMolecule = (double*)malloc(n*sizeof(double));
   lastU = 0;
   lastStep = 0;
   sdStep = false;
@@ -240,5 +243,11 @@ void Minimize::allComputeFinished(double uTot, double virialTot, double** f, dou
         for (int j=0; j<3; j++) fMolecule[nmap[i]+3+j] += atomTorque[j];
       }
     }
+  }
+
+  if (flexBox) {
+    fMolecule[nmap[numMolecules+1]+0] = virialTensor[0];
+    fMolecule[nmap[numMolecules+1]+1] = virialTensor[3];
+    fMolecule[nmap[numMolecules+1]+2] = virialTensor[5];
   }
 }

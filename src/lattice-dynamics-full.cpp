@@ -11,7 +11,7 @@
 #include "potential-master.h"
 #include "alloc2d.h"
 
-LatticeDynamicsFull::LatticeDynamicsFull(PotentialMaster& pm) : PotentialCallbackMoleculePhi(pm) {
+LatticeDynamicsFull::LatticeDynamicsFull(PotentialMaster& pm) : PotentialCallbackMoleculePhi(pm,false) {
 }
 
 LatticeDynamicsFull::~LatticeDynamicsFull() {
