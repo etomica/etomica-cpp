@@ -93,9 +93,28 @@ void PotentialCallbackMoleculePhi::pairCompute(int iAtom, int jAtom, double* dri
       // handle this here since pair separation depends directly on V
       int na = box.getNumAtoms();
       for (int l=0; l<3; l++) {
-        atomPhiTotal[3*iAtom+k][3*na+l] += (d2u - du) * drij[l]*drij[l]*drij[k] / (r2*r2)
+        atomPhiTotal[3*iAtom+k][3*na+l] += dfac * drij[l]*drij[l]*drij[k]
                                          + du * drij[l] / r2;
       }
+    }
+  }
+  if (flexBox) {
+    int na = box.getNumAtoms();
+    for (int k=0; k<3; k++) {
+      for (int l=0; l<3; l++) {
+        atomPhiTotal[3*na+k][3*na+l] += dfac * drij[l]*drij[l]*drij[k]*drij[k];
+      }
+    }
+  }
+}
+
+void PotentialCallbackMoleculePhi::computeDFDV(int iAtom, double* idFdV) {
+  int na = box.getNumAtoms();
+  const double* bs = box.getBoxSize();
+  double vol = bs[0]*bs[1]*bs[2];
+  for (int k=0; k<3; k++) {
+    for (int l=0; l<3; l++) {
+      atomPhiTotal[3*iAtom+k][3*na+l] += idFdV[k]*vol;
     }
   }
 }

@@ -69,6 +69,14 @@ void Minimize::doStep() {
     }
     fMolecule[k] = 0;
   }
+  if (flexBox) {
+    // We want to minimize the energy w.r.t. box shape, not size
+    // Tie the box lengths together with linear approximation
+    for (int k=0; k<nmap[N+1]+3; k++) {
+      moleculePhiTotal[nmap[N+1]+2][k] = k < nmap[N+1] ? 0 : 1;
+    }
+    fMolecule[nmap[N+1]+2] = 0;
+  }
 
   phiMat.invert();
 
@@ -186,6 +194,14 @@ void Minimize::doStep() {
       }
       box.nearestImage(ri);
     }
+  }
+  if (flexBox) {
+    const double* bs = box.getBoxSize();
+    int x = nmap[N+1];
+    double scale = pow((1+fMolecule[x])*(1+fMolecule[x+1])*(1+fMolecule[x+2]), 1.0/3.0);
+    double s[3] = {(1+fMolecule[x])*scale, (1+fMolecule[x+1])*scale, (1+fMolecule[x+2])*scale};
+    double bsnew[3] = {bs[0]*s[0], bs[1]*s[1], bs[2]*s[2]};
+    box.scaleBoxTo(bsnew[0], bsnew[1], bsnew[2]);
   }
   lastDR = sqrt(lastDR)/box.getNumAtoms();
   //printf("step %ld %f %f %f\n", stepCount-1, lastDU, lastDR, lastF);

@@ -153,6 +153,7 @@ class PotentialCallbackMoleculePhi : public PotentialCallback {
     virtual void reset();
     virtual void pairCompute(int iAtom, int jAtom, double* dr, double u, double du, double d2u);
     virtual void pairComputePhi(int iAtom, int jAtom, double phi[3][3]);
+    virtual void computeDFDV(int iAtom, double* idFdV);
     virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     double** getMoleculePhi();
 };
