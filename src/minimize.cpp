@@ -72,10 +72,10 @@ void Minimize::doStep() {
   if (flexBox) {
     // We want to minimize the energy w.r.t. box shape, not size
     // Tie the box lengths together with linear approximation
-    for (int k=0; k<nmap[N+1]+3; k++) {
-      moleculePhiTotal[nmap[N+1]+2][k] = k < nmap[N+1] ? 0 : 1;
+    for (int k=0; k<nmap[N]+3; k++) {
+      moleculePhiTotal[nmap[N]+2][k] = k < nmap[N] ? 0 : 1;
     }
-    fMolecule[nmap[N+1]+2] = 0;
+    fMolecule[nmap[N]+2] = 0;
   }
 
   phiMat.invert();
@@ -262,8 +262,11 @@ void Minimize::allComputeFinished(double uTot, double virialTot, double** f, dou
   }
 
   if (flexBox) {
-    fMolecule[nmap[numMolecules+1]+0] = virialTensor[0];
-    fMolecule[nmap[numMolecules+1]+1] = virialTensor[3];
-    fMolecule[nmap[numMolecules+1]+2] = virialTensor[5];
+    const double* bs = box.getBoxSize();
+    double vol = bs[0]*bs[1]*bs[2];
+    int o = nmap[numMolecules];
+    fMolecule[o+0] = -virialTensor[0]/vol;
+    fMolecule[o+1] = -virialTensor[3]/vol;
+    fMolecule[o+2] = -virialTensor[5]/vol;
   }
 }

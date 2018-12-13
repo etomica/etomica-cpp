@@ -133,7 +133,7 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
     }
   }
   int numMolecules = box.getTotalNumMolecules();
-  int m = nmap[numMolecules+1];
+  int m = nmap[numMolecules];
   if (flexBox) m += 3;
   for (int i=0; i<m; i++) {
     for (int j=0; j<m; j++) {
@@ -142,7 +142,7 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
   }
 
   if (flexBox) {
-    int offset = nmap[numMolecules+1];
+    int offset = nmap[numMolecules];
     // transform atomic dFdL into molecular dFdL
     for (int iMolecule=0; iMolecule<numMolecules; iMolecule++) {
       int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
