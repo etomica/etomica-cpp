@@ -8,7 +8,7 @@
 #include "box.h"
 #include "alloc2d.h"
 
-ConfigurationLattice::ConfigurationLattice(Box& b, double** basis, double* s) : box(b), basis(basis), cellShape(s) {}
+ConfigurationLattice::ConfigurationLattice(Box& b, int nb, double** basis, double* s) : box(b), numBasisAtoms(nb), basis(basis), cellShape(s) {}
 
 ConfigurationLattice::~ConfigurationLattice() {
   free2D((void**)basis);

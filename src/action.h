@@ -14,7 +14,7 @@ class ConfigurationLattice {
     double* cellShape;
 
   public:
-    ConfigurationLattice(Box& box, double** basis, double* cellShape);
+    ConfigurationLattice(Box& box, int numBasisAtoms, double** basis, double* cellShape);
     ~ConfigurationLattice();
     virtual void go();
 };
