@@ -8,14 +8,7 @@
 #include "box.h"
 #include "alloc2d.h"
 
-ConfigurationLattice::ConfigurationLattice(Box& b, int nb, double** basis, double* s) : box(b), numBasisAtoms(nb), basis(basis), cellShape(s) {}
-
-ConfigurationLattice::~ConfigurationLattice() {
-  free2D((void**)basis);
-  free(cellShape);
-}
-
-void ConfigurationLattice::go() {
+void ConfigurationLattice::go(Box& box, int numBasisAtoms, double** basis, double* cellShape) {
   const double* boxSize = box.getBoxSize();
   int numMolecules = box.getTotalNumMolecules();
   int nCellsLeft = (numMolecules+(numBasisAtoms-1))/numBasisAtoms;

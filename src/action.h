@@ -7,16 +7,8 @@
 class Box;
 
 class ConfigurationLattice {
-  protected:
-    Box& box;
-    int numBasisAtoms;
-    double** basis;
-    double* cellShape;
-
   public:
-    ConfigurationLattice(Box& box, int numBasisAtoms, double** basis, double* cellShape);
-    ~ConfigurationLattice();
-    virtual void go();
+    static void go(Box& box, int numBasisAtoms, double** basis, double *cellShape);
 };
 
 class ConfigurationFile {
