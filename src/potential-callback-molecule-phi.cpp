@@ -102,7 +102,7 @@ void PotentialCallbackMoleculePhi::pairCompute(int iAtom, int jAtom, double* dri
     int na = box.getNumAtoms();
     for (int k=0; k<3; k++) {
       for (int l=0; l<3; l++) {
-        atomPhiTotal[3*na+k][3*na+l] += dfac * drij[l]*drij[l]*drij[k]*drij[k];
+        atomPhiTotal[3*na+k][3*na+l] -= dfac * drij[l]*drij[l]*drij[k]*drij[k];
       }
     }
   }
@@ -258,6 +258,14 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
             moleculePhiTotal[nmap[iMolecule] + 3 + k][nmap[iMolecule] + 3 + l] -= 0.5*(dri[k]*f[iAtom][l] + dri[l]*f[iAtom][k]);
           }
         }
+      }
+    }
+  }
+  if (flexBox) {
+    int na = box.getNumAtoms();
+    for (int k=0; k<3; k++) {
+      for (int l=0; l<3; l++) {
+        moleculePhiTotal[nmap[numMolecules]+k][nmap[numMolecules]+l] = atomPhiTotal[3*na+k][3*na+l];
       }
     }
   }

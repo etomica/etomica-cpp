@@ -51,12 +51,14 @@ void Minimize::doStep() {
   lastF = sqrt(lastF)/box.getNumAtoms();
   //printf("RMS F %e\n", lastF);
 
-  Matrix phiMat(nmap[nm], nmap[nm], moleculePhiTotal);
+  int m = nmap[nm];
+  if (flexBox) m += 3;
+  Matrix phiMat(m, m, moleculePhiTotal);
 #ifndef MIN_SKIP_UCHECK
-  Matrix phiMat0(nmap[nm], nmap[nm]);
+  Matrix phiMat0(m, m);
   phiMat0.E(phiMat);
-  double* fMolecule0 = (double*)malloc(nmap[nm]*sizeof(double));
-  for (int i=0; i<nmap[nm]; i++) fMolecule0[i] = fMolecule[i];
+  double* fMolecule0 = (double*)malloc(m*sizeof(double));
+  for (int i=0; i<m; i++) fMolecule0[i] = fMolecule[i];
 #endif
   // We can't solve all 3N translation DOF based on phi and dFdV because
   // the COM mode is free.  Instead enforce that molecule 0 translates to
@@ -67,15 +69,12 @@ void Minimize::doStep() {
         moleculePhiTotal[k][c] = k==(c-nmap[j]) ? 1 : 0;
       }
     }
-    fMolecule[k] = 0;
-  }
-  if (flexBox) {
-    // We want to minimize the energy w.r.t. box shape, not size
-    // Tie the box lengths together with linear approximation
-    for (int k=0; k<nmap[N]+3; k++) {
-      moleculePhiTotal[nmap[N]+2][k] = k < nmap[N] ? 0 : 1;
+    if (flexBox) {
+      for (int l=0; l<3; l++) {
+        moleculePhiTotal[k][nmap[N]+l] = 0;
+      }
     }
-    fMolecule[nmap[N]+2] = 0;
+    fMolecule[k] = 0;
   }
 
   phiMat.invert();
@@ -95,7 +94,7 @@ void Minimize::doStep() {
   if (mt > maxDtheta && maxDtheta/mt<scaleback) scaleback = maxDtheta/mt;
   if (scaleback<1) {
     //printf("scaleback %f\n", scaleback);
-    for (int i=0; i<nmap[nm]; i++) {
+    for (int i=0; i<m; i++) {
       fMolecule[i] *= scaleback;
     }
   }
@@ -108,31 +107,31 @@ void Minimize::doStep() {
   sdStep = false;
   double estDU0 = 0;
 #ifndef MIN_SKIP_UCHECK
-  for (int i=0; i<nmap[nm]; i++) {
+  for (int i=0; i<m; i++) {
     estDU0 -= fMolecule0[i]*fMolecule[i];
-    for (int j=0; j<nmap[nm]; j++) {
+    for (int j=0; j<m; j++) {
       estDU0 += 0.5*phiMat0.matrix[i][j]*fMolecule[i]*fMolecule[j];
     }
   }
-  //printf("estimated DU: %e\n", estDU/nm);
+  //printf("estimated DU: %e\n", estDU0/nm);
   double estDU1 = estDU0;
   if (estDU0 > 0) {
     sdStep = true;
     double fmag = 0;
-    for (int i=0; i<nmap[nm]; i++) {
+    for (int i=0; i<m; i++) {
       fmag += fMolecule0[i]*fMolecule0[i];
     }
     fmag = sqrt(fmag);
     if (lastStep==0) lastStep = 0.1;
     
     while (estDU1>0) {
-      for (int i=0; i<nmap[nm]; i++) {
+      for (int i=0; i<m; i++) {
         fMolecule[i] = fMolecule0[i]/fmag*lastStep;
       }
       estDU1 = 0;
-      for (int i=0; i<nmap[nm]; i++) {
+      for (int i=0; i<m; i++) {
         estDU1 -= fMolecule0[i]*fMolecule[i];
-        for (int j=0; j<nmap[nm]; j++) {
+        for (int j=0; j<m; j++) {
           estDU1 += 0.5*phiMat0.matrix[i][j]*fMolecule[i]*fMolecule[j];
         }
       }
@@ -197,9 +196,9 @@ void Minimize::doStep() {
   }
   if (flexBox) {
     const double* bs = box.getBoxSize();
-    int x = nmap[N+1];
+    int x = nmap[N];
     double scale = pow((1+fMolecule[x])*(1+fMolecule[x+1])*(1+fMolecule[x+2]), 1.0/3.0);
-    double s[3] = {(1+fMolecule[x])*scale, (1+fMolecule[x+1])*scale, (1+fMolecule[x+2])*scale};
+    double s[3] = {(1+fMolecule[x])/scale, (1+fMolecule[x+1])/scale, (1+fMolecule[x+2])/scale};
     double bsnew[3] = {bs[0]*s[0], bs[1]*s[1], bs[2]*s[2]};
     box.scaleBoxTo(bsnew[0], bsnew[1], bsnew[2]);
   }
@@ -262,11 +261,15 @@ void Minimize::allComputeFinished(double uTot, double virialTot, double** f, dou
   }
 
   if (flexBox) {
-    const double* bs = box.getBoxSize();
-    double vol = bs[0]*bs[1]*bs[2];
     int o = nmap[numMolecules];
-    fMolecule[o+0] = -virialTensor[0]/vol;
-    fMolecule[o+1] = -virialTensor[3]/vol;
-    fMolecule[o+2] = -virialTensor[5]/vol;
+    // L = L0 (1+eps)
+    // dU/deps = V dU/AdL
+    // we take negative, but we want "force" F = -dU
+    // we're trying to minimize the force, so take our "force" to be the
+    // deviation of each component from the average
+    double avg = (-virialTensor[0] - virialTensor[3] - virialTensor[5])/3;
+    fMolecule[o+0] = -virialTensor[0]-avg;
+    fMolecule[o+1] = -virialTensor[3]-avg;
+    fMolecule[o+2] = -virialTensor[5]-avg;
   }
 }
