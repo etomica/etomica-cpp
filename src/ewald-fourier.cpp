@@ -263,8 +263,8 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
             //            dfExp/dk dk/dkx dkx/dLx
             // kx = 2 pi ikx / Lx
             // dkx/dLx = -2 pi ikx / Lx^2
-            //         = -2 kx / L
-            // dFS/dLx += dfExp/dk  (kx/k) (-2kx/Lx)
+            //         = -kx / Lx
+            // dFS/dLx += dfExp/dk  (kx/k) (-kx/Lx)
             //             (2 exp) (2/k + 0.5/alpha^2) (kx/k)^2
             foo *= 0.5*coeff/kxyz2;
             virialTensor[0] += kx*kx * foo;
