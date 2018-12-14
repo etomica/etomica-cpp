@@ -115,6 +115,7 @@ void PotentialCallbackMoleculePhi::computeDFDV(int iAtom, double* idFdV) {
   for (int k=0; k<3; k++) {
     for (int l=0; l<3; l++) {
       atomPhiTotal[3*iAtom+k][3*na+l] += idFdV[k]*vol;
+      atomPhiTotal[3*na+l][3*iAtom+k] += idFdV[k]*vol;
     }
   }
 }
@@ -143,6 +144,7 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
 
   if (flexBox) {
     int offset = nmap[numMolecules];
+    int na = box.getNumAtoms();
     // transform atomic dFdL into molecular dFdL
     for (int iMolecule=0; iMolecule<numMolecules; iMolecule++) {
       int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
@@ -153,16 +155,16 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
       for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
         for (int k=0; k<3; k++) {
           for (int l=0; l<3; l++) {
-            moleculePhiTotal[offset+k][nmap[iMolecule]+l] += f[iAtom][l];
-            moleculePhiTotal[nmap[iMolecule]+l][offset+k] += f[iAtom][l];
+            moleculePhiTotal[nmap[iMolecule]+l][offset+k] += atomPhiTotal[3*iMolecule+l][3*na+k];
+            moleculePhiTotal[offset+k][nmap[iMolecule]+l] += atomPhiTotal[3*na+k][3*iMolecule+l];
           }
         }
         if (iLastAtom>iFirstAtom) {
           double* riAtom = box.getAtomPosition(iAtom);
           double drAtom[3] = {riAtom[0]-ri[0], riAtom[1]-ri[1], riAtom[2]-ri[2]};
           box.nearestImage(drAtom);
-          Vector::cross(drAtom, f[iAtom], atomTorque);
           for (int k=0; k<3; k++) {
+            Vector::cross(drAtom, atomPhiTotal[3*na+k]+(3*iAtom), atomTorque);
             for (int l=0; l<3; l++) {
               moleculePhiTotal[offset+k][nmap[iMolecule]+l+3] += atomTorque[l];
               moleculePhiTotal[nmap[iMolecule]+l+3][offset+k] += atomTorque[l];
