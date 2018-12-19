@@ -255,24 +255,19 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
         //             dfExp/dk (-2k/3V)
         //             (-2 exp/k^2 - 0.5/alpha^2 exp/k) (-2k/3V)
         //             (2 exp/3V) (2/k + 0.5/alpha^2)
+        double kdfdk = 0;
         if (alpha>0) {
-          double foo = 2*expthing * (2/kxyz2 + 0.5/(alpha*alpha))*x;
-          virialSum += foo;
+          kdfdk = -(2 + kxyz2/(2*alpha*alpha))*fExp[ik];
+          virialSum += (-3*fExp[ik] - kdfdk)*x;
           if (doVirialTensor) {
-            // dFS/dLx += dfExp/dLx * x
-            //            dfExp/dk dk/dkx dkx/dLx
-            // kx = 2 pi ikx / Lx
-            // dkx/dLx = -2 pi ikx / Lx^2
-            //         = -kx / Lx
-            // dFS/dLx += dfExp/dk  (kx/k) (-kx/Lx)
-            //             (2 exp) (2/k + 0.5/alpha^2) (kx/k)^2
-            foo *= 0.5*coeff/kxyz2;
-            virialTensor[0] += kx*kx * foo;
+            double bar = -fExp[ik]*x;
+            double foo = -kdfdk*x/kxyz2;
+            virialTensor[0] += bar + kx*kx * foo;
             virialTensor[1] += ky*kx * foo;
             virialTensor[2] += kz*kx * foo;
-            virialTensor[3] += ky*ky * foo;
+            virialTensor[3] += bar + ky*ky * foo;
             virialTensor[4] += kz*ky * foo;
-            virialTensor[5] += kz*kz * foo;
+            virialTensor[5] += bar + kz*kz * foo;
           }
         }
         // f6Exp = coeffB k^3 (pi^.5 erfc(a) + (0.5/a^3 - 1/a) exp(-a2))
@@ -318,14 +313,9 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
   fill(sFac.begin()+ik, sFac.end(), 0);
   uTot += fourierSum;
   uTot += fourierSum6;
-  if (doVirialTensor) {
-    virialTensor[0] += -0.5*fourierSum;
-    virialTensor[1] += -0.5*fourierSum;
-    virialTensor[2] += -0.5*fourierSum;
-  }
   // dU/dV = -0.5*coeff*fourierSum/V
   // virialTot = dU/dV *3V
-  virialTot += -3* fourierSum + 0.5*coeff*virialSum  -3*fourierSum6 + virialSum6;
+  virialTot += virialSum  -3*fourierSum6 + virialSum6;
 }
 
 double EwaldFourier::uTotalFromAtoms() {
