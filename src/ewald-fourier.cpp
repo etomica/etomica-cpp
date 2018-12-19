@@ -209,33 +209,29 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
             }
           }
           if (doPhi) {
-            double* ri = box.getAtomPosition(iAtom);
-            double phiFac = 2*qi*fExp[ik];
-            double phiFac6[7] = {0};
+            double iphiFac = 2*qi*fExp[ik];
+            double iphiFac6[7] = {0};
             if (eta>0) {
               for (int kB=0; kB<=6; kB++) {
-                phiFac6[kB] = f6Exp[ik]*b6[iType][kB];
+                iphiFac6[kB] = f6Exp[ik]*b6[iType][kB];
               }
             }
             double karray[3] = {kx,ky,kz};
-            for (int jAtom=0; jAtom<numAtoms; jAtom++) {
-              if (jAtom==iAtom) continue;
+            for (int jAtom=0; jAtom<iAtom; jAtom++) {
               int jType = box.getAtomType(jAtom);
               double qj = charges[jType];
-              if (qj==0) continue;
-              double* rj = box.getAtomPosition(jAtom);
-              double dr[3] = {rj[0]-ri[0],rj[1]-ri[1],rj[2]-ri[2]};
+              if (qj*qi==0 && iphiFac6[0]*B6[jType][jType] == 0) continue;
               // cos(kr) ?= f(eik.real,ejk.real)
-              double jPhiFac = qj*phiFac;
+              double ijPhiFac = qj*iphiFac;
               if (eta>0) {
                 for (int kB=0; kB<=6; kB++) {
-                  jPhiFac += b6[jType][6-kB]*phiFac6[kB];
+                  ijPhiFac += b6[jType][6-kB]*iphiFac6[kB];
                 }
               }
-              jPhiFac *= cos(kx*dr[0] + ky*dr[1] + kz*dr[2]);
+              ijPhiFac *= 2*(sFacAtom[iAtom]*conj(sFacAtom[jAtom])).real();
               for (int k=0; k<3; k++) {
                 for (int l=0; l<3; l++) {
-                  phi[k][l] = jPhiFac*karray[k]*karray[l];
+                  phi[k][l] = ijPhiFac*karray[k]*karray[l];
                 }
               }
               if (pairCallbacks) {
