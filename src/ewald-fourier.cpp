@@ -269,6 +269,16 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
             double y = (sFacB[kB][ik]*conj(sFacB[6-kB][ik])).real();
             fourierSum6 += f6Exp[ik] * y;
             virialSum6 += -(3*f6Exp[ik] + hdf6dh)*y;
+            if (doVirialTensor) {
+              double bar = -f6Exp[ik] * y;
+              double foo = -hdf6dh*y/kxyz2;
+              virialTensor[0] += bar + kx*kx * foo;
+              virialTensor[1] += ky*kx * foo;
+              virialTensor[2] += kz*kx * foo;
+              virialTensor[3] += bar + ky*ky * foo;
+              virialTensor[4] += kz*ky * foo;
+              virialTensor[5] += bar + kz*kz * foo;
+            }
           }
         }
         if (doForces) {
