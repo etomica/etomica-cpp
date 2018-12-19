@@ -179,7 +179,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
         sFac[ik] = 0;
         for (int kB=0; kB<=6; kB++) sFacB[kB][ik] = 0;
         // we could skip this as long as box-length, kCut don't change between calls
-        fExp[ik] = 2*coeff*expthing/kxyz2;
+        fExp[ik] = coeff*expthing/kxyz2;
         double df6 = 0;
         if (eta>0) {
           double kxyz1 = sqrt(kxyz2);
@@ -210,7 +210,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
           }
           if (doPhi) {
             double* ri = box.getAtomPosition(iAtom);
-            double phiFac = qi*fExp[ik];
+            double phiFac = 2*qi*fExp[ik];
             double phiFac6[7] = {0};
             if (eta>0) {
               for (int kB=0; kB<=6; kB++) {
@@ -291,7 +291,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
         if (doForces) {
           for (int iAtom=0; iAtom<numAtoms; iAtom++) {
             int iType = box.getAtomType(iAtom);
-            double coeffki = fExp[ik]*charges[iType]*(sFacAtom[iAtom].imag()*sFac[ik].real()
+            double coeffki = 2*fExp[ik]*charges[iType]*(sFacAtom[iAtom].imag()*sFac[ik].real()
                              -sFacAtom[iAtom].real()*sFac[ik].imag());
             if (eta>0) {
               for (int kB=0; kB<=6; kB++) {
@@ -316,7 +316,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
   }
   fill(fExp.begin()+ik, fExp.end(), 0);
   fill(sFac.begin()+ik, sFac.end(), 0);
-  uTot += 0.5*fourierSum;
+  uTot += fourierSum;
   uTot += fourierSum6;
   if (doVirialTensor) {
     virialTensor[0] += -0.5*fourierSum;
@@ -325,7 +325,7 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
   }
   // dU/dV = -0.5*coeff*fourierSum/V
   // virialTot = dU/dV *3V
-  virialTot += -3*0.5* fourierSum + 0.5*coeff*virialSum  -3*fourierSum6 + virialSum6;
+  virialTot += -3* fourierSum + 0.5*coeff*virialSum  -3*fourierSum6 + virialSum6;
 }
 
 double EwaldFourier::uTotalFromAtoms() {
@@ -366,7 +366,7 @@ double EwaldFourier::uTotalFromAtoms() {
       }
     }
   }
-  uTot += 0.5*fourierSum;
+  uTot += fourierSum;
   uTot += fourierSum6;
   return uTot;
 }
@@ -493,7 +493,7 @@ double EwaldFourier::computeFourierAtom(int iAtom, bool oldEnergy) {
       }
     }
   }
-  u += 0.5*fourierSum;
+  u += fourierSum;
   u += fourierSum6;
   return u;
 }
@@ -633,7 +633,7 @@ double EwaldFourier::oneMoleculeFourierEnergy(int iMolecule, bool oldEnergy) {
       }
     }
   }
-  u += 0.5*fourierSum;
+  u += fourierSum;
   u += fourierSum6;
   return u;
 }
