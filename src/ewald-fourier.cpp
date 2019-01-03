@@ -280,13 +280,11 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
         if (doForces) {
           for (int iAtom=0; iAtom<numAtoms; iAtom++) {
             int iType = box.getAtomType(iAtom);
-            double coeffki = 2*fExp[ik]*charges[iType]*(sFacAtom[iAtom].imag()*sFac[ik].real()
-                             -sFacAtom[iAtom].real()*sFac[ik].imag());
+            double coeffki = alpha==0 ? 0 : 2*fExp[ik]*charges[iType]*(sFacAtom[iAtom]*conj(sFac[ik])).imag();
             double coeffki6 = 0;
             if (eta>0) {
               for (int kB=0; kB<=6; kB++) {
-                coeffki6 += f6Exp[ik]*b6[iType][kB]*(sFacAtom[iAtom].imag()*sFacB[6-kB][ik].real()
-                           -sFacAtom[iAtom].real()*sFacB[6-kB][ik].imag());
+                coeffki6 += 2*f6Exp[ik]*b6[iType][kB]*(sFacAtom[iAtom]*conj(sFacB[6-kB][ik])).imag();
               }
             }
             if (doDFDV && pairCallbacks) {
@@ -294,11 +292,11 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
               double z = 0;
               if (alpha>0) {
                 double dfqdV = -fExp[ik]/vol - kdfdk/(3*vol);
-                z += coeffki*dfqdV/fExp[ik] - coeffki/(3*vol);
+                z += 3*vol*coeffki*dfqdV/fExp[ik] - coeffki;
               }
               if (eta>0) {
                 double df6dV = -f6Exp[ik]/vol - hdf6dh/(3*vol);
-                z += coeffki6 * df6dV/f6Exp[ik] - coeffki6/(3*vol);
+                z += 3*vol*coeffki6 * df6dV/f6Exp[ik] - coeffki6;
               }
               dfdv[0] = kx*z;
               dfdv[1] = ky*z;
