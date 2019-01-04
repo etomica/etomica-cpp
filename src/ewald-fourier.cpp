@@ -11,9 +11,11 @@
 #include "util.h"
 
 EwaldFourier::EwaldFourier(const SpeciesList& sl, Box& b) : EwaldBase(sl,b), kCut(0), alpha(0), eta(0) {
+  dFdL = (double**)malloc2D(3,3,sizeof(double));
 }
 
 EwaldFourier::~EwaldFourier() {
+  free2D((void**)dFdL);
 }
 
 void EwaldFourier::getOptimalAlpha(double s, double& alpha, double& rc, double& kc) {
@@ -246,34 +248,44 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
         double x = (sFac[ik]*conj(sFac[ik])).real();
         fourierSum += fExp[ik] * x;
         double kdfdk = 0;
+        double LdfqdL[3] = {0}, Ldf6dL[3] = {0};
+        double dfqdV = 0, df6dV = 0;
         if (alpha>0) {
           kdfdk = -(2 + kxyz2/(2*alpha*alpha))*fExp[ik];
-          virialSum += (-3*fExp[ik] - kdfdk)*x;
+          dfqdV = -fExp[ik]/vol - kdfdk/(3*vol);
+          virialSum += 3*vol*dfqdV*x;
           if (doVirialTensor) {
-            double bar = -fExp[ik]*x;
+            LdfqdL[0] = -fExp[ik] - kdfdk*kx*kx/kxyz2;
+            LdfqdL[1] = -fExp[ik] - kdfdk*ky*ky/kxyz2;
+            LdfqdL[2] = -fExp[ik] - kdfdk*kz*kz/kxyz2;
+            //double bar = -fExp[ik]*x;
             double foo = -kdfdk*x/kxyz2;
-            virialTensor[0] += bar + kx*kx * foo;
+            virialTensor[0] += LdfqdL[0]*x;
             virialTensor[1] += ky*kx * foo;
             virialTensor[2] += kz*kx * foo;
-            virialTensor[3] += bar + ky*ky * foo;
+            virialTensor[3] += LdfqdL[1]*x;
             virialTensor[4] += kz*ky * foo;
-            virialTensor[5] += bar + kz*kz * foo;
+            virialTensor[5] += LdfqdL[2]*x;
           }
         }
         if (eta>0) {
+          df6dV = -f6Exp[ik]/vol - hdf6dh/(3*vol);
           for (int kB=0; kB<=6; kB++) {
             double y = (sFacB[kB][ik]*conj(sFacB[6-kB][ik])).real();
             fourierSum6 += f6Exp[ik] * y;
-            virialSum6 += -(3*f6Exp[ik] + hdf6dh)*y;
+            virialSum6 += 3*vol*df6dV*y;
             if (doVirialTensor) {
-              double bar = -f6Exp[ik] * y;
+              Ldf6dL[0] = -f6Exp[ik] - hdf6dh*kx*kx/kxyz2;
+              Ldf6dL[1] = -f6Exp[ik] - hdf6dh*ky*ky/kxyz2;
+              Ldf6dL[2] = -f6Exp[ik] - hdf6dh*kz*kz/kxyz2;
+              //double bar = -f6Exp[ik] * y;
               double foo = -hdf6dh*y/kxyz2;
-              virialTensor[0] += bar + kx*kx * foo;
+              virialTensor[0] += Ldf6dL[0]*y;
               virialTensor[1] += ky*kx * foo;
               virialTensor[2] += kz*kx * foo;
-              virialTensor[3] += bar + ky*ky * foo;
+              virialTensor[3] += Ldf6dL[1]*y;
               virialTensor[4] += kz*ky * foo;
-              virialTensor[5] += bar + kz*kz * foo;
+              virialTensor[5] += Ldf6dL[2]*y;
             }
           }
         }
@@ -289,20 +301,40 @@ void EwaldFourier::computeAllFourier(const bool doForces, const bool doPhi, cons
             }
             if (doDFDV && pairCallbacks) {
               double dfdv[3] = {0};
+              for (int i=0; i<3; i++) dFdL[i][0] = dFdL[i][1] = dFdL[i][2] = 0;
               double z = 0;
+              double kxyz1 = sqrt(kxyz2);
               if (alpha>0) {
-                double dfqdV = -fExp[ik]/vol - kdfdk/(3*vol);
-                z += 3*vol*coeffki*dfqdV/fExp[ik] - coeffki;
+                z += 3*vol*(coeffki/fExp[ik])*dfqdV - coeffki;
+                // first index is L, second is r
+                dFdL[0][0] += LdfqdL[0]*(coeffki/fExp[ik])*kx - coeffki*kx*kx/kxyz1;
+                dFdL[0][1] += LdfqdL[0]*(coeffki/fExp[ik])*ky;
+                dFdL[0][2] += LdfqdL[0]*(coeffki/fExp[ik])*kz;
+                dFdL[1][0] += LdfqdL[1]*(coeffki/fExp[ik])*kx;
+                dFdL[1][1] += LdfqdL[1]*(coeffki/fExp[ik])*ky - coeffki*ky*ky/kxyz1;
+                dFdL[1][2] += LdfqdL[1]*(coeffki/fExp[ik])*kz;
+                dFdL[2][0] += LdfqdL[2]*(coeffki/fExp[ik])*kx;
+                dFdL[2][1] += LdfqdL[2]*(coeffki/fExp[ik])*ky;
+                dFdL[2][2] += LdfqdL[2]*(coeffki/fExp[ik])*kz - coeffki*kz*kz/kxyz1;
               }
               if (eta>0) {
-                double df6dV = -f6Exp[ik]/vol - hdf6dh/(3*vol);
-                z += 3*vol*coeffki6 * df6dV/f6Exp[ik] - coeffki6;
+                z += 3*vol*(coeffki6/f6Exp[ik]) * df6dV - coeffki6;
+                dFdL[0][0] += Ldf6dL[0]*(coeffki6/f6Exp[ik])*kx - coeffki6*kx*kx/kxyz1;
+                dFdL[0][1] += Ldf6dL[0]*(coeffki6/f6Exp[ik])*ky;
+                dFdL[0][2] += Ldf6dL[0]*(coeffki6/f6Exp[ik])*kz;
+                dFdL[1][0] += Ldf6dL[1]*(coeffki6/f6Exp[ik])*kx;
+                dFdL[1][1] += Ldf6dL[1]*(coeffki6/f6Exp[ik])*ky - coeffki6*ky*ky/kxyz1;
+                dFdL[1][2] += Ldf6dL[1]*(coeffki6/f6Exp[ik])*kz;
+                dFdL[2][0] += Ldf6dL[2]*(coeffki6/f6Exp[ik])*kx;
+                dFdL[2][1] += Ldf6dL[2]*(coeffki6/f6Exp[ik])*ky;
+                dFdL[2][2] += Ldf6dL[2]*(coeffki6/f6Exp[ik])*kz - coeffki6*kz*kz/kxyz1;
               }
               dfdv[0] = kx*z;
               dfdv[1] = ky*z;
               dfdv[2] = kz*z;
               for (vector<PotentialCallback*>::iterator it = pairCallbacks->begin(); it!=pairCallbacks->end(); it++) {
                 (*it)->computeDFDV(iAtom, dfdv);
+                (*it)->computeDFDL(iAtom, dFdL);
               }
             }
             coeffki += coeffki6;
