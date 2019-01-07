@@ -23,6 +23,7 @@ class PotentialCallback {
     virtual void pairCompute(int iAtom, int jAtom, double* dr, double u, double du, double d2u) {}
     virtual void pairComputePhi(int iAtom, int jAtom, double phi[3][3]) {}
     virtual void computeDFDV(int iAtom, double* dFdV) {}
+    virtual void computeDFDL(int iAtom, double** dFdL) {}
     virtual void allComputeFinished(double uTot, double virialTot, double** f, double *virialTensor) {}
     virtual int getNumData() {return 0;}
     virtual double* getData() {return nullptr;}
