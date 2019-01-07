@@ -23,6 +23,7 @@ class EwaldBase {
     double* charges;
     double** B6;
     double** b6;
+    double** dFdL;
 
   public:
     EwaldBase(const SpeciesList &speciesList, Box& box);
