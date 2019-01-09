@@ -118,8 +118,8 @@ void PotentialLJ::u012TC(double &u, double &du, double &d2u) {
   double sc6 = sc3*sc3;
   double sc12 = sc6*sc6;
   // correction due to shift and force-shift
-  du = M_PI*rc3*rCut*ufShift;
-  u = 4*M_PI*uShift*rc3/3 + du;
+  du = -M_PI*rc3*rCut*ufShift;
+  u = -4*M_PI*uShift*rc3/3 + du;
   // correction due to truncation
   u += 4*M_PI*4*epsilon*(sc12/(12-3) - sc6/(6-3))*rc3;
   du += -4*M_PI*4*epsilon*12*(sc12/(12-3) - 0.5*sc6/(6-3))*rc3;
