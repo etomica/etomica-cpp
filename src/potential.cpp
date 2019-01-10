@@ -216,8 +216,8 @@ void PotentialSS::u012TC(double &u, double &du, double &d2u) {
   double rc3 = rCut*rCut*rCut;
   double x = epsrpow(rCut*rCut);
   // correction due to shift and force-shift
-  du = M_PI*rc3*rCut*ufShift;
-  u = 4*M_PI*uShift*rc3/3 + du;
+  du = -M_PI*rc3*rCut*ufShift;
+  u = -4*M_PI*uShift*rc3/3 + du;
   // correction due to truncation
   double y = 4*M_PI*x/(exponent-3)*rc3;
   u += y;
@@ -272,8 +272,8 @@ void PotentialSSfloat::u012TC(double &u, double &du, double &d2u) {
   double rc3 = rCut*rCut*rCut;
   double x = epsrpow(rCut*rCut);
   // correction due to shift and force-shift
-  du = M_PI*rc3*rCut*ufShift;
-  u = 4*M_PI*uShift*rc3/3 + du;
+  du = -M_PI*rc3*rCut*ufShift;
+  u = -4*M_PI*uShift*rc3/3 + du;
   // correction due to truncation
   double y = 4*M_PI*x/(exponent-3);
   u += y;
@@ -351,8 +351,8 @@ void PotentialSSfloatTab::u012TC(double &u, double &du, double &d2u) {
   double rc3 = rc2*rCut;
   double x = epsrpow(rc2)/rpInterp(rc2);
   // correction due to shift and force-shift
-  du = M_PI*rc3*rCut*ufShift;
-  u = 4*M_PI*uShift*rc3/3 + du;
+  du = -M_PI*rc3*rCut*ufShift;
+  u = -4*M_PI*uShift*rc3/3 + du;
   // correction due to truncation
   double y = 4*M_PI*x/(exponent+exponentFloat-3);
   u += y;
@@ -456,6 +456,13 @@ void PotentialEwald::u012(double r2, double &u, double &du, double &d2u) {
 
 void PotentialEwald::u012TC(double &u, double &du, double &d2u) {
   p.u012TC(u, du, d2u);
+  if (truncType == TRUNC_NONE || !correctTruncation) {
+    return;
+  }
+  double rc3 = rCut*rCut*rCut;
+  // correction due to shift and force-shift
+  du += -M_PI*rc3*rCut*ufShift;
+  u += -4*M_PI*uShift*rc3/3 + du;
 }
 
 PotentialEwald6::PotentialEwald6(Potential& p, double si, double ei, double sj, double ej, double eta, double rc, int tt) : Potential(tt, rc), pShort(p), eta(eta) {
@@ -539,6 +546,13 @@ void PotentialEwald6::u012(double r2, double &u, double &du, double &d2u) {
 
 void PotentialEwald6::u012TC(double &u, double &du, double &d2u) {
   pShort.u012TC(u, du, d2u);
+  if (truncType == TRUNC_NONE || !correctTruncation) {
+    return;
+  }
+  double rc3 = rCut*rCut*rCut;
+  // correction due to shift and force-shift
+  du += -M_PI*rc3*rCut*ufShift;
+  u += -4*M_PI*uShift*rc3/3 + du;
 }
 
 double PotentialEwald6::getEta(double rc, double sigma, double epsilon, double uTol) {
@@ -616,3 +630,15 @@ void PotentialEwaldBare::u012(double r2, double &u, double &du, double &d2u) {
   du = derfc - uq + r*ufShift;
   d2u = - derfc * (2 + alpha*alpha*2*r2) + 2*uq;
 }
+
+void PotentialEwaldBare::u012TC(double &u, double &du, double &d2u) {
+  if (truncType == TRUNC_NONE || !correctTruncation) {
+    u = du = d2u = 0;
+    return;
+  }
+  double rc3 = rCut*rCut*rCut;
+  // correction due to shift and force-shift
+  du += -M_PI*rc3*rCut*ufShift;
+  u += -4*M_PI*uShift*rc3/3 + du;
+}
+
