@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
   if (argc>1) pm.parseArgs(argc-1, argv+1);
   int N0 = pm.getInt("N0");
   double L0 = pm.getDouble("L0");
-  double density = N0/(L0*L0*L0);
+  double density = 0;
   if (pm.hasParameter("density")) {
     density = pm.getDouble("density");
     L0 = pow(N0/density, 1.0/3.0);
@@ -64,19 +64,19 @@ int main(int argc, char** argv) {
 
   int numMolecules = N0*disorderRep*disorderRep*disorderRep;
   double uTol = pm.getDouble("uTol");
-  double L0k[3] = {12.03, 12.03, 12.03};
+  double L0k[3] = {L0, L0, L0};
   int rep[3] = {disorderRep, disorderRep, disorderRep};
-  double** rHOM = ProtonDisorder::go2("O.pos", 46, L0k, rep, rand, 3.5, 0.9572, 104.52/180*M_PI, 0.15);
+  double** rHOM = ProtonDisorder::go2("O.pos", N0, L0k, rep, rand, 3.5, 0.9572, 104.52/180*M_PI, 0.15);
 
   SpeciesList speciesList;
   SpeciesFile species("water.species");
   speciesList.add(&species);
 
-  double L = L0*disorderRep;
-  printf("box size: %f\n", L);
+  double L[3] = {L0k[0]*disorderRep, L0k[1]*disorderRep, L0k[2]*disorderRep};
+  printf("box size: %f %f %f\n", L[0], L[1], L[2]);
   Box box(speciesList);
   box.setNumMolecules(0, numMolecules);
-  box.setBoxSize(L,L,L);
+  box.setBoxSize(L[0],L[1],L[2]);
   for (int i=0; i<numMolecules; i++) {
     vecE(box, 4*i, rHOM[4*i+0]);
     vecE(box, 4*i+1, rHOM[4*i+1]);
@@ -84,8 +84,11 @@ int main(int argc, char** argv) {
     vecE(box, 4*i+3, rHOM[4*i+3]);
   }
 
-  L = pow(numMolecules/density, 1.0/3.0);
-  box.scaleBoxTo(L,L,L);
+  if (density > 0) {
+    double scaleL = pow(numMolecules/density / (L[0]*L[1]*L[2]), 1.0/3.0);
+    L[0] *= scaleL; L[1] *= scaleL; L[2] *= scaleL;
+    box.scaleBoxTo(L[0],L[1],L[2]);
+  }
 
   double A = 600E3, C = 610;
   double s6 = A/C;
@@ -104,7 +107,7 @@ int main(int argc, char** argv) {
   }
   else {
     ewald.getOptimalAlpha(s, alpha, rc, kCut);
-    double f = pow(numMolecules*4, 1.0/8.0);
+    double f = pow(numMolecules*4, 1.0/6.0);
     alpha /= f;
     rc *= f;
     kCut /= f;
@@ -112,11 +115,11 @@ int main(int argc, char** argv) {
   printf("alpha: %f\n", alpha);
   printf("rc: %f\n", rc);
   printf("kc: %f\n", kCut);
+  PotentialSS pOO12(4*epsilon*pow(sigma,12),12,TRUNC_SIMPLE,rc);
   double qH = 193.82504408037946;
   PotentialEwaldBare pHH(alpha, qH*qH, rc, TRUNC_FORCE_SHIFT);
   PotentialEwaldBare pHM(alpha, -2*qH*qH, rc, TRUNC_FORCE_SHIFT);
   PotentialEwaldBare pMM(alpha, 4*qH*qH, rc, TRUNC_FORCE_SHIFT);
-  PotentialSS pOO12(4*epsilon*pow(sigma,12),12,TRUNC_SIMPLE,rc);
   double uq = 4*qH*qH*erfc(rc*alpha)/rc;
   double eta = PotentialEwald6::getEta(rc, sigma, epsilon, uq);
   printf("eta: %f\n", eta);
@@ -125,7 +128,11 @@ int main(int argc, char** argv) {
   int mType = species.getTypeForSymbol("M");
   int hType = species.getTypeForSymbol("H");
 
-  PotentialMasterCell potentialMaster(speciesList, box, false, 3);
+  int nc = 3;
+  for (int k=0; k<3; k++) {
+    if (rc/L[k] > nc) nc = ((int)rc/L[k]) + 1;
+  }
+  PotentialMasterCell potentialMaster(speciesList, box, false, nc);
   potentialMaster.setPairPotential(oType, oType, &pOO);
   potentialMaster.setPairPotential(hType, hType, &pHH);
   potentialMaster.setPairPotential(hType, mType, &pHM);
@@ -140,7 +147,7 @@ int main(int argc, char** argv) {
   potentialMaster.setDoTruncationCorrection(false);
   potentialMaster.init();
   int* numCells = potentialMaster.getNumCells();
-  printf("cells: %d %d %d\n", numCells[0], numCells[1], numCells[2]);
+  printf("cells (%d): %d %d %d\n", nc, numCells[0], numCells[1], numCells[2]);
   PotentialCallbackEnergy pce;
   MeterFullCompute meterFullE(potentialMaster);
   meterFullE.addCallback(&pce);
