@@ -43,6 +43,10 @@ double** ProtonDisorder::go(Box& box, Random& rand, const double drNbrOO, const 
       box.nearestImage(dr);
       double dr2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
       if (dr2 < drNbr2) {
+        if (nCoordTot==2*N) {
+          fprintf(stderr, "I found too many neighboring oxygen pairs.  Please check your configuration and/or adjust the neighbor criteria.\n");
+          abort();
+        }
         // we found a pair of oxygens that needs a hydrogen
         int dRandCoordi = rand.nextInt(1); // does hydrogen belong to i
         nCoordsO[i] += dRandCoordi;
