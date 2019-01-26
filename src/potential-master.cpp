@@ -103,6 +103,10 @@ void PotentialMaster::setDoSingleTruncationCorrection(bool doCorrection) {
 
 void PotentialMaster::setPairPotential(int iType, int jType, Potential* p) {
   pairPotentials[iType][jType] = pairPotentials[jType][iType] = p;
+  if (!p) {
+    pairCutoffs[iType][jType] = 0;
+    return;
+  }
   double rc = p->getCutoff();
   pairCutoffs[iType][jType] = pairCutoffs[jType][iType] = rc*rc;
 }
@@ -128,7 +132,7 @@ void PotentialMaster::setEmbedF(int iType, EmbedF* ef) {
 void PotentialMaster::setEwald(EwaldBase* e) {
   doEwald = e != nullptr;
   ewald = e;
-  ewald->setNumAtomsByType(numAtomsByType);
+  if (doEwald) ewald->setNumAtomsByType(numAtomsByType);
 }
 
 void PotentialMaster::setBondPotential(int iSpecies, vector<int*> &bp, Potential *p) {
