@@ -192,16 +192,16 @@ int main(int argc, char** argv) {
     printf("eta: %f\n", eta);
   }
 
-  PotentialEwald6 pOOL(pOO12, sigma, epsilon, sigma, epsilon, eta, rc);
-  PotentialEwaldBare pHHL(alpha, qH*qH, rc);
-  PotentialEwaldBare pHML(alpha, -2*qH*qH, rc);
-  PotentialEwaldBare pMML(alpha, 4*qH*qH, rc);
+  PotentialEwald6 pOOL(pOO12, sigma, epsilon, sigma, epsilon, eta, rc, TRUNC_FORCE_SHIFT);
+  PotentialEwaldBare pHHL(alpha, qH*qH, rc, TRUNC_FORCE_SHIFT);
+  PotentialEwaldBare pHML(alpha, -2*qH*qH, rc, TRUNC_FORCE_SHIFT);
+  PotentialEwaldBare pMML(alpha, 4*qH*qH, rc, TRUNC_FORCE_SHIFT);
   potentialMaster.setPairPotential(oType, oType, &pOOL);
   potentialMaster.setPairPotential(hType, hType, &pHHL);
   potentialMaster.setPairPotential(hType, mType, &pHML);
   potentialMaster.setPairPotential(mType, mType, &pMML);
-  potentialMaster.setEwald(&ewald);
   potentialMaster.init();
+
   t1 = getTime();
 
   numCells = potentialMaster.getNumCells();
