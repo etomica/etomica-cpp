@@ -48,22 +48,46 @@ void EwaldFourier::computeFourierIntramolecular(int iMolecule, const bool doForc
   double twoosqrtpi = 2.0/sqrt(M_PI);
   for (int iAtom=iFirstAtom; iAtom<iLastAtom; iAtom++) {
     double qi = charges[box.getAtomType(iAtom)];
-    if (qi==0) continue;
+    double Bii = B6[iType][iType];
+    if (qi==0 && Bii==0) continue;
     double* ri = box.getAtomPosition(iAtom);
     for (int jAtom=iAtom+1; jAtom<=iLastAtom; jAtom++) {
       double qj = charges[box.getAtomType(jAtom)];
-      if (qj==0) continue;
+      double Bij = B6[iType][jType];
+      double qiqj = qi*qj;
+      if (qiqj==0 && Bij==0) continue;
       double* rj = box.getAtomPosition(jAtom);
       double dr[3];
       for (int k=0; k<3; k++) dr[k] = rj[k]-ri[k];
       box.nearestImage(dr);
       double r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
       double r = sqrt(r2);
-      double qiqj = qi*qj;
-      double ec = erfc(alpha*r);
-      uTot -= qiqj*(1-ec)/r;
+      double ec = 0;
+      if (alpha>0) {
+        ec = erfc(alpha*r);
+        uTot -= qiqj*(1-ec)/r;
+      }
+      double s2, s4, a2, a4;
+      if (eta>0) {
+        s2 = 1/r2;
+        s4 = s2*s2;
+        double eta2 = eta*eta;
+        a2 = r2/eta2;
+        a4 = a2*a2;
+        double ureal = -Bij*eta6r*(1+a2+a4/2)*exp(-a2)/(a4*a2);
+        double ufull = -Bij*s4*s2;
+        uTot += -ufull + ureal;
+      }
       if (!rigidMolecules && doForces) {
-        double du = -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *alpha + (ec-1)/r) / r2;
+        //XXX ensure atom pair is bonded
+        double du = 0;
+        if (alpha>0) du = -qiqj * (twoosqrtpi * exp(-alpha*alpha*r2) *alpha + (ec-1)/r) / r2;
+        if (eta>0) {
+          double a6 = a4*a2;
+          double dureal = Bij*eta6r*(6 + 6*a2 + 3*a4 + a6)*e/a6;
+          double dufull = 6*Bij*s2*s4;
+          du += -dufull + dureal;
+        }
         for (int m=0; m<3; m++) {
           force[iAtom][m] += dr[m]*du;
           force[jAtom][m] -= dr[m]*du;
