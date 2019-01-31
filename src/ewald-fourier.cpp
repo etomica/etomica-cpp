@@ -47,11 +47,13 @@ void EwaldFourier::computeFourierIntramolecular(int iMolecule, const bool doForc
   if (iLastAtom==iFirstAtom) return;
   double twoosqrtpi = 2.0/sqrt(M_PI);
   for (int iAtom=iFirstAtom; iAtom<iLastAtom; iAtom++) {
+    int iType = box.getAtomType(iAtom);
     double qi = charges[box.getAtomType(iAtom)];
     double Bii = B6[iType][iType];
     if (qi==0 && Bii==0) continue;
     double* ri = box.getAtomPosition(iAtom);
     for (int jAtom=iAtom+1; jAtom<=iLastAtom; jAtom++) {
+      int jType = box.getAtomType(jAtom);
       double qj = charges[box.getAtomType(jAtom)];
       double Bij = B6[iType][jType];
       double qiqj = qi*qj;
@@ -67,14 +69,16 @@ void EwaldFourier::computeFourierIntramolecular(int iMolecule, const bool doForc
         ec = erfc(alpha*r);
         uTot -= qiqj*(1-ec)/r;
       }
-      double s2, s4, a2, a4;
+      double s2=0, s4=0, a2=0, a4=0, eta6r=0, e=0;
       if (eta>0) {
         s2 = 1/r2;
         s4 = s2*s2;
         double eta2 = eta*eta;
         a2 = r2/eta2;
         a4 = a2*a2;
-        double ureal = -Bij*eta6r*(1+a2+a4/2)*exp(-a2)/(a4*a2);
+        eta6r = 1/(eta2*eta2*eta2);
+        e = exp(-a2);
+        double ureal = -Bij*eta6r*(1+a2+a4/2)*e/(a4*a2);
         double ufull = -Bij*s4*s2;
         uTot += -ufull + ureal;
       }
