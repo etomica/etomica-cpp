@@ -152,12 +152,12 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
         int jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom;
         box.getMoleculeInfo(jMolecule, jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom);
         if (jLastAtom==jFirstAtom) continue;
-        double* rjAtom = box.getAtomPosition(jAtom);
-        double drAtom[3] = {rjAtom[0]-rj[0], rjAtom[1]-rj[1], rjAtom[2]-rj[2]};
-        box.nearestImage(drAtom);
-        Species* species = speciesList.get(iSpecies);
-        double* rj = species->getMoleculeCOM(box, iFirstAtom, iLastAtom);
+        Species* species = speciesList.get(jSpecies);
+        double* rj = species->getMoleculeCOM(box, jFirstAtom, jLastAtom);
         for (int jAtom=jFirstAtom; jAtom<=jLastAtom; jAtom++) {
+          double* rjAtom = box.getAtomPosition(jAtom);
+          double drAtom[3] = {rjAtom[0]-rj[0], rjAtom[1]-rj[1], rjAtom[2]-rj[2]};
+          box.nearestImage(drAtom);
           for (int k=0; k<3; k++) {
             for (int l=0; l<3; l++) {
               atomPhiTotal[3*iAtom+k][offset+l] += atomPhiTotal[3*iAtom+k][3*jAtom+l] * drAtom[l];
