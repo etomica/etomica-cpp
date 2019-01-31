@@ -69,11 +69,6 @@ void Minimize::doStep() {
         moleculePhiTotal[k][c] = k==(c-nmap[j]) ? 1 : 0;
       }
     }
-    if (flexBox) {
-      for (int l=0; l<3; l++) {
-        moleculePhiTotal[k][nmap[N]+l] = 0;
-      }
-    }
     fMolecule[k] = 0;
   }
 
@@ -197,6 +192,7 @@ void Minimize::doStep() {
   if (flexBox) {
     const double* bs = box.getBoxSize();
     int x = nmap[N];
+    for (int i=0; i<3; i++) lastDR += fMolecule[x+i]*fMolecule[x+i];
     double scale = pow((1+fMolecule[x])*(1+fMolecule[x+1])*(1+fMolecule[x+2]), 1.0/3.0);
     double s[3] = {(1+fMolecule[x])/scale, (1+fMolecule[x+1])/scale, (1+fMolecule[x+2])/scale};
     double bsnew[3] = {bs[0]*s[0], bs[1]*s[1], bs[2]*s[2]};
