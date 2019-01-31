@@ -195,6 +195,42 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
         }
       }
     }
+    // and d2U/dLdL
+    for (int k=0; k<3; k++) {
+      for (int l=0; l<3; l++) {
+        moleculePhiTotal[nmap[numMolecules]+k][nmap[numMolecules]+l] = atomPhiTotal[3*na+k][3*na+l];
+      }
+    }
+    // and molecular contribution to d2U/dLdL
+    for (int iMolecule=0; iMolecule<numMolecules; iMolecule++) {
+      int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+      box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
+      if (iFirstAtom == iLastAtom) continue;
+      double* ri = speciesList.get(iSpecies)->getMoleculeCOM(box, iFirstAtom, iLastAtom);
+      for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
+        double* riAtom = box.getAtomPosition(iAtom);
+        double driAtom[3] = {riAtom[0]-ri[0], riAtom[1]-ri[1], riAtom[2]-ri[2]};
+        box.nearestImage(driAtom);
+        for (int k=0; k<3; k++) {
+          //moleculePhiTotal[nmap[numMolecules]+k][nmap[numMolecules]+k] += 2*f[iAtom][k]*driAtom[k];
+
+          for (int jMolecule=0; jMolecule<numMolecules; jMolecule++) {
+            int jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom;
+            box.getMoleculeInfo(jMolecule, jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom);
+            if (jFirstAtom == jLastAtom) continue;
+            double* rj = speciesList.get(jSpecies)->getMoleculeCOM(box, jFirstAtom, jLastAtom);
+            for (int jAtom=jFirstAtom; jAtom<=jLastAtom; jAtom++) {
+              double* rjAtom = box.getAtomPosition(jAtom);
+              double drjAtom[3] = {rjAtom[0]-rj[0], rjAtom[1]-rj[1], rjAtom[2]-rj[2]};
+              box.nearestImage(drjAtom);
+              for (int l=0; l<3; l++) {
+                //moleculePhiTotal[nmap[numMolecules]+k][nmap[numMolecules]+l] += atomPhiTotal[3*iAtom+k][3*jAtom+l]*driAtom[k]*drjAtom[l];
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   // phi for molecules
@@ -282,14 +318,6 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
             moleculePhiTotal[nmap[iMolecule] + 3 + k][nmap[iMolecule] + 3 + l] -= 0.5*(dri[k]*f[iAtom][l] + dri[l]*f[iAtom][k]);
           }
         }
-      }
-    }
-  }
-  if (flexBox) {
-    int na = box.getNumAtoms();
-    for (int k=0; k<3; k++) {
-      for (int l=0; l<3; l++) {
-        moleculePhiTotal[nmap[numMolecules]+k][nmap[numMolecules]+l] = atomPhiTotal[3*na+k][3*na+l];
       }
     }
   }
