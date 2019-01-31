@@ -94,7 +94,11 @@ void PotentialCallbackMoleculePhi::pairCompute(int iAtom, int jAtom, double* dri
       int na = box.getNumAtoms();
       for (int l=0; l<3; l++) {
         atomPhiTotal[3*iAtom+k][3*na+l] += dfac * drij[l]*drij[l]*drij[k];
-        if (k==l) atomPhiTotal[3*iAtom+k][3*na+l] -= du * drij[l] / r2;
+        atomPhiTotal[3*jAtom+k][3*na+l] -= dfac * drij[l]*drij[l]*drij[k];
+        if (k==l) {
+          atomPhiTotal[3*iAtom+k][3*na+l] -= du * drij[l] / r2;
+          atomPhiTotal[3*jAtom+k][3*na+l] += du * drij[l] / r2;
+        }
       }
     }
   }
@@ -160,8 +164,8 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
           box.nearestImage(drAtom);
           for (int k=0; k<3; k++) {
             for (int l=0; l<3; l++) {
-              atomPhiTotal[3*iAtom+k][offset+l] += atomPhiTotal[3*iAtom+k][3*jAtom+l] * drAtom[l];
-              atomPhiTotal[offset+l][3*iAtom+k] += atomPhiTotal[3*jAtom+l][3*iAtom+k] * drAtom[l];
+              atomPhiTotal[3*iAtom+k][3*na+l] -= atomPhiTotal[3*iAtom+k][3*jAtom+l] * drAtom[l];
+              atomPhiTotal[3*na+l][3*iAtom+k] -= atomPhiTotal[3*jAtom+l][3*iAtom+k] * drAtom[l];
             }
           }
         }
@@ -177,8 +181,8 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
       for (int iAtom=iFirstAtom; iAtom<=iLastAtom; iAtom++) {
         for (int k=0; k<3; k++) {
           for (int l=0; l<3; l++) {
-            moleculePhiTotal[nmap[iMolecule]+l][offset+k] += atomPhiTotal[3*iMolecule+l][3*na+k];
-            moleculePhiTotal[offset+k][nmap[iMolecule]+l] += atomPhiTotal[3*na+k][3*iMolecule+l];
+            moleculePhiTotal[nmap[iMolecule]+l][offset+k] += atomPhiTotal[3*iAtom+l][3*na+k];
+            moleculePhiTotal[offset+k][nmap[iMolecule]+l] += atomPhiTotal[3*na+k][3*iAtom+l];
           }
         }
         if (iLastAtom>iFirstAtom) {
