@@ -95,9 +95,13 @@ void PotentialCallbackMoleculePhi::pairCompute(int iAtom, int jAtom, double* dri
       for (int l=0; l<3; l++) {
         atomPhiTotal[3*iAtom+k][3*na+l] += dfac * drij[l]*drij[l]*drij[k];
         atomPhiTotal[3*jAtom+k][3*na+l] -= dfac * drij[l]*drij[l]*drij[k];
+        atomPhiTotal[3*na+l][3*iAtom+k] += dfac * drij[l]*drij[l]*drij[k];
+        atomPhiTotal[3*na+l][3*jAtom+k] -= dfac * drij[l]*drij[l]*drij[k];
         if (k==l) {
           atomPhiTotal[3*iAtom+k][3*na+l] -= du * drij[l] / r2;
           atomPhiTotal[3*jAtom+k][3*na+l] += du * drij[l] / r2;
+          atomPhiTotal[3*na+l][3*iAtom+k] -= du * drij[l] / r2;
+          atomPhiTotal[3*na+l][3*jAtom+k] += du * drij[l] / r2;
         }
       }
     }
@@ -107,8 +111,8 @@ void PotentialCallbackMoleculePhi::pairCompute(int iAtom, int jAtom, double* dri
     for (int k=0; k<3; k++) {
       for (int l=0; l<3; l++) {
         atomPhiTotal[3*na+k][3*na+l] -= dfac * drij[l]*drij[l]*drij[k]*drij[k];
-        if (k==l) atomPhiTotal[3*na+k][3*na+l] += du*drij[k]*drij[l]/r2;
       }
+      atomPhiTotal[3*na+k][3*na+k] += 2*du*drij[k]*drij[k]/r2;
     }
   }
 }
@@ -216,7 +220,7 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
         double driAtom[3] = {riAtom[0]-ri[0], riAtom[1]-ri[1], riAtom[2]-ri[2]};
         box.nearestImage(driAtom);
         for (int k=0; k<3; k++) {
-          //moleculePhiTotal[nmap[numMolecules]+k][nmap[numMolecules]+k] += 2*f[iAtom][k]*driAtom[k];
+          moleculePhiTotal[nmap[numMolecules]+k][nmap[numMolecules]+k] -= f[iAtom][k]*driAtom[k];
 
           for (int jMolecule=0; jMolecule<numMolecules; jMolecule++) {
             int jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom;
@@ -228,7 +232,7 @@ void PotentialCallbackMoleculePhi::allComputeFinished(double uTot, double virial
               double drjAtom[3] = {rjAtom[0]-rj[0], rjAtom[1]-rj[1], rjAtom[2]-rj[2]};
               box.nearestImage(drjAtom);
               for (int l=0; l<3; l++) {
-                //moleculePhiTotal[nmap[numMolecules]+k][nmap[numMolecules]+l] += atomPhiTotal[3*iAtom+k][3*jAtom+l]*driAtom[k]*drjAtom[l];
+                moleculePhiTotal[nmap[numMolecules]+k][nmap[numMolecules]+l] += atomPhiTotal[3*iAtom+k][3*jAtom+l]*driAtom[k]*drjAtom[l];
               }
             }
           }
