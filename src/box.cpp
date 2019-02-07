@@ -8,9 +8,46 @@
 #include <iostream>
 #include "alloc2d.h"
 #include "box.h"
+#include "matrix.h"
+#include "vector.h"
 
-Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpecies(sl.size()), numAtomsBySpecies(nullptr), maxNumAtomsBySpecies(nullptr), speciesNumAtoms(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), atomTypes(nullptr), speciesList(sl) {
-  for (int i=0; i<3; i++) boxSize[i] = 0;
+Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpecies(sl.size()), numAtomsBySpecies(nullptr), maxNumAtomsBySpecies(nullptr), speciesNumAtoms(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), atomTypes(nullptr), speciesList(sl), rectangular(true) {
+  edgeVectors = (double**)malloc2D(3, 3, sizeof(double));
+  for (int i=0; i<3; i++) {
+    boxSize[i] = 0;
+    for (int j=0; j<3; j++) edgeVectors[i][j] = 0;
+  }
+
+  int ss = knownNumSpecies;
+  numAtomsBySpecies = new int[ss];
+  maxNumAtomsBySpecies = new int[ss];
+  speciesNumAtoms = new int[ss];
+  numMoleculesBySpecies = new int[ss];
+  maxNumMoleculesBySpecies = new int[ss];
+  positions = (double***)malloc(ss*sizeof(double**));
+  velocities = nullptr;
+  firstAtom = (int**)malloc(ss*sizeof(int*));
+  atomTypes = (int**)malloc(ss*sizeof(int*));
+  for (int i=0; i<ss; i++) {
+    positions[i] = nullptr;
+    if (velocities) velocities[i] = nullptr;
+    numMoleculesBySpecies[i] = numAtomsBySpecies[i] = maxNumMoleculesBySpecies[i] = 0;
+    atomTypes[i] = firstAtom[i] = nullptr;
+    speciesNumAtoms[i] = speciesList.get(i)->getNumAtoms();
+  }
+  periodic[0] = periodic[1] = periodic[2] = true;
+}
+
+Box::Box(SpeciesList &sl, bool rec) : positions(nullptr), velocities(nullptr), knownNumSpecies(sl.size()), numAtomsBySpecies(nullptr), maxNumAtomsBySpecies(nullptr), speciesNumAtoms(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), atomTypes(nullptr), speciesList(sl), rectangular(rec) {
+  edgeVectors = (double**)malloc2D(3, 3, sizeof(double));
+  for (int i=0; i<3; i++) {
+    boxSize[i] = 0;
+    for (int j=0; j<3; j++) edgeVectors[i][j] = 0;
+  }
+  if (rectangular) {
+    h = new Matrix(3,3);
+    hInv = new Matrix(3,3);
+  }
 
   int ss = knownNumSpecies;
   numAtomsBySpecies = new int[ss];
@@ -50,6 +87,11 @@ Box::~Box() {
   free(velocities);
   free(firstAtom);
   free(atomTypes);
+  free2D((void**)edgeVectors);
+  if (!rectangular) {
+    delete h;
+    delete hInv;
+  }
 }
 
 void Box::initCoordinates() {
@@ -226,6 +268,33 @@ void Box::getMoleculeInfo(int iMolecule, int &iSpecies, int &iMoleculeInSpecies,
 
 void Box::boxSizeUpdated() {
   for (int i=0; i<3; i++) boxHalf[i] = 0.5*boxSize[i];
+  if (!rectangular) {
+    h->setRows(edgeVectors);
+    hInv->E(*h);
+    hInv->invert();
+    // find transform vectors for nearestImage
+  }
+}
+
+double Box::volume() {
+  if (rectangular) return boxSize[0]*boxSize[1]*boxSize[2];
+  double temp[3];
+  Vector::cross(edgeVectors[0], edgeVectors[1], temp);
+  return fabs(Vector::dot(temp, edgeVectors[2]));
+}
+
+void Box::centralImage(double *dr) {
+  if (rectangular) {
+    nearestImage(dr);
+    return;
+  }
+  hInv->transform(dr);
+  for (int i=0; i<3; i++) {
+    if (!periodic[i]) continue;
+    while (dr[i] > boxHalf[i]) dr[i]--;
+    while (dr[i] < -boxHalf[i]) dr[i]++;
+  }
+  h->transform(dr);
 }
 
 void Box::nearestImage(double *dr) {
@@ -245,9 +314,20 @@ void Box::setPeriodic(const bool* newPeriodic) {
 }
 
 void Box::setBoxSize(double x, double y, double z) {
-  boxSize[0] = x;
-  boxSize[1] = y;
-  boxSize[2] = z;
+  boxSize[0] = edgeVectors[0][0] = x;
+  boxSize[1] = edgeVectors[1][1] = y;
+  boxSize[2] = edgeVectors[2][2] = z;
+  boxSizeUpdated();
+}
+
+void Box::setEdgeVector(int i, double x, double y, double z) {
+  if (rectangular) {
+    fprintf(stderr, "Box must be rectangular\n");
+    abort();
+  }
+  edgeVectors[i][0] = x;
+  edgeVectors[i][1] = y;
+  edgeVectors[i][2] = z;
   boxSizeUpdated();
 }
 

@@ -8,11 +8,13 @@
 #include "species.h"
 
 class SpeciesList;
+class Matrix;
 
 class Box {
   protected:
     double boxHalf[3];
     double boxSize[3];
+    double** edgeVectors;
     bool periodic[3];
 
     double ***positions, ***velocities;
@@ -23,15 +25,19 @@ class Box {
     int **firstAtom, **moleculeIdx;
     int **atomTypes;
     void boxSizeUpdated();
+    Matrix *h, *hInv;
 
     SpeciesList &speciesList;
+    const bool rectangular;
 
   public:
     Box(SpeciesList &speciesList);
+    Box(SpeciesList &speciesList, bool rectangular);
     virtual ~Box();
 
     SpeciesList& getSpeciesList() {return speciesList;}
     const double* getBoxSize() {return boxSize;}
+    const double* getEdgeVector(int i) {return edgeVectors[i];}
     int getTotalNumMolecules() {
       int s = 0;
       for (int i=0; i<knownNumSpecies; i++) s += numMoleculesBySpecies[i];
@@ -72,8 +78,11 @@ class Box {
     int getFirstAtom(int iSpecies, int iMoleculeInSpecies) { return firstAtom[iSpecies][iMoleculeInSpecies]; }
     int getGlobalMoleculeIndex(int iSpecies, int iMoleculeInSpecies);
     void nearestImage(double *dr);
+    void centralImage(double *dr);
     void initCoordinates();
+    double volume();
     void setBoxSize(double x, double y, double z);
+    void setEdgeVector(int i, double x, double y, double z);
     // sets box size and scales molecule coordinates
     void scaleBoxTo(double x, double y, double z);
     void setNumMolecules(int iSpecies, int numMolecules);
