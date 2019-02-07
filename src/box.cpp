@@ -252,6 +252,16 @@ void Box::setBoxSize(double x, double y, double z) {
 }
 
 void Box::scaleBoxTo(double bx, double by, double bz) {
+
+  /*for (int iAtom=0; iAtom<getNumAtoms(); iAtom++) {
+    double* ri = getAtomPosition(iAtom);
+    ri[0] *= bx/boxSize[0];
+    ri[1] *= by/boxSize[1];
+    ri[2] *= bz/boxSize[2];
+  }
+  setBoxSize(bx, by, bz);
+  return;*/
+
   double s[3] = {bx/boxSize[0], by/boxSize[1], bz/boxSize[2]};
   int nm = getTotalNumMolecules();
   // first unwrap and move molecules
