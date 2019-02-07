@@ -35,6 +35,7 @@ class Box {
     Box(SpeciesList &speciesList, bool rectangular);
     virtual ~Box();
 
+    bool isRectangular() {return rectangular;}
     SpeciesList& getSpeciesList() {return speciesList;}
     const double* getBoxSize() {return boxSize;}
     const double* getEdgeVector(int i) {return edgeVectors[i];}
@@ -93,4 +94,6 @@ class Box {
     void getMoleculeInfoAtom(int iAtom, int &iMoleculeInSpecies, int &iSpecies, int &firstAtom);
     const bool* getPeriodic();
     void setPeriodic(const bool* newPeriodic);
+    Matrix* getH() {return h;}
+    Matrix* getHInv() {return hInv;}
 };
