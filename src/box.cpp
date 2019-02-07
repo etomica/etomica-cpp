@@ -48,6 +48,9 @@ Box::Box(SpeciesList &sl, bool rec) : positions(nullptr), velocities(nullptr), k
     h = new Matrix(3,3);
     hInv = new Matrix(3,3);
   }
+  else {
+    h = hInv = nullptr;
+  }
 
   int ss = knownNumSpecies;
   numAtomsBySpecies = new int[ss];
