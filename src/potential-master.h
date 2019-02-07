@@ -46,6 +46,7 @@ class EmbedFsqrt : public EmbedF {
 class CellManager {
   public:
     Box &box;
+    const bool rectangular;
     const SpeciesList& speciesList;
     int cellRange;
     double range;

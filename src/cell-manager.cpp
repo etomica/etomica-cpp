@@ -4,8 +4,9 @@
 
 #include "potential-master.h"
 #include "alloc2d.h"
+#include "matrix.h"
 
-CellManager::CellManager(const SpeciesList &sl, Box& b, int cRange) : box(b), speciesList(sl), cellRange(cRange), range(0), rawBoxOffsets(nullptr) {
+CellManager::CellManager(const SpeciesList &sl, Box& b, int cRange) : box(b), rectangular(b.isRectangular()), speciesList(sl), cellRange(cRange), range(0), rawBoxOffsets(nullptr) {
 }
 
 CellManager::~CellManager() {
@@ -23,12 +24,24 @@ int* CellManager::getNumCells() {
 
 int CellManager::cellForCoord(const double *r) {
   int cellNum = 0;
-  const double* bs = box.getBoxSize();
   const bool* periodic = box.getPeriodic();
-  for (int i=0; i<3; i++) {
-    const double x = (r[i] + boxHalf[i])/bs[i];
-    if (periodic[i]) cellNum += ((int)(cellRange + x*(numCells[i]-2*cellRange)))*jump[i];
-    else cellNum += ((int)(x*numCells[i]))*jump[i];
+  if (rectangular) {
+    const double* bs = box.getBoxSize();
+    for (int i=0; i<3; i++) {
+      const double x = (r[i] + boxHalf[i])/bs[i];
+      if (periodic[i]) cellNum += ((int)(cellRange + x*(numCells[i]-2*cellRange)))*jump[i];
+      else cellNum += ((int)(x*numCells[i]))*jump[i];
+    }
+  }
+  else {
+    Matrix* hInv = box.getHInv();
+    double rtmp[3] = {r[0], r[1], r[2]};
+    hInv->transform(rtmp);
+    for (int i=0; i<3; i++) {
+      const double x = rtmp[i] + 0.5;
+      if (periodic[i]) cellNum += ((int)(cellRange + x*(numCells[i]-2*cellRange)))*jump[i];
+      else cellNum += ((int)(x*numCells[i]))*jump[i];
+    }
   }
   return cellNum;
 }
@@ -50,18 +63,82 @@ void CellManager::init() {
   int totalCells = 1;
   const double* bs = box.getBoxSize();
   const bool* periodic = box.getPeriodic();
-  for (int i=0; i<3; i++) {
-    // with cell lists, we can accommodate rc>L/2
-    // we need the box to be at least the size of a cell.
-    // when rc>L/2, we'll end up doing a lattice sum
-    if (bs[i] < minCellSize) {
-      fprintf(stderr, "box not big enough to accomodate even 1 cell (%f < %f)\n", bs[i], minCellSize);
-      exit(1);
+  double xminxyz, xmaxxyz, yminxyz, ymaxxyz, zminxyz, zmaxxyz;
+  const double* edgeVectors[3];
+  if (rectangular) {
+    for (int i=0; i<3; i++) {
+      // with cell lists, we can accommodate rc>L/2
+      // we need the box to be at least the size of a cell.
+      // when rc>L/2, we'll end up doing a lattice sum
+      if (bs[i] < minCellSize) {
+        fprintf(stderr, "box not big enough to accomodate even 1 cell (%f < %f)\n", bs[i], minCellSize);
+        exit(1);
+      }
+      // include cellRange of padding on each side of the box
+      numCells[i] = ((int)floor(bs[i]/minCellSize));
+      if (periodic[i]) numCells[i] += cellRange*2;
+      totalCells *= numCells[i];
     }
-    // include cellRange of padding on each side of the box
-    numCells[i] = ((int)floor(bs[i]/minCellSize));
-    if (periodic[i]) numCells[i] += cellRange*2;
-    totalCells *= numCells[i];
+  }
+  else {
+    // z first
+    edgeVectors[0] = box.getEdgeVector(0);
+    edgeVectors[1] = box.getEdgeVector(1);
+    edgeVectors[2] = box.getEdgeVector(2);
+    numCells[2] = (int)floor(edgeVectors[2][2]/minCellSize);
+    if (periodic[2]) numCells[2] += cellRange*2;
+    totalCells *= numCells[2];
+
+    // y
+    double l20 = edgeVectors[2][0]/numCells[2];
+    double l21 = edgeVectors[2][1]/numCells[2];
+    double l22 = edgeVectors[2][2]/numCells[2];
+    double l10 = edgeVectors[1][0];
+    double l11 = edgeVectors[1][1];
+    // Ly + alpha Lz
+    double alpha = -(l10+l11)/(l20*l20+l21*l21+l22*l22);
+    double maxyz = (l10+alpha*l20)*(l10+alpha*l20) + (l11+alpha*l21)*(l11+alpha*l21) + (alpha*l22)*(alpha*l22);
+    numCells[1] = (int)floor(maxyz / minCellSize);
+    l10 /= numCells[1];
+    l11 /= numCells[1];
+
+    // Lx + alpha Ly + beta Lz
+    // alpha = ab * b + a0
+    // beta = ba * a + b0
+    double l00 = edgeVectors[0][0];
+    double ba = -(l10*l20 + l11*l21)/(l20*l20+l21*l21+l22*l22);
+    double b0 = (l00*l20)/(l20*l20+l21*l21+l22*l22);
+    double ab = -(l10*l20 + l11*l21)/(l10*l10+l11*l11+l21*l21);
+    double a0 = (l00*l10)/(l10*l10+l11*l11+l21*l21);
+    double beta = (ba*a0 + b0)/(1-ba*ab);
+    alpha = ab*beta + a0;
+    double maxxyz_x = l00+alpha*l10+beta*l20;
+    double maxxyz_y = alpha*l11+beta*l21;
+    double maxxyz_z = beta*l22;
+    double maxxyz = maxxyz_x*maxxyz_x + maxxyz_y*maxxyz_y + maxxyz_z*maxxyz_z;
+    numCells[0] = (int)floor(maxxyz / minCellSize);
+
+    /*alpha = -(l00)/(l10*l10+l11*l11);
+    double maxxy = (l00+alpha*l10)*(l00+alpha*l10) + (alpha*l11)*(alpha*l11);
+    int n0xy = (int)floor(maxxy / minCellSize);
+
+    double alpha = -(l00)/(l20*l20+l21*l21+l22*l22);
+    double maxxz = (l00+alpha*l20)*(l00+alpha*l20) + (alpha*l21)*(alpha*l21) + (alpha*l22)*(alpha*l22);
+    int n0xz = (int)floor(maxxz / minCellSize);
+    int n0 = n0xy < n0xz ? n0xy : n0xz;*/
+
+    zminxyz = 0;
+    zmaxxyz = edgeVectors[2][2];
+    yminxyz = 0;
+    if (edgeVectors[2][1] < 0) yminxyz += edgeVectors[2][1];
+    ymaxxyz = edgeVectors[1][1];
+    if (edgeVectors[2][1] > 0) yminxyz += edgeVectors[2][1];
+    xminxyz = 0;
+    if (edgeVectors[1][0] < 0) xminxyz += edgeVectors[1][0];
+    if (edgeVectors[2][0] < 0) xminxyz += edgeVectors[2][0];
+    xmaxxyz = edgeVectors[0][0];
+    if (edgeVectors[1][0] > 0) xmaxxyz += edgeVectors[1][0];
+    if (edgeVectors[2][0] > 0) xmaxxyz += edgeVectors[2][0];
   }
   cellLastAtom.resize(totalCells);
   wrapMap.resize(totalCells);
@@ -104,7 +181,36 @@ void CellManager::init() {
           }
           int ixm1 = ix==0 ? 0 : (abs(ix)-1);
           int ixm1Sq = ixm1*ixm1;
-          if (ixm1Sq+iym1Sq+izm1Sq >= cellRange*cellRange) continue;
+          if (rectangular) {
+            if (ixm1Sq+iym1Sq+izm1Sq >= cellRange*cellRange) continue;
+          }
+          else {
+            double dx = ix*edgeVectors[0][0] + iy*edgeVectors[1][0] + iz*edgeVectors[2][0];
+            double min1 = xminxyz;
+            double max1 = xmaxxyz;
+            double min2 = xminxyz + dx;
+            double max2 = xmaxxyz + dx;
+            if ((max1-min2)*(max2-min1) < 0) dx = 0;
+            else if (dx > 0) dx = min2 - max1;
+            else dx = min1 - max2;
+            double dy = iy*edgeVectors[1][1] + iz*edgeVectors[2][1];
+            min1 = yminxyz;
+            max1 = ymaxxyz;
+            min2 = yminxyz + dy;
+            max2 = ymaxxyz + dy;
+            if ((max1-min2)*(max2-min1) < 0) dy = 0;
+            else if (dy > 0) dy = min2 - max1;
+            else dy = min1 - max2;
+            double dz = iz*edgeVectors[2][2];
+            min1 = zminxyz;
+            max1 = zmaxxyz;
+            min2 = zminxyz + dz;
+            max2 = zmaxxyz + dz;
+            if ((max1-min2)*(max2-min1) < 0) dz = 0;
+            else if (dy > 0) dz = min2 - max1;
+            else dz = min1 - max2;
+            if (dx*dx + dy*dy + dz*dz > range*range) continue;
+          }
           int mv = iz+(iy+ix*numCells[1])*numCells[2];
           cellOffsets.push_back(mv);
           dCell++;
@@ -115,6 +221,7 @@ void CellManager::init() {
     lastCellCount = dCell;
   }
 
+  // shouldn't this be (cellRange / (numCells - 2 cellRange)) ?????
   int xboRange = periodic[0] ? (numCells[0] - cellRange - 1)/(numCells[0] - 2*cellRange) : 0;
   int yboRange = periodic[1] ? (numCells[1] - cellRange - 1)/(numCells[1] - 2*cellRange) : 0;
   int zboRange = periodic[2] ? (numCells[2] - cellRange - 1)/(numCells[2] - 2*cellRange) : 0;
@@ -127,9 +234,16 @@ void CellManager::init() {
     for (int iy=-yboRange; iy<=yboRange; iy++) {
       for (int iz=-zboRange; iz<=zboRange; iz++) {
         int idx = (ix+xboRange)*ny*nz+(iy+yboRange)*nz+(iz+zboRange);
-        rawBoxOffsets[idx][0] = ix*bs[0];
-        rawBoxOffsets[idx][1] = iy*bs[1];
-        rawBoxOffsets[idx][2] = iz*bs[2];
+        if (rectangular) {
+          rawBoxOffsets[idx][0] = ix*bs[0];
+          rawBoxOffsets[idx][1] = iy*bs[1];
+          rawBoxOffsets[idx][2] = iz*bs[2];
+        }
+        else {
+          for (int k=0; k<3; k++) rawBoxOffsets[idx][k] += ix*edgeVectors[0][k];
+          for (int k=0; k<3; k++) rawBoxOffsets[idx][k] += iy*edgeVectors[1][k];
+          for (int k=0; k<3; k++) rawBoxOffsets[idx][k] += iz*edgeVectors[2][k];
+        }
       }
     }
   }
@@ -176,12 +290,26 @@ void CellManager::assignCells() {
   for (int iAtom=0; iAtom<numAtoms; iAtom++) {
     int cellNum = 0;
     double *r = box.getAtomPosition(iAtom);
-    for (int i=0; i<3; i++) {
-      double x = (r[i] + boxHalf[i])/bs[i];
-      int y = ((int)(cellRange + x*(numCells[i]-2*cellRange)));
-      if (y==numCells[i]-cellRange) y--;
-      else if (y==cellRange-1) y++;
-      cellNum += y*jump[i];
+    if (rectangular) {
+      for (int i=0; i<3; i++) {
+        double x = (r[i] + boxHalf[i])/bs[i];
+        int y = ((int)(cellRange + x*(numCells[i]-2*cellRange)));
+        if (y==numCells[i]-cellRange) y--;
+        else if (y==cellRange-1) y++;
+        cellNum += y*jump[i];
+      }
+    }
+    else {
+      Matrix* hInv = box.getHInv();
+      double rtmp[3] = {r[0], r[1], r[2]};
+      hInv->transform(rtmp);
+      for (int i=0; i<3; i++) {
+        const double x = rtmp[i] + 0.5;
+        int y = ((int)(cellRange + x*(numCells[i]-2*cellRange)));
+        if (y==numCells[i]-cellRange) y--;
+        else if (y==cellRange-1) y++;
+        cellNum += y*jump[i];
+      }
     }
 #ifdef DEBUG
     if (wrapMap[cellNum] != cellNum) {
@@ -216,12 +344,26 @@ void CellManager::updateAtom(int iAtom) {
   int cellNum = 0;
   const double *bs = box.getBoxSize();
   double *r = box.getAtomPosition(iAtom);
-  for (int i=0; i<3; i++) {
-    double x = (r[i] + boxHalf[i])/bs[i];
-    int y = ((int)(cellRange + x*(numCells[i]-2*cellRange)));
-    if (y==numCells[i]-cellRange) y--;
-    else if (y==cellRange-1) y++;
-    cellNum += y*jump[i];
+  if (rectangular) {
+    for (int i=0; i<3; i++) {
+      double x = (r[i] + boxHalf[i])/bs[i];
+      int y = ((int)(cellRange + x*(numCells[i]-2*cellRange)));
+      if (y==numCells[i]-cellRange) y--;
+      else if (y==cellRange-1) y++;
+      cellNum += y*jump[i];
+    }
+  }
+  else {
+    Matrix* hInv = box.getHInv();
+    double rtmp[3] = {r[0], r[1], r[2]};
+    hInv->transform(rtmp);
+    for (int i=0; i<3; i++) {
+      const double x = rtmp[i] + 0.5;
+      int y = ((int)(cellRange + x*(numCells[i]-2*cellRange)));
+      if (y==numCells[i]-cellRange) y--;
+      else if (y==cellRange-1) y++;
+      cellNum += y*jump[i];
+    }
   }
 
   int oldCell = atomCell[iAtom];
