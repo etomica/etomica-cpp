@@ -294,8 +294,8 @@ void Box::centralImage(double *dr) {
   hInv->transform(dr);
   for (int i=0; i<3; i++) {
     if (!periodic[i]) continue;
-    while (dr[i] > boxHalf[i]) dr[i]--;
-    while (dr[i] < -boxHalf[i]) dr[i]++;
+    while (dr[i] > 0.5) dr[i]--;
+    while (dr[i] < -0.5) dr[i]++;
   }
   h->transform(dr);
 }
