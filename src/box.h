@@ -26,9 +26,14 @@ class Box {
     int **atomTypes;
     void boxSizeUpdated();
     Matrix *h, *hInv;
+    int nTransformVectors, transformVectorCapacity;
+    double** transformVectors;
+    double* tV2;
 
     SpeciesList &speciesList;
     const bool rectangular;
+
+    void testTransformVector(double* t);
 
   public:
     Box(SpeciesList &speciesList);

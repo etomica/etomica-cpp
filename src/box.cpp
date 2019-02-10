@@ -11,7 +11,9 @@
 #include "matrix.h"
 #include "vector.h"
 
-Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpecies(sl.size()), numAtomsBySpecies(nullptr), maxNumAtomsBySpecies(nullptr), speciesNumAtoms(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), atomTypes(nullptr), speciesList(sl), rectangular(true) {
+#define BOX_HALF_TOL 0.5000000001
+
+Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpecies(sl.size()), numAtomsBySpecies(nullptr), maxNumAtomsBySpecies(nullptr), speciesNumAtoms(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), atomTypes(nullptr), nTransformVectors(0), transformVectorCapacity(0), transformVectors(nullptr), tV2(nullptr), speciesList(sl), rectangular(true) {
   edgeVectors = (double**)malloc2D(3, 3, sizeof(double));
   for (int i=0; i<3; i++) {
     boxSize[i] = 0;
@@ -38,13 +40,13 @@ Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpe
   periodic[0] = periodic[1] = periodic[2] = true;
 }
 
-Box::Box(SpeciesList &sl, bool rec) : positions(nullptr), velocities(nullptr), knownNumSpecies(sl.size()), numAtomsBySpecies(nullptr), maxNumAtomsBySpecies(nullptr), speciesNumAtoms(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), atomTypes(nullptr), speciesList(sl), rectangular(rec) {
+Box::Box(SpeciesList &sl, bool rec) : positions(nullptr), velocities(nullptr), knownNumSpecies(sl.size()), numAtomsBySpecies(nullptr), maxNumAtomsBySpecies(nullptr), speciesNumAtoms(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), atomTypes(nullptr), nTransformVectors(0), transformVectorCapacity(0), transformVectors(nullptr), tV2(nullptr), speciesList(sl), rectangular(rec) {
   edgeVectors = (double**)malloc2D(3, 3, sizeof(double));
   for (int i=0; i<3; i++) {
     boxSize[i] = 0;
     for (int j=0; j<3; j++) edgeVectors[i][j] = 0;
   }
-  if (rectangular) {
+  if (!rectangular) {
     h = new Matrix(3,3);
     hInv = new Matrix(3,3);
   }
@@ -94,6 +96,7 @@ Box::~Box() {
   if (!rectangular) {
     delete h;
     delete hInv;
+    free2D((void**)transformVectors);
   }
 }
 
@@ -156,7 +159,7 @@ void Box::initCoordinates() {
             double* jPos = s->getAtomPosition(jAtom-firstAtom);
             double* rj = getAtomPosition(jAtom);
             for (int k=0; k<3; k++) rj[k] = ri[k] + jPos[k];
-            nearestImage(rj);
+            centralImage(rj);
           }
           iMolecule++;
         }
@@ -269,13 +272,88 @@ void Box::getMoleculeInfo(int iMolecule, int &iSpecies, int &iMoleculeInSpecies,
   la = fa + speciesNumAtoms[iSpecies] - 1;
 }
 
+void Box::testTransformVector(double* t) {
+  for (int i=0; i<nTransformVectors; i++) {
+    double dot = 0.5*fabs(Vector::dot(t, transformVectors[i]))/tV2[i];
+    if (dot > 1-BOX_HALF_TOL) return;
+  }
+  nTransformVectors++;
+  if (transformVectorCapacity < nTransformVectors) {
+    transformVectors = (double**)realloc2D((void**)transformVectors, nTransformVectors, 3, sizeof(double));
+    tV2 = (double*)realloc(tV2, nTransformVectors*sizeof(double));
+    transformVectorCapacity = nTransformVectors;
+  }
+  double sq = 0;
+  for (int k=0; k<3; k++) {
+    transformVectors[nTransformVectors-1][k] = t[k];
+    sq += t[k]*t[k];
+  }
+  tV2[nTransformVectors-1] = sqrt(sq);
+}
+
 void Box::boxSizeUpdated() {
   for (int i=0; i<3; i++) boxHalf[i] = 0.5*boxSize[i];
   if (!rectangular) {
+    if (volume()==0) return;
     h->setRows(edgeVectors);
+    h->transpose();
     hInv->E(*h);
     hInv->invert();
     // find transform vectors for nearestImage
+    if (transformVectors==nullptr) {
+      transformVectors = (double**)malloc2D(3, 3, sizeof(double));
+      tV2 = (double*)malloc(3*sizeof(double));
+      nTransformVectors = transformVectorCapacity = 3;
+    }
+    for (int i=0; i<3; i++) {
+      double sq = 0;
+      for (int j=0; j<3; j++) {
+        transformVectors[i][j] = edgeVectors[i][j];
+        sq += edgeVectors[i][j]*edgeVectors[i][j];
+      }
+      tV2[i] = sq;
+    }
+    // test edge pairs
+    double temp1[3];
+    for (int i=0; i<3-1; i++) {
+      for (int j=i+1; j<3; j++) {
+        double dot = Vector::dot(edgeVectors[i], edgeVectors[j]);
+        if (fabs(dot) <= 1e-10) continue;
+        double s = dot < 0 ? -1 : +1;
+        for (int k=0; k<3; k++) temp1[k] = edgeVectors[i][k] + s*edgeVectors[j][k];
+        testTransformVector(temp1);
+      }
+    }
+
+    //test edge triplets
+    double dot01 = Vector::dot(edgeVectors[0], edgeVectors[1]);
+    double dot02 = Vector::dot(edgeVectors[0], edgeVectors[2]);
+    double dot12 = Vector::dot(edgeVectors[1], edgeVectors[2]);
+    
+    double sum;
+    sum = dot01 + dot02 + dot12;
+    if (sum < 1e-10) {
+      for (int k=0; k<3; k++) temp1[k] = edgeVectors[0][k] + edgeVectors[1][k] + edgeVectors[2][k];
+      testTransformVector(temp1);
+    }
+
+    sum = dot01 - dot02 - dot12;
+    if (sum < 1e-10) {
+      for (int k=0; k<3; k++) temp1[k] = edgeVectors[0][k] + edgeVectors[1][k] - edgeVectors[2][k];
+      testTransformVector(temp1);
+    }
+
+    sum = -dot01 + dot02 - dot12; 
+    if (sum < 1e-10) {
+      for (int k=0; k<3; k++) temp1[k] = edgeVectors[0][k] - edgeVectors[1][k] + edgeVectors[2][k];
+      testTransformVector(temp1);
+    }
+
+    sum = -dot01 - dot02 + dot12; 
+    if (sum < 1e-10) {
+      for (int k=0; k<3; k++) temp1[k] = edgeVectors[0][k] - edgeVectors[1][k] - edgeVectors[2][k];
+      testTransformVector(temp1);
+    }
   }
 }
 
@@ -301,10 +379,33 @@ void Box::centralImage(double *dr) {
 }
 
 void Box::nearestImage(double *dr) {
-  for (int i=0; i<3; i++) {
-    if (!periodic[i]) continue;
-    while (dr[i] > boxHalf[i]) dr[i] -= boxSize[i];
-    while (dr[i] < -boxHalf[i]) dr[i] += boxSize[i];
+  if (rectangular) {
+    for (int i=0; i<3; i++) {
+      if (!periodic[i]) continue;
+      while (dr[i] > boxHalf[i]) dr[i] -= boxSize[i];
+      while (dr[i] < -boxHalf[i]) dr[i] += boxSize[i];
+    }
+  }
+  else {
+    // To get out of the loop, we need to check n consecutive transformVectors
+    // without applying any of them.  If we reach the end, then we wrap back around.
+    for (int noTransformCount=0, i=0; noTransformCount<nTransformVectors; i++) {
+      double dot = Vector::dot(transformVectors[i],dr)/tV2[i];
+      if (fabs(dot) > BOX_HALF_TOL) {
+        dot = round(dot);
+        for (int k=0; k<3; k++) dr[k] -= dot*transformVectors[i][k];
+        // We transformed, but this now counts as a non-transfomrm -- we don't need to check it again.
+        noTransformCount = 1;
+      }
+      else {
+        noTransformCount++;
+      }
+      if (i==nTransformVectors-1) {
+        // we finished a pass, but transformed a vector.
+        // make another pass (we'll stop at the vector we transformed)
+        i=-1;
+      }
+    }
   }
 }
 
@@ -367,7 +468,7 @@ void Box::scaleBoxTo(double bx, double by, double bz) {
   // now wrap atoms back inside box
   for (int iAtom=0; iAtom<na; iAtom++) {
     double* ri = getAtomPosition(iAtom);
-    nearestImage(ri);
+    centralImage(ri);
   }
 }
 
