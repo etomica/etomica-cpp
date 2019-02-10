@@ -4,3 +4,4 @@ em/build
 em/WebIDLGrammar.pkl
 em/parser.out
 em/webidl.mk
+src/config.mk
