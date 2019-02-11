@@ -20,7 +20,7 @@ class Minimize : public PotentialCallbackMoleculePhi {
     double lastDR;
     double lastU, lastDU;
     double lastStep;
-    double maxDR, maxDtheta;
+    double maxDR, maxDtheta, maxDL;
     bool sdStep;
   public:
     Minimize(PotentialMaster& potentialMaster, bool flexBox);
