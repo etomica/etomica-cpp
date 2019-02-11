@@ -38,7 +38,6 @@ int main(int argc, char** argv) {
   pm.addParameter("steps", "10000");
   pm.addParameter("s", "4");
   pm.addParameter("alpha", "0.3");
-  pm.readFile("water.in");
   if (argc>1) pm.parseArgs(argc-1, argv+1);
   int N0 = pm.getInt("N0");
   double L0 = pm.getDouble("L0");
@@ -154,18 +153,29 @@ int main(int argc, char** argv) {
   double* data = meterFullE.getData();
   double lastU = data[0]/numMolecules;
   printf("u0: %f\n", lastU);
+  MeterFullCompute meterFoo(potentialMaster);
+  PotentialCallbackPressure pcp(box, temperature, true);
+  meterFoo.addCallback(&pcp);
+  PotentialCallbackVirialTensor pcvt(box);
+  meterFoo.addCallback(&pcvt);
+  double *p = meterFoo.getData();
+  printf("p0: %f\n", p[0]);
+  printf("  % 15.9e  % 15.9e  % 15.9e\n", p[1], p[2], p[3]);
+  printf("  % 15.9e  % 15.9e  % 15.9e\n", p[2], p[4], p[5]);
+  printf("  % 15.9e  % 15.9e  % 15.9e\n", p[3], p[5], p[6]);
 
   double t1 = getTime();
-  Minimize min(potentialMaster, false);
-  for (int i=0; i<10; i++) {
+  Minimize min(potentialMaster, true);
+  const double* bs = box.getBoxSize();
+  for (int i=0; i<500; i++) {
     min.doStep();
     double lastDR = min.getLastDR();
     data = meterFullE.getData();
     double unow = data[0]/numMolecules;
     double du = unow-lastU;
-    printf("%d % 10.4e % 10.4e\n", i, lastDR, unow-lastU);
+    printf("%d % 10.4e % 10.4e  %8.5f %8.5f %8.5f\n", i, lastDR, unow-lastU, bs[0], bs[1], bs[2]);
     lastU = unow;
-    if (fabs(du) < uTol) break;
+    //if (fabs(du) < uTol) break;
   }
   double t2 = getTime();
   printf("u: %20.15e\n", lastU);
@@ -206,7 +216,6 @@ int main(int argc, char** argv) {
 
   numCells = potentialMaster.getNumCells();
   printf("cells: %d %d %d\n", numCells[0], numCells[1], numCells[2]);
-  PotentialCallbackPressure pcp(box, temperature, true);
   IntegratorMC integrator(potentialMaster, rand);
   integrator.setTemperature(temperature);
   integrator.reset();
@@ -219,10 +228,11 @@ int main(int argc, char** argv) {
   pcHMA.setReturnAnharmonic(true);
   pcHMA.findShiftV();
 
-  MeterFullCompute meterFoo(potentialMaster);
-  meterFoo.addCallback(&pcp);
-  double *p = meterFoo.getData();
+  p = meterFoo.getData();
   printf("p0: %f\n", p[0]);
+  printf("  % 15.9e  % 15.9e  % 15.9e\n", p[1], p[2], p[3]);
+  printf("  % 15.9e  % 15.9e  % 15.9e\n", p[2], p[4], p[5]);
+  printf("  % 15.9e  % 15.9e  % 15.9e\n", p[3], p[5], p[6]);
   double u0 = integrator.getPotentialEnergy();
   printf("u: %f\n", u0/numMolecules);
   integrator.doSteps(steps/10);
