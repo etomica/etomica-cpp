@@ -20,6 +20,7 @@ Minimize::Minimize(PotentialMaster& pm, bool fb) : PotentialCallbackMoleculePhi(
   sdStep = false;
   maxDR = 0.3;
   maxDtheta = 0.1;
+  maxDL = 0.001;
 }
 
 Minimize::~Minimize() {
@@ -75,7 +76,7 @@ void Minimize::doStep() {
   phiMat.invert();
 
   phiMat.transform(fMolecule);
-  double mr = 0, mt = 0;
+  double mr = 0, mt = 0, ml = 0;
   for (int iMolecule=0; iMolecule<nm; iMolecule++) {
     for (int k=nmap[iMolecule]; k<nmap[iMolecule]+3; k++) {
       if (fabs(fMolecule[k]) > mr) mr = fabs(fMolecule[k]);
@@ -84,9 +85,13 @@ void Minimize::doStep() {
       if (fabs(fMolecule[k]) > mt) mt = fabs(fMolecule[k]);
     }
   }
+  for (int k=0; k<3; k++) {
+    if (fabs(fMolecule[nmap[N]+k]) > ml) ml = fabs(fMolecule[nmap[N]+k]);
+  }
   double scaleback = 1;
   if (mr > maxDR) scaleback = maxDR/mr;
   if (mt > maxDtheta && maxDtheta/mt<scaleback) scaleback = maxDtheta/mt;
+  if (ml > maxDL && maxDL/ml<scaleback) scaleback = maxDL/ml;
   if (scaleback<1) {
     //printf("scaleback %f\n", scaleback);
     for (int i=0; i<m; i++) {
