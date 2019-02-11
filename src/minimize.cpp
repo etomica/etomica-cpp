@@ -191,7 +191,7 @@ void Minimize::doStep() {
         lastDR += idr2[k]*idr2[k];
         ri[k] += idR[k];
       }
-      box.nearestImage(ri);
+      box.centralImage(ri);
     }
   }
   if (flexBox) {

@@ -155,7 +155,7 @@ void PotentialMasterList::reset() {
   }
   for (int iAtom=0; iAtom<boxNumAtoms; iAtom++) {
     double *ri = box.getAtomPosition(iAtom);
-    box.nearestImage(ri);
+    box.centralImage(ri);
     for (int j=0; j<3; j++) oldAtomPositions[iAtom][j] = ri[j];
   }
 

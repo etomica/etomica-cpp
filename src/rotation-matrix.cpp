@@ -74,7 +74,7 @@ void RotationMatrix::transformAbout(double* vec, double* center, Box& box) {
       vec[i] += matrix[i][j]*dr[j];
     }
   }
-  box.nearestImage(vec);
+  box.centralImage(vec);
 }
 
 void RotationMatrix::transpose() {

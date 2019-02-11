@@ -24,7 +24,7 @@ void vecE(Box& box, int iAtom, double* v) {
   r[0] = v[0];
   r[1] = v[1];
   r[2] = v[2];
-  box.nearestImage(r);
+  box.centralImage(r);
 }
 
 int main(int argc, char** argv) {

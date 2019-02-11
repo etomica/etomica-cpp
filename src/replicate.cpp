@@ -58,6 +58,6 @@ void Replicate::go(Box& box, const int replicates[3]) {
   }
   for (int iAtom=0; iAtom<box.getNumAtoms(); iAtom++) {
     double* ri = box.getAtomPosition(iAtom);
-    box.nearestImage(ri);
+    box.centralImage(ri);
   }
 }

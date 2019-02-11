@@ -783,5 +783,5 @@ double PotentialMaster::uTotalFromAtoms() {
 }
 
 void PotentialMaster::updateAtom(int iAtom) {
-  box.nearestImage(box.getAtomPosition(iAtom));
+  box.centralImage(box.getAtomPosition(iAtom));
 }

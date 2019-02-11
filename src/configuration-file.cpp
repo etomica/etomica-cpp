@@ -54,7 +54,7 @@ void ConfigurationFile::go() {
       }
       c = c2;
     }
-    box.nearestImage(ri);
+    box.centralImage(ri);
   }
   fclose(inp);
 }

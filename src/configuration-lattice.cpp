@@ -59,7 +59,7 @@ void ConfigurationLattice::go(Box& box, int numBasisAtoms, double** basis, doubl
             double* jPos = s->getAtomPosition(jAtom-firstAtom);
             double* rj = box.getAtomPosition(jAtom);
             for (int k=0; k<3; k++) rj[k] = ri[k] + jPos[k];
-            box.nearestImage(rj);
+            box.centralImage(rj);
           }
           iMolecule++;
         }
