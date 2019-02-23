@@ -63,8 +63,9 @@ void CellManager::init() {
   int totalCells = 1;
   const double* bs = box.getBoxSize();
   const bool* periodic = box.getPeriodic();
-  double xminxyz, xmaxxyz, yminxyz, ymaxxyz, zminxyz, zmaxxyz;
-  const double* edgeVectors[3];
+  double xminxyz=0, xmaxxyz=0, yminxyz=0, ymaxxyz=0, zminxyz=0, zmaxxyz=0;
+  const double* edgeVectors[3] = {nullptr,nullptr,nullptr};
+  int numBoxCells[3];
   if (rectangular) {
     for (int i=0; i<3; i++) {
       // with cell lists, we can accommodate rc>L/2
@@ -75,7 +76,7 @@ void CellManager::init() {
         exit(1);
       }
       // include cellRange of padding on each side of the box
-      numCells[i] = ((int)floor(bs[i]/minCellSize));
+      numBoxCells[i] = numCells[i] = ((int)floor(bs[i]/minCellSize));
       if (periodic[i]) numCells[i] += cellRange*2;
       totalCells *= numCells[i];
     }
@@ -85,22 +86,23 @@ void CellManager::init() {
     edgeVectors[0] = box.getEdgeVector(0);
     edgeVectors[1] = box.getEdgeVector(1);
     edgeVectors[2] = box.getEdgeVector(2);
-    numCells[2] = (int)floor(edgeVectors[2][2]/minCellSize);
+    numBoxCells[2] = numCells[2] = (int)floor(edgeVectors[2][2]/minCellSize);
     if (periodic[2]) numCells[2] += cellRange*2;
     totalCells *= numCells[2];
 
     // y
-    double l20 = edgeVectors[2][0]/numCells[2];
-    double l21 = edgeVectors[2][1]/numCells[2];
-    double l22 = edgeVectors[2][2]/numCells[2];
+    double l20 = edgeVectors[2][0]/numBoxCells[2];
+    double l21 = edgeVectors[2][1]/numBoxCells[2];
+    double l22 = edgeVectors[2][2]/numBoxCells[2];
     double l10 = edgeVectors[1][0];
     double l11 = edgeVectors[1][1];
     // Ly + alpha Lz
-    double alpha = -(l10+l11)/(l20*l20+l21*l21+l22*l22);
-    double maxyz = (l10+alpha*l20)*(l10+alpha*l20) + (l11+alpha*l21)*(l11+alpha*l21) + (alpha*l22)*(alpha*l22);
-    numCells[1] = (int)floor(maxyz / minCellSize);
-    l10 /= numCells[1];
-    l11 /= numCells[1];
+    double alpha = -(l10*l20+l11*l21)/(l20*l20+l21*l21+l22*l22);
+    double maxyz = sqrt((l10+alpha*l20)*(l10+alpha*l20) + (l11+alpha*l21)*(l11+alpha*l21) + (alpha*l22)*(alpha*l22));
+    numBoxCells[1] = numCells[1] = (int)floor(maxyz / minCellSize);
+    if (periodic[1]) numCells[1] += cellRange*2;
+    l10 /= numBoxCells[1];
+    l11 /= numBoxCells[1];
 
     // Lx + alpha Ly + beta Lz
     // alpha = ab * b + a0
@@ -115,30 +117,22 @@ void CellManager::init() {
     double maxxyz_x = l00+alpha*l10+beta*l20;
     double maxxyz_y = alpha*l11+beta*l21;
     double maxxyz_z = beta*l22;
-    double maxxyz = maxxyz_x*maxxyz_x + maxxyz_y*maxxyz_y + maxxyz_z*maxxyz_z;
-    numCells[0] = (int)floor(maxxyz / minCellSize);
-
-    /*alpha = -(l00)/(l10*l10+l11*l11);
-    double maxxy = (l00+alpha*l10)*(l00+alpha*l10) + (alpha*l11)*(alpha*l11);
-    int n0xy = (int)floor(maxxy / minCellSize);
-
-    double alpha = -(l00)/(l20*l20+l21*l21+l22*l22);
-    double maxxz = (l00+alpha*l20)*(l00+alpha*l20) + (alpha*l21)*(alpha*l21) + (alpha*l22)*(alpha*l22);
-    int n0xz = (int)floor(maxxz / minCellSize);
-    int n0 = n0xy < n0xz ? n0xy : n0xz;*/
+    double maxxyz = sqrt(maxxyz_x*maxxyz_x + maxxyz_y*maxxyz_y + maxxyz_z*maxxyz_z);
+    numBoxCells[0] = numCells[0] = (int)floor(maxxyz / minCellSize);
+    if (periodic[0]) numCells[0] += cellRange*2;
 
     zminxyz = 0;
-    zmaxxyz = edgeVectors[2][2];
+    zmaxxyz = edgeVectors[2][2]/numBoxCells[2];
     yminxyz = 0;
-    if (edgeVectors[2][1] < 0) yminxyz += edgeVectors[2][1];
-    ymaxxyz = edgeVectors[1][1];
-    if (edgeVectors[2][1] > 0) yminxyz += edgeVectors[2][1];
+    if (edgeVectors[2][1] < 0) yminxyz += edgeVectors[2][1]/numBoxCells[2];
+    ymaxxyz = edgeVectors[1][1]/numBoxCells[1];
+    if (edgeVectors[2][1] > 0) yminxyz += edgeVectors[2][1]/numBoxCells[2];
     xminxyz = 0;
-    if (edgeVectors[1][0] < 0) xminxyz += edgeVectors[1][0];
-    if (edgeVectors[2][0] < 0) xminxyz += edgeVectors[2][0];
-    xmaxxyz = edgeVectors[0][0];
-    if (edgeVectors[1][0] > 0) xmaxxyz += edgeVectors[1][0];
-    if (edgeVectors[2][0] > 0) xmaxxyz += edgeVectors[2][0];
+    if (edgeVectors[1][0] < 0) xminxyz += edgeVectors[1][0]/numBoxCells[1];
+    if (edgeVectors[2][0] < 0) xminxyz += edgeVectors[2][0]/numBoxCells[2];
+    xmaxxyz = edgeVectors[0][0]/numBoxCells[0];
+    if (edgeVectors[1][0] > 0) xmaxxyz += edgeVectors[1][0]/numBoxCells[1];
+    if (edgeVectors[2][0] > 0) xmaxxyz += edgeVectors[2][0]/numBoxCells[2];
   }
   cellLastAtom.resize(totalCells);
   wrapMap.resize(totalCells);
@@ -153,17 +147,19 @@ void CellManager::init() {
     // but exclude any cells handle in the previous passes
     int icd2 = icd*icd;
     int iz2;
-    for (int iz=0; (iz2=iz*iz)<=icd2; iz++) {
+    for (int iz=0; (iz2=iz*iz)<=icd2 && iz<=cellRange; iz++) {
       int izm1 = iz==0 ? 0 : (abs(iz)-1);
       int izm1Sq = izm1*izm1;
       int iy2Max = icd2-iz2;
       int iyMax = (int)sqrt(iy2Max+0.001);
+      if (iyMax>cellRange) iyMax = cellRange;
       for (int iy=-iyMax; iy<=iyMax; iy++) {
         int iym1 = iy==0 ? 0 : (abs(iy)-1);
         int iym1Sq = iym1*iym1;
         int iy2 = iy*iy;
         int ix2Max = iy2Max-iy2;
         int ixMax = (int)sqrt(ix2Max+0.001);
+        if (ixMax>cellRange) ixMax = cellRange;
         int ix2Min = (icd-1)*(icd-1) - iz2 - iy2;
         int ixMin;
         if (ix2Min<0) {
@@ -185,29 +181,29 @@ void CellManager::init() {
             if (ixm1Sq+iym1Sq+izm1Sq >= cellRange*cellRange) continue;
           }
           else {
-            double dx = ix*edgeVectors[0][0] + iy*edgeVectors[1][0] + iz*edgeVectors[2][0];
+            double dx = ix*edgeVectors[0][0]/numBoxCells[0] + iy*edgeVectors[1][0]/numBoxCells[1] + iz*edgeVectors[2][0]/numBoxCells[2];
             double min1 = xminxyz;
             double max1 = xmaxxyz;
             double min2 = xminxyz + dx;
             double max2 = xmaxxyz + dx;
-            if ((max1-min2)*(max2-min1) < 0) dx = 0;
+            if ((max1-min2)*(max2-min1) > 0) dx = 0;
             else if (dx > 0) dx = min2 - max1;
             else dx = min1 - max2;
-            double dy = iy*edgeVectors[1][1] + iz*edgeVectors[2][1];
+            double dy = iy*edgeVectors[1][1]/numBoxCells[1] + iz*edgeVectors[2][1]/numBoxCells[2];
             min1 = yminxyz;
             max1 = ymaxxyz;
             min2 = yminxyz + dy;
             max2 = ymaxxyz + dy;
-            if ((max1-min2)*(max2-min1) < 0) dy = 0;
+            if ((max1-min2)*(max2-min1) > 0) dy = 0;
             else if (dy > 0) dy = min2 - max1;
             else dy = min1 - max2;
-            double dz = iz*edgeVectors[2][2];
+            double dz = iz*edgeVectors[2][2]/numBoxCells[2];
             min1 = zminxyz;
             max1 = zmaxxyz;
             min2 = zminxyz + dz;
             max2 = zmaxxyz + dz;
-            if ((max1-min2)*(max2-min1) < 0) dz = 0;
-            else if (dy > 0) dz = min2 - max1;
+            if ((max1-min2)*(max2-min1) > 0) dz = 0;
+            else if (dz > 0) dz = min2 - max1;
             else dz = min1 - max2;
             if (dx*dx + dy*dy + dz*dz > range*range) continue;
           }
@@ -240,7 +236,7 @@ void CellManager::init() {
           rawBoxOffsets[idx][2] = iz*bs[2];
         }
         else {
-          for (int k=0; k<3; k++) rawBoxOffsets[idx][k] += ix*edgeVectors[0][k];
+          for (int k=0; k<3; k++) rawBoxOffsets[idx][k] = ix*edgeVectors[0][k];
           for (int k=0; k<3; k++) rawBoxOffsets[idx][k] += iy*edgeVectors[1][k];
           for (int k=0; k<3; k++) rawBoxOffsets[idx][k] += iz*edgeVectors[2][k];
         }
