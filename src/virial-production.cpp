@@ -94,18 +94,18 @@ void VirialProduction::printResults(const char **targetNames) {
   printf("target overlap average:    % 22.15e  error: %12.5e  acor: % 7.5f\n", targetStats[numTargets-1][AVG_AVG], targetStats[numTargets-1][AVG_ERR], targetStats[numTargets-1][AVG_ACOR]);
   if (numTargets == 2) return;
   for (int i=1; i<numTargets-1; i++) {
-    char name[28];
+    char name[40];
     if (targetNames && strlen(targetNames[i]) > 11) {
       fprintf(stderr, "truncating name %s to 11 characters\n", targetNames[i]);
     }
-    if (targetNames && targetNames[i]) snprintf(name, 27, "%.11s average:", targetNames[i]);
-    else snprintf(name, 27, "extra %d average:", i);
+    if (targetNames && targetNames[i]) snprintf(name, 39, "%.11s average:", targetNames[i]);
+    else snprintf(name, 39, "extra %d average:", i);
     printf("%-26s % 22.15e  error: %12.5e  acor: % 7.5f\n", name, targetStats[i][AVG_AVG], targetStats[i][AVG_ERR], targetStats[i][AVG_ACOR]);
-    if (targetNames && targetNames[i]) snprintf(name, 27, "%.11s ratio average:", targetNames[i]);
-    else snprintf(name, 27, "extra %d ratio average:", i);
+    if (targetNames && targetNames[i]) snprintf(name, 39, "%.11s ratio average:", targetNames[i]);
+    else snprintf(name, 39, "extra %d ratio average:", i);
     printf("%-26s % 22.15e  error: %12.5e   cor: % 7.5f\n", name, targetRatioStats[i][AVG_AVG], targetRatioStats[i][AVG_ERR], targetBCStats[i][numTargets-1]);
-    if (targetNames && targetNames[i]) snprintf(name, 27, "full %.11s average:", targetNames[i]);
-    else snprintf(name, 27, "full extra %d average:", i);
+    if (targetNames && targetNames[i]) snprintf(name, 39, "full %.11s average:", targetNames[i]);
+    else snprintf(name, 39, "full extra %d average:", i);
     printf("%-26s % 22.15e  error: %12.5e\n", name, fullStats[i][0], fullStats[i][1]);
   }
   if (numTargets == 1) return;
