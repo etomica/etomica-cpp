@@ -32,6 +32,7 @@ class Box {
 
     SpeciesList &speciesList;
     const bool rectangular;
+    bool hDirty;
 
     void testTransformVector(double* t);
 
@@ -99,6 +100,6 @@ class Box {
     void getMoleculeInfoAtom(int iAtom, int &iMoleculeInSpecies, int &iSpecies, int &firstAtom);
     const bool* getPeriodic();
     void setPeriodic(const bool* newPeriodic);
-    Matrix* getH() {return h;}
-    Matrix* getHInv() {return hInv;}
+    Matrix* getH();
+    Matrix* getHInv();
 };

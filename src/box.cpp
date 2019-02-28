@@ -14,6 +14,7 @@
 #define BOX_HALF_TOL 0.5000000001
 
 Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpecies(sl.size()), numAtomsBySpecies(nullptr), maxNumAtomsBySpecies(nullptr), speciesNumAtoms(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), atomTypes(nullptr), nTransformVectors(0), transformVectorCapacity(0), transformVectors(nullptr), tV2(nullptr), speciesList(sl), rectangular(true) {
+  hDirty = false;
   edgeVectors = (double**)malloc2D(3, 3, sizeof(double));
   for (int i=0; i<3; i++) {
     boxSize[i] = 0;
@@ -38,6 +39,8 @@ Box::Box(SpeciesList &sl) : positions(nullptr), velocities(nullptr), knownNumSpe
     speciesNumAtoms[i] = speciesList.get(i)->getNumAtoms();
   }
   periodic[0] = periodic[1] = periodic[2] = true;
+  h = new Matrix(3,3);
+  hInv = new Matrix(3,3);
 }
 
 Box::Box(SpeciesList &sl, bool rec) : positions(nullptr), velocities(nullptr), knownNumSpecies(sl.size()), numAtomsBySpecies(nullptr), maxNumAtomsBySpecies(nullptr), speciesNumAtoms(nullptr), numMoleculesBySpecies(nullptr), maxNumMoleculesBySpecies(nullptr), firstAtom(nullptr), atomTypes(nullptr), nTransformVectors(0), transformVectorCapacity(0), transformVectors(nullptr), tV2(nullptr), speciesList(sl), rectangular(rec) {
@@ -46,13 +49,8 @@ Box::Box(SpeciesList &sl, bool rec) : positions(nullptr), velocities(nullptr), k
     boxSize[i] = 0;
     for (int j=0; j<3; j++) edgeVectors[i][j] = 0;
   }
-  if (!rectangular) {
-    h = new Matrix(3,3);
-    hInv = new Matrix(3,3);
-  }
-  else {
-    h = hInv = nullptr;
-  }
+  h = new Matrix(3,3);
+  hInv = new Matrix(3,3);
 
   int ss = knownNumSpecies;
   numAtomsBySpecies = new int[ss];
@@ -355,6 +353,9 @@ void Box::boxSizeUpdated() {
       testTransformVector(temp1);
     }
   }
+  else {
+    hDirty = true;
+  }
 }
 
 double Box::volume() {
@@ -484,3 +485,22 @@ void Box::enableVelocities() {
   }
 }
 
+Matrix* Box::getH() {
+  if (rectangular && hDirty) {
+    h->setRows(edgeVectors);
+    h->transpose();
+    hInv->E(*h);
+    hDirty = false;
+  }
+  return h;
+}
+
+Matrix* Box::getHInv() {
+  if (rectangular && hDirty) {
+    h->setRows(edgeVectors);
+    h->transpose();
+    hInv->E(*h);
+    hDirty = false;
+  }
+  return hInv;
+}
