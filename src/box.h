@@ -92,6 +92,7 @@ class Box {
     void setEdgeVector(int i, double x, double y, double z);
     // sets box size and scales molecule coordinates
     void scaleBoxTo(double x, double y, double z);
+    void scaleBoxToEdgeVectors(double *x, double *y, double *z);
     void setNumMolecules(int iSpecies, int numMolecules);
     double* getAtomVelocity(int iAtom);
     void enableVelocities();

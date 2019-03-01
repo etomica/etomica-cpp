@@ -436,6 +436,47 @@ void Box::setEdgeVector(int i, double x, double y, double z) {
   boxSizeUpdated();
 }
 
+void Box::scaleBoxToEdgeVectors(double *ex, double *ey, double *ez) {
+  // set h with new edge vectors, leave hInv with the old ones
+  for (int k=0; k<3; k++) {
+    edgeVectors[0][k] = ex[k];
+    edgeVectors[1][k] = ey[k];
+    edgeVectors[2][k] = ez[k];
+  }
+  h->setRows(edgeVectors);
+  h->transpose();
+
+  int nm = getTotalNumMolecules();
+  // first unwrap and move molecules
+  for (int iMolecule=0; iMolecule<nm; iMolecule++) {
+    int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
+    getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
+    Species* species = speciesList.get(iSpecies);
+    double* center = species->getMoleculeCOM(*this, iFirstAtom, iLastAtom);
+    for (int jAtom=iFirstAtom; jAtom<=iLastAtom; jAtom++) {
+      double* rj = getAtomPosition(jAtom);
+      for (int k=0; k<3; k++) rj[k] -= center[k];
+      nearestImage(rj);
+    }
+    hInv->transform(center);
+    h->transform(center);
+    for (int jAtom=iFirstAtom; jAtom<=iLastAtom; jAtom++) {
+      double* rj = getAtomPosition(jAtom);
+      for (int k=0; k<3; k++) rj[k] += center[k];
+    }
+  }
+  // now change box size
+  setEdgeVector(0, ex[0], ex[1], ex[2]);
+  setEdgeVector(1, ey[0], ey[1], ey[2]);
+  setEdgeVector(2, ez[0], ez[1], ez[2]);
+  int na = getNumAtoms();
+  // now wrap atoms back inside box
+  for (int iAtom=0; iAtom<na; iAtom++) {
+    double* ri = getAtomPosition(iAtom);
+    centralImage(ri);
+  }
+}
+
 void Box::scaleBoxTo(double bx, double by, double bz) {
 
   /*for (int iAtom=0; iAtom<getNumAtoms(); iAtom++) {
