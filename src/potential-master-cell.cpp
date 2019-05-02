@@ -353,7 +353,13 @@ double PotentialMasterCell::oldIntraMoleculeEnergyLS(int iAtom, int iLastAtom) {
     double rc2 = iCutoffs[jType];
     if (rc2 < minR2) continue;
     const double *rj = box.getAtomPosition(jAtom);
-    for (int ijbo=0; ijbo<numRawBoxOffsets; ijbo++) {
+    int jNumRawBoxOffsets = numRawboxOffsets;
+    // we want to look at half of the interactions.  We get that by skipping
+    // jAtom<iAtom, but for jAtom==iAtom, we get everything.  box offsets are
+    // stored regularly, so we can skip the second half (box offset=0 will
+    // never be useful for jAtom==iAtom)
+    if (iAtom==jAtom) jNumRawBoxOffsets /= 2;
+    for (int ijbo=0; ijbo<jNumRawBoxOffsets; ijbo++) {
       double* jbo = rawBoxOffsets[ijbo];
       handleComputeOne(pij, ri, rj, jbo, iAtom, jAtom, u, rc2, 0, nullptr, iType, jType, true);
     }
