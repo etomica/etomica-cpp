@@ -189,7 +189,7 @@ int main(int argc, char** argv) {
   }
   if (!cheap) {
     // we optimized for 2nd derivative.  now optimize for energy
-    ewald.getOptimalAlpha(s, alpha, rc, kCut);
+    ewald.getOptimalAlpha(s, alpha, rc, kCut, 0);
     uq = 4*qH*qH*erfc(rc*alpha)/rc;
     eta = PotentialEwald6::getEta(rc, sigma, epsilon, uq);
     ewald.setCutoff(kCut);

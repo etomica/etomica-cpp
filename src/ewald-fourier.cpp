@@ -18,12 +18,12 @@ EwaldFourier::~EwaldFourier() {
   free2D((void**)dFdL);
 }
 
-void EwaldFourier::getOptimalAlpha(double s, double& alpha, double& rc, double& kc) {
-  double numAtoms = box.getNumAtoms();
+void EwaldFourier::getOptimalAlpha(double s, double& alpha, double& rc, double& kc, double tauRatio) {
+  int numAtoms = box.getNumAtoms();
   const double* bs = box.getBoxSize();
   double vol = bs[0]*bs[1]*bs[2];
-  // based on crude benchmarks for etomica-cpp
-  double tauRatio = 16;
+  // based on simple benchmarks for etomica-cpp
+  if (tauRatio == 0) tauRatio = 9;
   alpha = pow(tauRatio * M_PI*M_PI*M_PI * numAtoms / (vol*vol), 1.0/6.0);
   rc = s/alpha;
   kc = 2 * alpha*s;

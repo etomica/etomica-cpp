@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
     kCut = 0;
   }
   else {
-    ewald.getOptimalAlpha(s, alpha, rc, kCut);
+    ewald.getOptimalAlpha(s, alpha, rc, kCut, 0);
     double f = pow(numMolecules*4, 1.0/6.0);
     alpha /= f;
     rc *= f;
