@@ -71,6 +71,60 @@ void LatticeDynamics::setStrain(double x, double y, double z) {
   strain[2] = z;
 }
 
+void LatticeDynamics::setupForWV(int n, double** wv) {
+
+  double vol = cellSize[0] * cellSize[1] * cellSize[2];
+  double targetVol = nBasis/density;
+  double scale = pow(targetVol/vol, 1.0/3.0);
+  for (int k=0; k<3; k++) cellSize[k] *= scale;
+  for (int i=0; i<nBasis; i++) {
+    for (int k=0; k<3; k++) basis[i][k] *= cellSize[k];
+  }
+
+  wCount = n;
+  waveVectors = (double**)malloc2D(wCount, 3, sizeof(double));
+
+  matrix = (std::complex<double>***)malloc3D(wCount, 3*nBasis, 3*nBasis, sizeof(std::complex<double>));
+  for (int i=0; i<wCount; i++) {
+    for (int j=0; j<3*nBasis; j++) {
+      for (int k=0; k<3*nBasis; k++) {
+        matrix[i][j][k] = 0;
+      }
+    }
+  }
+
+  wCount = n;
+  wvCount = (int*)malloc(wCount*sizeof(int));
+
+  for (int i=0; i<n; i++) {
+    waveVectors[i][0] = wv[i][0];
+    waveVectors[i][1] = wv[i][1];
+    waveVectors[i][2] = wv[i][2];
+    wvCount[i] = 1;
+  }
+
+  selfSum = (double***)malloc3D(nBasis, 3, 3, sizeof(double));
+  for (int i=0; i<nBasis; i++) {
+    for (int j=0; j<3; j++) {
+      for (int k=0; k<3; k++) selfSum[i][j][k] = 0;
+    }
+  }
+
+  uLat = 0;
+  logSum = 0;
+  status = 1;
+  for (int i=0; i<3; i++) {
+    latticeShells[i] = floor(rCut/cellSize[i])+1;
+  }
+  rNext = rCut;
+  xcellNext = -latticeShells[0];
+  ycellNext = -latticeShells[1];
+  zcellNext = -latticeShells[2];
+  wvNext = wCount-1;
+  doneXYZ = 0;
+  unstable = false;
+}
+
 void LatticeDynamics::setup() {
 
   double vol = cellSize[0] * cellSize[1] * cellSize[2];
@@ -387,6 +441,32 @@ int LatticeDynamics::doSelfSum() {
   return -1;
 }
 
+double** LatticeDynamics::getEigenvalues(int nwv, int& rwv) {
+  if (wvNext<0) {
+    fprintf(stderr, "called getEigenvalues too many times");
+    rwv = 0;
+    return nullptr;
+  }
+  if (nwv > wvNext+1) nwv = wvNext+1;
+  double** rv = (double**)malloc2D(nwv, 3*nBasis, sizeof(double));
+  for (int k=wvNext; k>=0; k--) {
+    Eigen::MatrixXcd m(nBasis*3, nBasis*3);
+    for (int i=0; i<nBasis*3; i++) {
+      for (int j=0; j<nBasis*3; j++) {
+        m(i,j) = matrix[k][i][j];
+      }
+    }
+    Eigen::ComplexEigenSolver<Eigen::MatrixXcd> eigenSolver(m);
+    Eigen::ComplexEigenSolver<Eigen::MatrixXcd>::EigenvalueType eVals = eigenSolver.eigenvalues();
+    for (int i=0; i<3*nBasis; i++) {
+      rv[wvNext-k][i] = std::real(eVals(i));
+    }
+  }
+  wvNext -= nwv;
+  if (wvNext<0) wvNext = -1;
+  rwv = nwv;
+  return rv;
+}
 int LatticeDynamics::goEVD(int nwv) {
   if (wvNext<0) {
     fprintf(stderr, "called goEVD too many times");

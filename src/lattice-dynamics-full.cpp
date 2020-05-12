@@ -18,6 +18,7 @@ LatticeDynamicsFull::~LatticeDynamicsFull() {
   free2D((void**)waveVectors);
   free(wvCount);
   free3D((void***)matrix);
+  free2D((void**)evals);
 }
 
 void LatticeDynamicsFull::setNumCells(int x, int y, int z) {
@@ -31,6 +32,35 @@ void LatticeDynamicsFull::setNumCells(int x, int y, int z) {
   if (numMolecules != nCells*nBasis) {
     fprintf(stderr, "warning: number of molecules %d must be a multiple of the number of cells %d\n", numMolecules, nCells);
     abort();
+  }
+}
+
+void LatticeDynamicsFull::setupForWV(int n, double** wv) {
+
+  int numMolecules = box.getTotalNumMolecules();
+  int nCells = numCells[0]*numCells[1]*numCells[2];
+  int nBasis = numMolecules/nCells;
+
+  wCount = n;
+  waveVectors = (double**)malloc2D(wCount, 3, sizeof(double));
+
+  matrix = (std::complex<double>***)malloc3D(wCount, nmap[nBasis], nmap[nBasis], sizeof(std::complex<double>));
+  for (int i=0; i<wCount; i++) {
+    for (int j=0; j<nmap[nBasis]; j++) {
+      for (int k=0; k<nmap[nBasis]; k++) {
+        matrix[i][j][k] = 0;
+      }
+    }
+  }
+
+  wCount = n;
+  wvCount = (int*)malloc(wCount*sizeof(int));
+
+  for (int i=0; i<n; i++) {
+    waveVectors[i][0] = wv[i][0];
+    waveVectors[i][1] = wv[i][1];
+    waveVectors[i][2] = wv[i][2];
+    wvCount[i] = 1;
   }
 }
 
@@ -155,6 +185,7 @@ void LatticeDynamicsFull::allComputeFinished(double uTot, double virialTot, doub
   std::complex<double> ifac[wCount];
   ifac[0] = 1;
   bool ifacDone[wCount];
+  evals = (double**)malloc2D(wCount, 3*nBasis, sizeof(double));
   for (int jMolecule=0; jMolecule<N; jMolecule++) {
     int jCell = jMolecule/nBasis;
     int jBasis = jMolecule - jCell*nBasis;
@@ -200,6 +231,7 @@ void LatticeDynamicsFull::allComputeFinished(double uTot, double virialTot, doub
     for (int i=0; i<nmap[nBasis]; i++) {
       //printf("%d %d %25.15e\n", k, i, std::real(eVals(i)));
       double ev = std::real(eVals(i));
+      evals[k][i] = ev;
       if (k>0 || i>2) {
         if (ev <= 0) {
           unstable = true;

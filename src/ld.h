@@ -44,10 +44,13 @@ class LatticeDynamics {
     void setNumCells(int x, int y, int z);
     int getStatus() {return status;}
     void setup();
+    void setupForWV(int n, double** wv);
     long long countLS();
     long long goLS(int nMax);
     int doSelfSum();
     int goEVD(int nwv);
+    // returned eigenvalues should be freed by caller
+    double** getEigenvalues(int nwv, int& rwv);
     int getWaveVectorCount() {return wCount;}
     bool getUnstable() {return unstable;}
     double getLogSum() {return logSum;}
