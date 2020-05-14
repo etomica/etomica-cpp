@@ -191,11 +191,14 @@ void LatticeDynamicsFull::allComputeFinished(double uTot, double virialTot, doub
     int jBasis = jMolecule - jCell*nBasis;
     if (jBasis == 0) {
       ifacDone[0] = true;
-      for (int i=1; i<wCount; i++) ifacDone[i] = false;
+      for (int i=0; i<wCount; i++) ifacDone[i] = false;
     }
     int xjCell = jCell/(numCells[1]*numCells[2]);
     int yjCell = (jCell - xjCell*numCells[1]*numCells[2]) / numCells[2];
-    int zjCell = jCell%(numCells[0]*numCells[1]);
+    int zjCell = jCell - xjCell*numCells[1]*numCells[2] - yjCell*numCells[2];
+    if (xjCell > numCells[0]/2) xjCell -= numCells[0];
+    if (yjCell > numCells[1]/2) yjCell -= numCells[1];
+    if (zjCell > numCells[2]/2) zjCell -= numCells[2];
     int xyzjCell[3] = {xjCell,yjCell,zjCell}; 
     for (int iMolecule=0; iMolecule<nBasis; iMolecule++) {
       for (int k=0; k<wCount; k++) {
