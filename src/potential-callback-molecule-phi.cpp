@@ -77,6 +77,8 @@ void PotentialCallbackMoleculePhi::pairComputePhi(int iAtom, int jAtom, double p
 }
 
 void PotentialCallbackMoleculePhi::pairCompute(int iAtom, int jAtom, double* drij, double u, double du, double d2u) {
+  // atom interacting with its own image doesn't contribute
+  if (iAtom == jAtom) return;
   // drij = rj-ri
   double r2 = 0;
   for (int k=0; k<3; k++) r2 += drij[k]*drij[k];
