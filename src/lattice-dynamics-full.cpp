@@ -3,15 +3,18 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #ifdef LATTICE_DYNAMICS
-
 #include <Eigen/Eigenvalues>
 #include <complex>
 #include "lattice-dynamics-full.h"
 #include "box.h"
 #include "potential-master.h"
 #include "alloc2d.h"
+#include <iostream>
 
-LatticeDynamicsFull::LatticeDynamicsFull(PotentialMaster& pm) : PotentialCallbackMoleculePhi(pm,false) {
+LatticeDynamicsFull::LatticeDynamicsFull(PotentialMaster& pm, bool ae) : PotentialCallbackMoleculePhi(pm, false) {
+  atomicExp = ae;
+  logSum = 0;
+  unstable = false;
 }
 
 LatticeDynamicsFull::~LatticeDynamicsFull() {
@@ -164,8 +167,8 @@ donef:  if (flip) {
 
   free3D((void***)waveVectorIndices);
 
-  logSum = 0;
-  unstable = false;
+  //logSum = 0;
+  //unstable = false;
 
   vector<PotentialCallback*> pcs;
   pcs.push_back(this);
@@ -185,8 +188,12 @@ void LatticeDynamicsFull::allComputeFinished(double uTot, double virialTot, doub
   std::complex<double> ifac[wCount];
   ifac[0] = 1;
   bool ifacDone[wCount];
+  double dr[3];
   evals = (double**)malloc2D(wCount, 3*nBasis, sizeof(double));
   for (int jMolecule=0; jMolecule<N; jMolecule++) {
+    double *rj = box.getAtomPosition(jMolecule);
+    //for (int g=0; g<3; g++){printf(" %f  ", rj[g]);}
+    //printf("\n");
     int jCell = jMolecule/nBasis;
     int jBasis = jMolecule - jCell*nBasis;
     if (jBasis == 0) {
@@ -201,11 +208,18 @@ void LatticeDynamicsFull::allComputeFinished(double uTot, double virialTot, doub
     if (zjCell > numCells[2]/2) zjCell -= numCells[2];
     int xyzjCell[3] = {xjCell,yjCell,zjCell}; 
     for (int iMolecule=0; iMolecule<nBasis; iMolecule++) {
+      double *ri = box.getAtomPosition(iMolecule);
+      for (int l=0; l<3; l++) dr[l] = rj[l]-ri[l];
+      box.nearestImage(dr);
       for (int k=0; k<wCount; k++) {
-        if (!ifacDone[k]) {
+        if (!ifacDone[k] || atomicExp) {
           double kdotr = 0;
           for (int i=0; i<3; i++) {
-            kdotr += cellSize[i]*xyzjCell[i]*waveVectors[k][i];
+            if (atomicExp) {
+              kdotr += dr[i]*waveVectors[k][i];
+            }else{
+              kdotr += cellSize[i]*xyzjCell[i]*waveVectors[k][i];
+            }
           }
           std::complex<double> exparg(0, -kdotr);
           ifac[k] = exp(exparg);
@@ -231,11 +245,12 @@ void LatticeDynamicsFull::allComputeFinished(double uTot, double virialTot, doub
     Eigen::ComplexEigenSolver<Eigen::MatrixXcd> eigenSolver(m);
     Eigen::ComplexEigenSolver<Eigen::MatrixXcd>::EigenvalueType eVals = eigenSolver.eigenvalues();
     double klnsum = 0;
+    double k2 = pow(waveVectors[k][0], 2.0) + pow(waveVectors[k][1], 2.0) + pow(waveVectors[k][2], 2.0);
     for (int i=0; i<nmap[nBasis]; i++) {
       //printf("%d %d %25.15e\n", k, i, std::real(eVals(i)));
       double ev = std::real(eVals(i));
       evals[k][i] = ev;
-      if (k>0 || i>2) {
+      if (k2>0 || i>2) {
         if (ev <= 0) {
           unstable = true;
           return;

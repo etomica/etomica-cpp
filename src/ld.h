@@ -4,6 +4,7 @@
 
 #ifdef LATTICE_DYNAMICS
 #pragma once
+#include <complex>
 
 class Potential;
 
@@ -15,6 +16,7 @@ class LatticeDynamics {
     double lrcFac;
     Potential* potential;
     bool doLRC;
+    bool atomicExp;
     int status;
     int nBasis;
     double **basis;
@@ -36,7 +38,7 @@ class LatticeDynamics {
     bool unstable;
     double uLat;
   public:
-    LatticeDynamics(double d, Potential *p, bool doLRC, int nBasis);
+    LatticeDynamics(double d, Potential *p, bool doLRC, int nBasis, bool atomicExp);
     ~LatticeDynamics();
     void setBasis(int i, double x, double y, double z);
     void setUnitCell(double x, double y, double z);

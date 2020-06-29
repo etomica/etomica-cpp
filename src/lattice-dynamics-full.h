@@ -24,8 +24,9 @@ class LatticeDynamicsFull : public PotentialCallbackMoleculePhi {
     int* wvCount;
     double logSum;
     bool unstable;
+    bool atomicExp;
   public:
-    LatticeDynamicsFull(PotentialMaster& potentialMaster);
+    LatticeDynamicsFull(PotentialMaster& potentialMaster, bool atomicExp);
     virtual ~LatticeDynamicsFull();
     virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     void setNumCells(int x, int y, int z);

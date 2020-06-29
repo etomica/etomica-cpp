@@ -9,9 +9,10 @@
 #include "potential.h"
 #include "alloc2d.h"
 
-LatticeDynamics::LatticeDynamics(double d, Potential* p, bool lrc, int nb) {
+LatticeDynamics::LatticeDynamics(double d, Potential* p, bool lrc, int nb, bool ae) {
   status = 0;
 
+  atomicExp = ae;
   density = d;
   potential = p;
   doLRC = lrc;
@@ -380,10 +381,14 @@ long long LatticeDynamics::goLS(int nMax) {
                 if (doLRC && r2 > rCut2/(lrcFac*lrcFac) && k>0) break;
                 nxyz++;
                 doneXYZ++;
-                if (!ifacDone[k]) {
+                if (!ifacDone[k] || atomicExp) {
                   double kdotr = 0;
                   for (int i=0; i<3; i++) {
-                    kdotr += d_xyz_cell[i]*waveVectors[k][i];
+                    if (atomicExp) {
+                      kdotr += d_xyz[i]*waveVectors[k][i];
+                    } else {
+                      kdotr += d_xyz_cell[i]*waveVectors[k][i];
+                    }
                   }
                   std::complex<double> exparg(0, -kdotr);
                   ifac[k] = exp(exparg);
@@ -467,6 +472,7 @@ double** LatticeDynamics::getEigenvalues(int nwv, int& rwv) {
   rwv = nwv;
   return rv;
 }
+
 int LatticeDynamics::goEVD(int nwv) {
   if (wvNext<0) {
     fprintf(stderr, "called goEVD too many times");
@@ -482,11 +488,11 @@ int LatticeDynamics::goEVD(int nwv) {
     Eigen::ComplexEigenSolver<Eigen::MatrixXcd> eigenSolver(m);
     Eigen::ComplexEigenSolver<Eigen::MatrixXcd>::EigenvalueType eVals = eigenSolver.eigenvalues();
     double klnsum = 0;
+    double k2 = pow(waveVectors[k][0], 2.0) + pow(waveVectors[k][1], 2.0) + pow(waveVectors[k][2], 2.0);
     for (int i=0; i<3*nBasis; i++) {
-      //printf("%d %d %25.15e\n", k, i, std::real(eVals(i)));
-      if (k>0 || i>2) {
+      if (k2>0 || i>2) {
         double ev = std::real(eVals(i));
-        if (ev < 0) {
+        if (ev <= 0) {
           unstable = true;
           wvNext = -1;
           return -1;
@@ -495,7 +501,6 @@ int LatticeDynamics::goEVD(int nwv) {
       }
     }
     logSum += wvCount[k]*klnsum;
-    //printf("%d %d %f %f\n", k, wvCount[k], klnsum, logSum);
   }
   wvNext -= nwv;
   if (wvNext<0) wvNext = -1;
