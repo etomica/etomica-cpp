@@ -37,9 +37,7 @@ double** AverageRatio::getRatioStatistics() {
     ratioStats[i][AVG_CUR] = mostRecent[i]/mostRecent[nData-1];
     ratioStats[i][AVG_AVG] = blockSum[i] / blockSum[nData-1];
     if (blockCount == 1) {
-      for (int i=0; i<nData; i++) {
-        ratioStats[i][AVG_ERR] = NAN;
-      }
+      ratioStats[i][AVG_ERR] = NAN;
       continue;
     }
     double d = blockCovariance[i][i] * blockCovariance[nData-1][nData-1];
