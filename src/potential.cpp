@@ -514,7 +514,11 @@ double PotentialEwald6::du(double r2) {
   double a4 = a2*a2;
   double a6 = a4*a2;
   double e = exp(-a2);
-  // (2a + 2a3) e/a6 - 2(1 + a2 + a4/2) e/a5 - 6(1 + a2 + a4/2) e/a7
+  // r du/dr = r du/da da/dr
+  // da/dr = 1/eta
+  // r du/dr = a du/da
+  // (du/da)/(Bij/eta6) = - ((2a + 2a3) e/a6 - 2(1 + a2 + a4/2) e/a5 - 6(1 + a2 + a4/2) e/a7)
+  // a (du/da)/(Bij/eta6) = (-2a2 - 2a4) e/a6 + 2(a2 + a4 + a6/2) e/a6 + 6(1 + a2 + a4/2) e/a6
   double du = pShort.du(r2) + Bij*eta6r*(6 + 6*a2 + 3*a4 + a6)*e/a6;
   if (ufShift!=0) du += ufShift*sqrt(r2);
   return du;
