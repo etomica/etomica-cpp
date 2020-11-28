@@ -23,7 +23,7 @@ void WriteXYZ::go(const char* filename, Box& box, char** symbols, bool append) {
       sym = s1;
     }
     double* ri = box.getAtomPosition(iAtom);
-    fprintf(f, "%s %f %f %f\n", sym, ri[0], ri[1], ri[2]);
+    fprintf(f, "%s %20.15f %20.15f %20.15f\n", sym, ri[0], ri[1], ri[2]);
   }
   fclose(f);
 }
