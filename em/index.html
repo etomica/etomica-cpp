@@ -221,6 +221,7 @@ var startTime = 0;
       }
     }
     integrator.setTemperature(getInputInt("T"));
+    potentialMaster.init();
     integrator.reset();
     pcHMA = new Module.PotentialCallbackHMA(box, integrator.getTemperature(), 0);
 
