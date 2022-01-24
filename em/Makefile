@@ -3,10 +3,11 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # DEBUG flags
-#FLAGS = -O0 -Wall -s ASSERTIONS=2 -s SAFE_HEAP=1 -s STACK_OVERFLOW_CHECK=2 -s DEMANGLE_SUPPORT=1
+#FLAGS = -O0 -std=c++11 -Wall
 FLAGS = -Os -std=c++11 -Wall
 CFLAGS = $(FLAGS) -I../src/ -I. -Ibuild -DSFMT_MEXP=19937
 LFLAGS = $(FLAGS) -s WASM=1
+#LFLAGS = $(FLAGS) -s WASM=1 -s ASSERTIONS=2 -s SAFE_HEAP=1 -s STACK_OVERFLOW_CHECK=2 -s DEMANGLE_SUPPORT=1
 # define WEBIDL or create webidl.mk
 ifndef WEBIDL
   # webidl.mk needs to include a line like:
