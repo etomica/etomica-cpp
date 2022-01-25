@@ -1,0 +1,20 @@
+name: Build emscripten pages
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Setup emsdk
+      uses: mymindstorm/setup-emsdk@v11
+    
+    - name: Build emscripten pages
+      working-directory: ./em
+      run: make WEBIDL="python $EMSDK/upstream/emscripten/tools/webidl_binder.py"
