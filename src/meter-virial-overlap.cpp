@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <cmath>
+#include <limits>
 #include "meter-virial.h"
 
 // This meter takes 2 clusters -- a primary and a perturb cluster.  The sampling weight (pi) is

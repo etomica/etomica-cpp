@@ -94,13 +94,11 @@ interface PotentialMaster {
   void setDoTruncationCorrection(boolean doCorrection);
   void setRhoPotential(long jType, Potential rhoj);
   void setEmbedF(long iType, EmbedF Fi);
-  void setCharge(long iType, double charge);
-  void setEwald(double kCut, double alpha);
+  void init();
 };
 
 interface PotentialMasterCell : PotentialMaster {
   void PotentialMasterCell([Ref] SpeciesList sl, [Ref] Box box, boolean doEmbed, long cellRange);
-  void init();
 };
 
 PotentialMasterCell implements PotentialMaster;

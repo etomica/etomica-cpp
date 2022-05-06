@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <cmath>
+#include <limits>
 #include "meter-virial.h"
 
 MeterVirialDirect::MeterVirialDirect(Cluster &tCluster, Cluster &rCluster) : Meter(0), targetCluster(tCluster), refCluster(rCluster) {
