@@ -431,10 +431,10 @@ class PotentialMasterVirial : public PotentialMaster {
     PotentialMasterVirial(const SpeciesList &speciesList, Box& box);
     virtual ~PotentialMasterVirial() {}
     // inter-molecular energy of a group of molecules
-    void computeMolecules(const int* iMolecules, const int nMolecules, double &energy);
-    void computeAtoms(const int* iAtoms, const int nAtoms, double &energy);
-    void computeAll(vector<PotentialCallback*> &callbacks);
-    double uTotalFromAtoms();
+    virtual void computeMolecules(const int* iMolecules, const int nMolecules, double &energy);
+    virtual void computeAtoms(const int* iAtoms, const int nAtoms, double &energy);
+    virtual void computeAll(vector<PotentialCallback*> &callbacks);
+    virtual double uTotalFromAtoms();
 };
 
 class PotentialMasterVirialMolecular : public PotentialMasterVirial {
@@ -442,7 +442,7 @@ class PotentialMasterVirialMolecular : public PotentialMasterVirial {
     PotentialMolecular*** moleculePairPotentials;
 
   public:
-    PotentialMasterVirialMolecular(const SpeciesList &speciesList, Box& box);
+    PotentialMasterVirialMolecular(SpeciesList &speciesList, Box& box);
     virtual ~PotentialMasterVirialMolecular() {}
     // inter-molecular energy of a group of molecules
     void setMoleculePairPotential(int iSpecies, int jSpecies, PotentialMolecular* p);
