@@ -57,23 +57,6 @@ double MCMoveMoleculeDisplacementVirial::getChi(double T) {
 void MCMoveMoleculeDisplacementVirial::acceptNotify() {
   //printf("accepted\n");
   numAccepted++;
-  if (true) {
-    double mr0[3], mr1[3];
-    double* r0 = box.getAtomPosition(0);
-    mr0[0] = r0[0]; mr0[1] = r0[1]; mr0[2] = r0[2];
-    r0 = box.getAtomPosition(1);
-    mr0[0] = (mr0[0] + r0[0])/2; mr0[1] = (mr0[1] + r0[1])/2; mr0[2] = (mr0[2] + r0[2])/2;
-    r0 = box.getAtomPosition(2);
-    mr1[0] = r0[0]; mr1[1] = r0[1]; mr1[2] = r0[2];
-    r0 = box.getAtomPosition(3);
-    mr1[0] = (mr1[0] + r0[0])/2; mr1[1] = (mr1[1] + r0[1])/2; mr1[2] = (mr1[2] + r0[2])/2;
-    double dmr[] = {mr0[0]-mr1[0], mr0[1]-mr1[1], mr0[2]-mr1[2]};
-    double rsq = (mr0[0]-mr1[0])*(mr0[0]-mr1[0]) + (mr0[1]-mr1[1])*(mr0[1]-mr1[1]) + (mr0[2]-mr1[2])*(mr0[2]-mr1[2]);
-    double rr = sqrt(rsq);
-    if (rr > 0.65 && rr < 0.75 && wNew > 0.55) {
-      printf("r %f  pi %f\n", rr, wNew);
-    }
-  }
 }
 
 void MCMoveMoleculeDisplacementVirial::rejectNotify() {
