@@ -4,26 +4,35 @@
 
 #include "move-virial.h"
 
-MCMoveChainVirial::MCMoveChainVirial(Box& b, PotentialMaster& p, Random& r, double s) : MCMove(b,p,r,1), sigma(s) {
+MCMoveChainVirial::MCMoveChainVirial(SpeciesList& sl, Box& b, PotentialMaster& p, Random& r, double s) : MCMove(b,p,r,1), speciesList(sl), sigma(s) {
   tunable = false;
 }
 
 MCMoveChainVirial::~MCMoveChainVirial() {}
 
 bool MCMoveChainVirial::doTrial() {
-  int na = box.getNumAtoms();
-  if (na<=1) {
-    fprintf(stderr, "Gotta give me more than 1 atom!\n");
+  int nm = box.getTotalNumMolecules();
+  if (nm<=1) {
+    fprintf(stderr, "Gotta give me more than 1 molecule!\n");
     abort();
   }
-  double* rPrev = box.getAtomPosition(0);
-  for (int iAtom=1; iAtom<na; iAtom++) {
-    double* r = box.getAtomPosition(iAtom);
-    random.inSphere(r);
-    r[0] = r[0]*sigma + rPrev[0];
-    r[1] = r[1]*sigma + rPrev[1];
-    r[2] = r[2]*sigma + rPrev[2];
-    rPrev = r;
+  int iSpecies, iMoleculeInSpecies, firstAtom, lastAtom;
+  box.getMoleculeInfo(0, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
+  double rPrev[3];
+  double* com = speciesList.get(iSpecies)->getMoleculeCOM(box, firstAtom, lastAtom);
+  std::copy(com, com+3, rPrev);
+  for (int iMolecule=1; iMolecule<nm; iMolecule++) {
+    double dr[3];
+    random.inSphere(dr);
+    box.getMoleculeInfo(1, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
+    com = speciesList.get(iSpecies)->getMoleculeCOM(box, firstAtom, lastAtom);
+    //printf("move %d %e %e\n", iAtom, r[0]*r[0]+r[1]*r[1]+r[2]*r[2], sigma);
+    for (int iAtom=firstAtom; iAtom<=lastAtom; iAtom++) {
+      double* r = box.getAtomPosition(iAtom);
+      r[0] += (rPrev[0] - com[0]) + dr[0]*sigma;
+      r[1] += (rPrev[1] - com[1]) + dr[1]*sigma;
+      r[2] += (rPrev[2] - com[2]) + dr[2]*sigma;
+    }
   }
   numTrials++;
   numAccepted++;

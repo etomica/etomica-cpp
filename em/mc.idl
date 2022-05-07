@@ -45,6 +45,14 @@ interface PotentialJS {
   double d2u(double r2);
 };
 
+interface PotentialMolecular {};
+
+interface PotentialMolecularAtomic : PotentialMolecular {
+  void PotentialMolecularAtomic(long nAtoms, [Ref] Potential pAtomic);
+};
+
+PotentialMolecularAtomic implements PotentialMolecular;
+
 interface EmbedF {};
 
 interface EmbedFsqrt : EmbedF {
@@ -115,6 +123,10 @@ interface PotentialMasterVirial : PotentialMaster {
 
 PotentialMasterVirial implements PotentialMaster;
 
+interface PotentialMasterVirialMolecular : PotentialMasterVirial {
+  void PotentialMasterVirialMolecular([Ref] SpeciesList sl, [Ref] Box box);
+};
+
 interface Random {
   void Random();
   void Random(long seed);
@@ -147,10 +159,22 @@ interface MCMoveDisplacementVirial : MCMove {
 MCMoveDisplacementVirial implements MCMove;
 
 interface MCMoveChainVirial : MCMove {
-  void MCMoveChainVirial([Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double sigma);
+  void MCMoveChainVirial([Ref]SpeciesList speciesList, [Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double sigma);
 };
 
-MCMoveDisplacementVirial implements MCMove;
+MCMoveChainVirial implements MCMove;
+
+interface MCMoveMoleculeDisplacementVirial : MCMove {
+  void MCMoveMoleculeDisplacementVirial([Ref]SpeciesList speciesList, long iSpecies, [Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double stepSize, [Ref] Cluster cluster);
+};
+
+MCMoveMoleculeDisplacementVirial implements MCMove;
+
+interface MCMoveMoleculeRotateVirial : MCMove {
+  void MCMoveMoleculeRotateVirial([Ref]SpeciesList speciesList, long iSpecies, [Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double stepSize, [Ref] Cluster cluster);
+};
+
+MCMoveMoleculeRotateVirial implements MCMove;
 
 interface IntegratorListener { };
 

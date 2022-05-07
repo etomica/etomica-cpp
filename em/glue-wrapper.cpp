@@ -1,5 +1,6 @@
 #include "box.h"
 #include "potential.h"
+#include "potential-molecular.h"
 #include "potential-master.h"
 #include "integrator.h"
 #include "em-util.h"

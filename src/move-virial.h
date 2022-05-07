@@ -6,6 +6,7 @@
 
 #include "move.h"
 #include "cluster.h"
+#include "rotation-matrix.h"
 
 class MCMoveDisplacementVirial : public MCMove {
   private:
@@ -26,12 +27,55 @@ class MCMoveDisplacementVirial : public MCMove {
     virtual double energyChange();
 };
 
+class MCMoveMoleculeDisplacementVirial : public MCMove {
+  private:
+    Cluster &cluster;
+    double **rOld;
+    double wOld, wNew;
+    int iMolecule;
+    int iSpecies;
+
+  public:
+
+    MCMoveMoleculeDisplacementVirial(SpeciesList& speciesList, int iSpecies, Box& box, PotentialMaster& potentialMaster, Random& random, double stepSize, Cluster &cluster);
+    ~MCMoveMoleculeDisplacementVirial();
+
+    virtual bool doTrial();
+    virtual double getChi(double temperature);
+    virtual void acceptNotify();
+    virtual void rejectNotify();
+    virtual double energyChange();
+};
+
+class MCMoveMoleculeRotateVirial : public MCMove {
+  private:
+    SpeciesList& speciesList;
+    Cluster &cluster;
+    RotationMatrix mat;
+    double **rOld;
+    double wOld, wNew;
+    int iMolecule;
+    int iSpecies;
+
+  public:
+
+    MCMoveMoleculeRotateVirial(SpeciesList& speciesList, int iSpecies, Box& box, PotentialMaster& potentialMaster, Random& random, double stepSize, Cluster &cluster);
+    ~MCMoveMoleculeRotateVirial();
+
+    virtual bool doTrial();
+    virtual double getChi(double temperature);
+    virtual void acceptNotify();
+    virtual void rejectNotify();
+    virtual double energyChange();
+};
+
 class MCMoveChainVirial : public MCMove {
   private:
+    SpeciesList& speciesList;
     const double sigma;
 
   public:
-    MCMoveChainVirial(Box& box, PotentialMaster& potentialMaster, Random& random, double sigma);
+    MCMoveChainVirial(SpeciesList& speciesList, Box& box, PotentialMaster& potentialMaster, Random& random, double sigma);
     ~MCMoveChainVirial();
 
     virtual bool doTrial();

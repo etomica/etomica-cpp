@@ -6,7 +6,7 @@
 #include "potential-molecular.h"
 #include "alloc2d.h"
 
-PotentialMasterVirialMolecular::PotentialMasterVirialMolecular(const SpeciesList &sl, Box &box) : PotentialMasterVirial(sl,box) {
+PotentialMasterVirialMolecular::PotentialMasterVirialMolecular(SpeciesList &sl, Box &box) : PotentialMasterVirial(sl,box) {
   moleculePairPotentials = (PotentialMolecular***)malloc2D(speciesList.size(), speciesList.size(), sizeof(PotentialMolecular*));
   for (int i=0; i<speciesList.size(); i++) {
     for (int j=0; j<speciesList.size(); j++) moleculePairPotentials[i][j] = nullptr;

@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
   IntegratorMC refIntegrator(refPotentialMasterHS, rand);
   ClusterVirial refClusterLJ(refPotentialMasterLJ, temperature, 0, false);
   ClusterChain refClusterHS(refPotentialMasterHS, temperature, 1.0, 0, false);
-  MCMoveChainVirial refMove(refBox, refPotentialMasterHS, rand, 1.5);
+  MCMoveChainVirial refMove(speciesList, refBox, refPotentialMasterHS, rand, 1.5);
   refIntegrator.addMove(&refMove, 1);
   refIntegrator.setTemperature(temperature);
 
