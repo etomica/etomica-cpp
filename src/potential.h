@@ -130,6 +130,19 @@ class PotentialHS: public Potential {
     void u012(double r2, double &u, double &du, double &d2u);
 };
 
+class PotentialSQW: public Potential {
+  private:
+    double sigma, sigma2, wellDiameter, wellDiameter2, epsilon;
+  public:
+    PotentialSQW(double sigma, double lambda, double epsilon);
+    ~PotentialSQW() {}
+    double ur(double r);
+    double u(double r2);
+    double du(double r2);
+    double d2u(double r2);
+    void u012(double r2, double &u, double &du, double &d2u);
+};
+
 class PotentialCharge : public Potential {
   private:
     const double qiqj;

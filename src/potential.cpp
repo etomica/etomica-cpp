@@ -388,6 +388,31 @@ void PotentialHS::u012(double r2, double &u, double &du, double &d2u) {
   du = d2u = 0;
 }
 
+PotentialSQW::PotentialSQW(double s, double l, double e) : Potential(TRUNC_SIMPLE, s*l), sigma(s), sigma2(s*s), wellDiameter(s*l), wellDiameter2(s*s*l*l), epsilon(e)  {
+  init();
+}
+
+double PotentialSQW::ur(double r) {
+  return r<sigma ? INFINITY : (r > wellDiameter ? 0 : -epsilon);
+}
+
+double PotentialSQW::u(double r2) {
+  return r2<sigma2 ? INFINITY : (r2 > wellDiameter2 ? 0 : -epsilon);
+}
+
+double PotentialSQW::du(double r2) {
+  return 0;
+}
+
+double PotentialSQW::d2u(double r2) {
+  return 0;
+}
+
+void PotentialSQW::u012(double r2, double &u, double &du, double &d2u) {
+  u = r2<sigma2 ? INFINITY : (r2 > wellDiameter2 ? 0 : -epsilon);
+  du = d2u = 0;
+}
+
 PotentialCharge::PotentialCharge(double qq, double core, double rc) : Potential(TRUNC_SIMPLE,rc), qiqj(qq), rCore(core) {
 }
 
