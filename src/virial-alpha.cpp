@@ -6,7 +6,13 @@
 
 // perhaps just take Clusters and make Meter and Average internally
 
-VirialAlpha::VirialAlpha(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget) : stepCount(0), nextCheck(1000), refIntegrator(rIntegrator), targetIntegrator(tIntegrator), refMeter(MeterVirialOverlap(refClusterRef, refClusterTarget, 1, 5, 10)), targetMeter(MeterVirialOverlap(targetClusterTarget, targetClusterRef, 1, -5, 10)), refAverage(10, 1, 1000, false), targetAverage(10, 1, 100, false), refPump(refMeter,1,&refAverage), targetPump(targetMeter,1,&targetAverage), newAlpha(0), newAlphaErr(0), alphaCor(0), alphaSpan(0), allDone(false), verbose(false), disposed(false) {
+VirialAlpha::VirialAlpha(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget) :
+    stepCount(0), nextCheck(1000), refIntegrator(rIntegrator), targetIntegrator(tIntegrator),
+    refMeter(MeterVirialOverlap(refClusterRef, refClusterTarget, 1, 5, 11)),
+    targetMeter(MeterVirialOverlap(targetClusterTarget, targetClusterRef, 1, -5, 11)),
+    refAverage(11, 1, 1000, false), targetAverage(11, 1, 100, false),
+    refPump(refMeter,1,&refAverage), targetPump(targetMeter,1,&targetAverage),
+    newAlpha(0), newAlphaErr(0), alphaCor(0), alphaSpan(0), allDone(false), verbose(false), disposed(false) {
   refIntegrator.addListener(&refPump);
   targetIntegrator.addListener(&targetPump);
   int numAlpha = refMeter.getNumAlpha();
@@ -22,7 +28,19 @@ void VirialAlpha::dispose() {
   if (disposed) return;
   refIntegrator.removeListener(&refPump);
   targetIntegrator.removeListener(&targetPump);
+  for (vector<double*>::iterator it = allAlphaStats.begin(); it!=allAlphaStats.end(); it++) {
+    free(*it);
+  }
+  allAlphaStats.clear();
   disposed = true;
+}
+
+int VirialAlpha::getNumSavedStats() {
+  return allAlphaStats.size();
+}
+
+double* VirialAlpha::getSavedStats(int i) {
+  return allAlphaStats[i];
 }
 
 void VirialAlpha::setVerbose(bool newVerbose) {
@@ -104,6 +122,15 @@ void VirialAlpha::runSteps(int numSteps) {
   if (stepCount >= nextCheck) {
     double jBestAlpha;
     analyze(jBestAlpha);
+    double* saveStats = (double*)malloc(6*sizeof(double));
+    // both ref and target avg have the same counts
+    saveStats[0] = refAverage.getBlockCount() * refAverage.getBlockSize();
+    saveStats[1] = refAverage.getBlockSize();
+    saveStats[2] = newAlpha;
+    saveStats[3] = newAlphaErr;
+    saveStats[4] = alphaCor;
+    saveStats[5] = alphaSpan;
+    allAlphaStats.push_back(saveStats);
     if (verbose) printf("alpha  avg: %22.15e   err: %12.5e   cor: % 6.4f\n", newAlpha, newAlphaErr, alphaCor);
     int numAlpha = refMeter.getNumAlpha();
     double nextCheckFac = 1.4;
