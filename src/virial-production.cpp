@@ -9,7 +9,13 @@
 
 // perhaps just take Clusters and make Meter and Average internally
 
-VirialProduction::VirialProduction(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget, double alpha, double ri) : refIntegrator(rIntegrator), targetIntegrator(tIntegrator), refMeter(MeterVirialOverlap(refClusterRef, refClusterTarget, alpha, 0, 1)), targetMeter(MeterVirialOverlap(targetClusterTarget, targetClusterRef, 1/alpha, 0, 1)), refAverage(2, 1, 1000, true), targetAverage(targetClusterTarget.numValues()+1, 1, 1000, true), refPump(refMeter,1,&refAverage), targetPump(targetMeter,1,&targetAverage), idealTargetFraction(0.5), refIntegral(ri), disposed(false), refSteps(0), targetSteps(0) {
+VirialProduction::VirialProduction(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget, double alpha, double ri) :
+    refIntegrator(rIntegrator), targetIntegrator(tIntegrator),
+    refMeter(MeterVirialOverlap(refClusterRef, refClusterTarget, alpha, 0, 1)),
+    targetMeter(MeterVirialOverlap(targetClusterTarget, targetClusterRef, 1/alpha, 0, 1)),
+    refAverage(2, 1, 1000, true), targetAverage(targetClusterTarget.numValues()+1, 1, 1000, true),
+    refPump(refMeter,1,&refAverage), targetPump(targetMeter,1,&targetAverage),
+    idealTargetFraction(0.5), refIntegral(ri), disposed(false), refSteps(0), targetSteps(0) {
   int numTargets = targetAverage.getNumData();
   fullStats = (double**)malloc2D(numTargets-1, 2, sizeof(double));
   fullBCStats = (double**)malloc2D(numTargets-1, numTargets-1, sizeof(double));
@@ -125,23 +131,6 @@ void VirialProduction::printResults(const char **targetNames) {
   }
 }
 
-double** VirialProduction::getFullStats() {return fullStats;}
-
-double* VirialProduction::getAlphaStats() {return alphaStats;}
-
-double** VirialProduction::getRefStats() { return refStats; }
-
-double** VirialProduction::getTargetStats() {return targetStats;}
-
-double** VirialProduction::getRefBCStats() {return refBCStats;}
-
-double** VirialProduction::getTargetBCStats() {return targetBCStats;}
-
-double** VirialProduction::getRefRatioStats() {return refRatioStats;}
-
-double** VirialProduction::getTargetRatioStats() {return targetRatioStats;}
-
-double** VirialProduction::getFullBCStats() {return fullBCStats;}
 
 void VirialProduction::runSteps(long numSteps) {
   long totalSteps = refSteps + targetSteps;
