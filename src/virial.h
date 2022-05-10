@@ -19,6 +19,7 @@ class VirialAlpha {
     double newAlpha, newAlphaErr, alphaCor, alphaSpan;
     bool allDone, verbose, disposed;
     double alphaStats[4];
+    vector<double*> allAlphaStats;
   public:
     VirialAlpha(IntegratorMC &refIntegrator, IntegratorMC &targetIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget);
     ~VirialAlpha();
@@ -29,6 +30,8 @@ class VirialAlpha {
     void analyze(double &jBest);
     void runSteps(int steps);
     void run();
+    int getNumSavedStats();
+    double* getSavedStats(int i);
     bool getAllDone();
     void dispose();
     Average& getTargetAverage() {return targetAverage;}
@@ -50,6 +53,7 @@ class VirialProduction {
     double refIntegral;
     bool disposed;
     long refSteps, targetSteps;
+
   public:
     VirialProduction(IntegratorMC &refIntegrator, IntegratorMC &targetIntegrator, Cluster &refClusterRef, Cluster &refClusterTarget, Cluster &targetClusterRef, Cluster &targetClusterTarget, double alpha, double refIntegral);
     ~VirialProduction();
@@ -58,15 +62,17 @@ class VirialProduction {
     void printResults(const char **targetNames);
     void getResults();
     void runSteps(long numSteps);
-    double** getFullStats();
-    double* getAlphaStats();
-    double** getRefStats();
-    double** getTargetStats();
-    double** getRefBCStats();
-    double** getTargetBCStats();
-    double** getRefRatioStats();
-    double** getTargetRatioStats();
-    double** getFullBCStats();
+    double** getFullStats() {return fullStats;}
+    double* getAlphaStats() {return alphaStats;}
+    double** getRefStats() { return refStats; }
+    double** getTargetStats() {return targetStats;}
+    double** getRefBCStats() {return refBCStats;}
+    double** getTargetBCStats() {return targetBCStats;}
+    double** getRefRatioStats() {return refRatioStats;}
+    double** getTargetRatioStats() {return targetRatioStats;}
+    double** getFullBCStats() {return fullBCStats;}
+    long getRefSteps() {return refSteps;}
+    long getTargetSteps() {return targetSteps;}
     AverageRatio& getTargetAverage() {return targetAverage;}
     AverageRatio& getRefAverage() {return refAverage;}
 };
