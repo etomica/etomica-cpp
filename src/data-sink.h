@@ -124,3 +124,30 @@ class AverageRatio : public Average {
       return ((vi/vd)/eid)*((vj/vd)/ejd)*((ed/vd)*(ed/vd) + (ei/vi)*(ej/vj)*cij - (ei/vi)*(ed/vd)*cid - (ej/vj)*(ed/vd)*cjd);
     }
 };
+
+class History : public DataSink {
+  protected:
+    int nData, historySize;
+    // 0: scrolling, 1: complete, 2: collapsing discard, 3: collapsing avg
+    int historyType;
+    int count, pointer, collapseSize, skipCount;
+    double *collapseSum;
+    double **data, **history;
+
+    void collapseDiscard();
+    void collapseAverage();
+    void dispose();
+    void unset();
+
+  public:
+    History(int nData, int historyType, int historySize);
+    virtual ~History();
+    virtual void addData(double* x);
+    double** getHistory();
+    long getRawCount() {return count;}
+    int getHistorySize();
+    void setNumData(int newNumData);
+    int getNumData();
+    virtual void reset();
+};
+
