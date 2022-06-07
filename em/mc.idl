@@ -33,9 +33,27 @@ interface PotentialHS : Potential {
 
 PotentialHS implements Potential;
 
+interface PotentialSQW : Potential {
+  void PotentialSQW(double sigma, double lambda, double epsilon);
+};
+
+PotentialSQW implements Potential;
+
 interface PotentialEwald : Potential {
   void PotentialEwald([Ref] Potential p2, double alpha, double qiqj, double rc);
 };
+
+interface PotentialChargeBare : Potential {
+  void PotentialChargeBare(double qiqj, double core, double rc);
+};
+
+PotentialChargeBare implements Potential;
+
+interface PotentialCharge : Potential {
+  void PotentialCharge([Ref] Potential p2, double qiqj, double rc);
+};
+
+PotentialCharge implements Potential;
 
 [JSImplementation="Potential"]
 interface PotentialJS {
@@ -78,6 +96,8 @@ interface Species {
 
 interface SpeciesSimple : Species {
   void SpeciesSimple(long numAtoms, double mass);
+  void addAtomType(double mass, long atomsOfType);
+  void setAtomPosition(long iAtom, double x, double y, double z);
 };
 
 SpeciesSimple implements Species;
@@ -94,6 +114,7 @@ interface Box {
   VoidPtr getAtomPosition(long iAtom);
   void enableVelocities();
   VoidPtr getAtomVelocity(long iAtom);
+  void setPeriodic(boolean x, boolean y, boolean z);
 };
 
 interface PotentialMaster {
@@ -103,6 +124,7 @@ interface PotentialMaster {
   void setRhoPotential(long jType, Potential rhoj);
   void setEmbedF(long iType, EmbedF Fi);
   void init();
+  [Ref] Box getBox();
 };
 
 interface PotentialMasterCell : PotentialMaster {
@@ -125,6 +147,7 @@ PotentialMasterVirial implements PotentialMaster;
 
 interface PotentialMasterVirialMolecular : PotentialMasterVirial {
   void PotentialMasterVirialMolecular([Ref] SpeciesList sl, [Ref] Box box);
+  void setMoleculePairPotential(long iSpecies, long jSpecies, PotentialMolecular p);
 };
 
 interface Random {
@@ -146,6 +169,12 @@ interface MCMoveDisplacement : MCMove {
 
 MCMoveDisplacement implements MCMove;
 
+interface MCMoveVolume : MCMove {
+  void MCMoveVolume([Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double pressure, double stepSize, [Ref] SpeciesList speciesList, [Ref] Meter oldMeterPE);
+};
+
+MCMoveVolume implements MCMove;
+
 interface MCMoveInsertDelete : MCMove {
   void MCMoveInsertDelete([Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double mu, long iSpecies);
 };
@@ -166,6 +195,8 @@ MCMoveChainVirial implements MCMove;
 
 interface MCMoveMoleculeDisplacementVirial : MCMove {
   void MCMoveMoleculeDisplacementVirial([Ref]SpeciesList speciesList, long iSpecies, [Ref] Box box, [Ref] PotentialMaster potentialMaster, [Ref] Random random, double stepSize, [Ref] Cluster cluster);
+  VoidPtr getHistogram();
+  VoidPtr getHistogramPi();
 };
 
 MCMoveMoleculeDisplacementVirial implements MCMove;
@@ -306,7 +337,13 @@ interface ClusterChain : Cluster {
   void ClusterChain([Ref] PotentialMasterVirial potentialMaster, double tempreature, double chainFac, double ringFac, boolean cached);
 };
 
-ClusterVirial implements Cluster;
+ClusterChain implements Cluster;
+
+interface ClusterFlipped : Cluster {
+  void ClusterFlipped([Ref] Cluster cluster, [Ref] SpeciesList speciesList, [Ref] Box box, boolean cached);
+};
+
+ClusterFlipped implements Cluster;
 
 interface VirialAlpha {
   void VirialAlpha([Ref] IntegratorMC refIntegrator, [Ref] IntegratorMC targetIntegrator,
@@ -316,6 +353,8 @@ interface VirialAlpha {
   void runSteps(long steps);
   VoidPtr getAlphaStatistics();
   boolean getAllDone();
+  long getNumSavedStats();
+  VoidPtr getSavedStats(long i);
   [Ref] Average getTargetAverage();
   [Ref] Average getRefAverage();
 };
@@ -335,6 +374,8 @@ interface VirialProduction {
   VoidPtr getRefRatioStats();
   VoidPtr getTargetRatioStats();
   VoidPtr getFullBCStats();
+  long getRefSteps();
+  long getTargetSteps();
   [Ref] AverageRatio getTargetAverage();
   [Ref] AverageRatio getRefAverage();
 };

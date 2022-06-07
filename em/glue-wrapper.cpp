@@ -9,5 +9,6 @@
 #include "cluster.h"
 #include "virial.h"
 #include "move-virial.h"
+#include "move-volume.h"
 
 #include "glue-mc.cpp"
