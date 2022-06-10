@@ -5,6 +5,8 @@
 #include "integrator.h"
 #include "meter.h"
 
+class DataSink;
+
 class DataPump : public IntegratorListener {
   private:
     Meter& meter;

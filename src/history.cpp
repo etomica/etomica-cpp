@@ -7,8 +7,9 @@
 #include <math.h>
 #include "data-sink.h"
 #include "alloc2d.h"
+#include "meter.h"
 
-History::History(int n, int ht, int hs) : nData(n), historySize(hs), historyType(ht), collapseSize(1), skipCount(0), collapseSum(0) {
+History::History(int n, int ht, int hs, Meter* xm) : xMeter(xm), nData(n), historySize(hs), historyType(ht), collapseSize(1), skipCount(0), collapseSum(0) {
   unset();
   if (historyType < 0 || historyType > 3) {
     fprintf(stderr, "Unrecognized history type %d\n", historyType);
@@ -38,9 +39,9 @@ void History::unset() {
 }
 
 void History::reset() {
-  data = (double**)malloc2D(nData, historySize, sizeof(double));
-  history = (double**)malloc2D(nData, historySize, sizeof(double));
-  if (historyType == 3) collapseSum = (double*)malloc(nData*sizeof(double));
+  data = (double**)malloc2D(1+nData, historySize, sizeof(double));
+  history = (double**)malloc2D(1+nData, historySize, sizeof(double));
+  if (historyType == 3) collapseSum = (double*)malloc((1+nData)*sizeof(double));
   count = pointer = 0;
 }
 
@@ -69,26 +70,30 @@ void History::addData(double* x) {
     case 0:
       // scrolling
       pointer = count % historySize;
-      for (int i=0; i<nData; i++) data[i][pointer] = x[i];
+      data[0][pointer] = xMeter->getData()[0];
+      for (int i=0; i<nData; i++) data[1+i][pointer] = x[i];
       break;
     case 1:
       // complete
       if (pointer == historySize) {
         historySize *= 2;
-        data = (double**)realloc2D((void**)data, nData, historySize, sizeof(double));
-        history = (double**)realloc2D((void**)data, nData, historySize, sizeof(double));
+        data = (double**)realloc2D((void**)data, 1+nData, historySize, sizeof(double));
+        history = (double**)realloc2D((void**)data, 1+nData, historySize, sizeof(double));
       }
-      for (int i=0; i<nData; i++) data[i][pointer] = x[i];
+      data[0][pointer] = xMeter->getData()[0];
+      for (int i=0; i<nData; i++) data[1+i][pointer] = x[i];
       pointer++;
       break;
     case 2:
       // collapse discard -- keep the first then skip until we want another
       if (skipCount == 0) {
+        // first incoming data; take it
         if (pointer >= historySize) {
           // we're full, discard some data
           collapseDiscard();
         }
-        for (int i=0; i<nData; i++) data[i][pointer] = x[i];
+        data[0][pointer] = xMeter->getData()[0];
+        for (int i=0; i<nData; i++) data[1+i][pointer] = x[i];
         pointer++;
       }
       skipCount++;
@@ -103,7 +108,8 @@ void History::addData(double* x) {
         collapseAverage();
       }
       // sum this data for later
-      for (int i=0; i<nData; i++) collapseSum[i] += x[i];
+      collapseSum[0] = xMeter->getData()[0];
+      for (int i=0; i<nData; i++) collapseSum[1+i] += x[i];
       skipCount++;
       if (skipCount < collapseSize) {
         // we still don't have enough data to save an average
@@ -127,7 +133,6 @@ void History::addData(double* x) {
 int History::getHistorySize() {
   switch (historyType) {
     case 0:
-      printf("count %ld  pointer %d  historySize %d\n", count, pointer, historySize);
       return count > historySize ? historySize : pointer;
     case 1:
     case 2:

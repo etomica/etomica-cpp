@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "data-sink.h"
 #include "integrator.h"
 #include "species.h"
 
@@ -78,7 +77,7 @@ class MeterFullCompute : public Meter {
 
 class MeterPressureFD : public Meter {
   protected:
-    SpeciesList speciesList;
+    SpeciesList& speciesList;
     PotentialMaster& potentialMaster;
     double data[1];
     vector<PotentialCallback*> callbacks;
@@ -90,5 +89,21 @@ class MeterPressureFD : public Meter {
     MeterPressureFD(SpeciesList& sl, PotentialMaster& potentialMaster, double temperature);
     ~MeterPressureFD();
     void setEps(double newEps);
+    double* getData();
+};
+
+class MeterWidomInsertion : public Meter {
+  protected:
+    Box& box;
+    int iSpecies;
+    PotentialMaster& potentialMaster;
+    Random& random;
+    double data[1];
+    double temperature;
+    int numTrials;
+
+  public:
+    MeterWidomInsertion(Box& box, int iSpecies, PotentialMaster& potentialMaster, Random& rand, double temperature, int numTrials);
+    ~MeterWidomInsertion();
     double* getData();
 };

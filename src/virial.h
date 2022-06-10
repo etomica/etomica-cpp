@@ -8,6 +8,7 @@
 #include "meter-virial.h"
 #include "integrator.h"
 #include "data-pump.h"
+#include "data-sink.h"
 
 class VirialAlpha {
   protected:

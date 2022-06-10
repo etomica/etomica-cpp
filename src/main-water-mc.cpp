@@ -18,6 +18,7 @@
 #include "lattice-dynamics-full.h"
 #include "parameter-map.h"
 #include "data-pump.h"
+#include "data-sink.h"
 
 void vecE(Box& box, int iAtom, double* v) {
   double* r = box.getAtomPosition(iAtom);

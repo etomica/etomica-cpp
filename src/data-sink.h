@@ -9,6 +9,8 @@
 
 using namespace std;
 
+class Meter;
+
 class DataSink {
   protected:
     vector<DataSink*> sinks;
@@ -127,6 +129,7 @@ class AverageRatio : public Average {
 
 class History : public DataSink {
   protected:
+    Meter* xMeter;
     int nData, historySize;
     // 0: scrolling, 1: complete, 2: collapsing discard, 3: collapsing avg
     int historyType;
@@ -140,7 +143,7 @@ class History : public DataSink {
     void unset();
 
   public:
-    History(int nData, int historyType, int historySize);
+    History(int nData, int historyType, int historySize, Meter* meter);
     virtual ~History();
     virtual void addData(double* x);
     double** getHistory();

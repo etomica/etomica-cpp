@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "data-pump.h"
+#include "data-sink.h"
 
 DataPump::DataPump(Meter& m, int i) : IntegratorListener(), meter(m), interval(i), intervalCountdown(i), dataSink1isMine(true) {
   callStepFinished = true;
