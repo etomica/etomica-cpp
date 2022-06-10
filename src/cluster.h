@@ -57,3 +57,19 @@ class ClusterChain : public Cluster {
 
     const double* getValues();
 };
+
+class ClusterFlipped : public Cluster {
+  protected:
+    Cluster& wrappedCluster;
+    SpeciesList& speciesList;
+    Box& box;
+    bool* flippedAtoms;
+
+    void flip(int iMolecule);
+
+  public:
+    ClusterFlipped(Cluster& cluster, SpeciesList& speciesList, Box& box, bool cached);
+    virtual ~ClusterFlipped();
+
+    const double* getValues();
+};
