@@ -34,6 +34,9 @@ class MCMoveMoleculeDisplacementVirial : public MCMove {
     double wOld, wNew;
     int iMolecule;
     int iSpecies;
+    double pisum[91], piHist[91], histogram[91];
+    long hcount[91];
+    void addToHistogram(double pi);
 
   public:
 
@@ -45,6 +48,8 @@ class MCMoveMoleculeDisplacementVirial : public MCMove {
     virtual void acceptNotify();
     virtual void rejectNotify();
     virtual double energyChange();
+    double* getHistogram();
+    double* getHistogramPi();
 };
 
 class MCMoveMoleculeRotateVirial : public MCMove {
@@ -73,6 +78,8 @@ class MCMoveChainVirial : public MCMove {
   private:
     SpeciesList& speciesList;
     const double sigma;
+    double histogram[61];
+    long hcount[61];
 
   public:
     MCMoveChainVirial(SpeciesList& speciesList, Box& box, PotentialMaster& potentialMaster, Random& random, double sigma);
@@ -83,5 +90,6 @@ class MCMoveChainVirial : public MCMove {
     virtual void acceptNotify(){}
     virtual void rejectNotify() {fprintf(stderr, "no rejection for chain"); abort();}
     virtual double energyChange() {return 0;}
+    double* getHistogram();
 };
 
