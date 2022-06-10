@@ -413,30 +413,56 @@ void PotentialSQW::u012(double r2, double &u, double &du, double &d2u) {
   du = d2u = 0;
 }
 
-PotentialCharge::PotentialCharge(double qq, double core, double rc) : Potential(TRUNC_SIMPLE,rc), qiqj(qq), rCore(core) {
+PotentialChargeBare::PotentialChargeBare(double qq, double core, double rc) : Potential(TRUNC_SIMPLE,rc), qiqj(qq), rCore(core) {
 }
 
-double PotentialCharge::ur(double r) {
+double PotentialChargeBare::ur(double r) {
   if (r<rCore) return INFINITY;
   return qiqj/r;
 }
 
-double PotentialCharge::u(double r2) {
+double PotentialChargeBare::u(double r2) {
   return ur(sqrt(r2));
 }
 
-double PotentialCharge::du(double r2) {
+double PotentialChargeBare::du(double r2) {
   return -u(r2);
 }
 
-double PotentialCharge::d2u(double r2) {
+double PotentialChargeBare::d2u(double r2) {
   return 2*u(r2);
 }
 
-void PotentialCharge::u012(double r2, double &u, double &du, double &d2u) {
+void PotentialChargeBare::u012(double r2, double &u, double &du, double &d2u) {
   u = qiqj/sqrt(r2);
   du = -u;
   d2u = 2*u;
+}
+
+PotentialCharge::PotentialCharge(Potential& p2, double qq, double rc) : Potential(TRUNC_SIMPLE,rc), p(p2), qiqj(qq) {
+}
+
+double PotentialCharge::ur(double r) {
+  return p.ur(r) + qiqj/r;
+}
+
+double PotentialCharge::u(double r2) {
+  return p.u(r2) + ur(sqrt(r2));
+}
+
+double PotentialCharge::du(double r2) {
+  return p.du(r2) -u(r2);
+}
+
+double PotentialCharge::d2u(double r2) {
+  return p.d2u(r2) + 2*u(r2);
+}
+
+void PotentialCharge::u012(double r2, double &u, double &du, double &d2u) {
+  p.u012(r2, u, du, d2u);
+  u += qiqj/sqrt(r2);
+  du += -u;
+  d2u += 2*u;
 }
 
 PotentialEwald::PotentialEwald(Potential& p2, double a, double qq, double rc) : Potential(TRUNC_SIMPLE, rc), p(p2), qiqj(qq), alpha(a), twoosqrtpi(2.0/sqrt(M_PI)) {

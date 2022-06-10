@@ -143,12 +143,26 @@ class PotentialSQW: public Potential {
     void u012(double r2, double &u, double &du, double &d2u);
 };
 
-class PotentialCharge : public Potential {
+class PotentialChargeBare : public Potential {
   private:
     const double qiqj;
     const double rCore;
   public:
-    PotentialCharge(double qiqj, double rCore, double rc);
+    PotentialChargeBare(double qiqj, double rCore, double rc);
+    virtual ~PotentialChargeBare() {}
+    double ur(double r);
+    double u(double r2);
+    double du(double r2);
+    double d2u(double r2);
+    void u012(double r2, double &u, double &du, double &d2u);
+};
+
+class PotentialCharge : public Potential {
+  private:
+    Potential& p;
+    const double qiqj;
+  public:
+    PotentialCharge(Potential& p2, double qiqj, double rc);
     virtual ~PotentialCharge() {}
     double ur(double r);
     double u(double r2);
