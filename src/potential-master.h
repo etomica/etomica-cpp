@@ -356,6 +356,7 @@ class PotentialMaster {
     virtual double oldIntraMoleculeEnergyLS(int iAtom, int iLastAtom) {return 0;}
     void resetAtomDU();
     void processAtomU(int coeff);
+    virtual void unsetAtomDU() { duAtomMulti = duAtomSingle = false; }
     void addCallback(PotentialCallback* pcb);
     virtual double uTotalFromAtoms();
     virtual void updateVolume() {}
