@@ -5,17 +5,32 @@
 #include <algorithm>
 #include "species.h"
 
-SpeciesSimple::SpeciesSimple(int na, double m) : Species(na,1), mass(m) {
+SpeciesSimple::SpeciesSimple(int na, int nat) : Species(na,nat) {
 }
 
 void SpeciesSimple::init(AtomInfo& ai) {
   Species::init(ai);
-  int myType = ai.addAtomType(mass);
-  for (int i=0; i<numAtoms; i++) {
-    atomTypes[i] = myType;
+  int typeOffset = 0;
+  for (int i=0; i<typeMass.size(); i++) {
+    int myType = ai.addAtomType(typeMass[i]);
+    typeOffset = myType-i;
+  }
+  int a = 0;
+  for (int i=0; i<typeMass.size(); i++) {
+    for (int j=0; j<numAtomsOfType[i]; j++) {
+      atomTypes[a] = typeOffset + i;
+      a++;
+    }
   }
 }
 
-void SpeciesSimple::setAtomPosition(int iAtom, double* iPosition) {
-  for (int k=0; k<3; k++) positions[iAtom][k] = iPosition[k];
+void SpeciesSimple::addAtomType(double mass, int atomsOfType) {
+  typeMass.push_back(mass);
+  numAtomsOfType.push_back(atomsOfType);
+}
+
+void SpeciesSimple::setAtomPosition(int iAtom, double x, double y, double z) {
+  positions[iAtom][0] = x;
+  positions[iAtom][1] = y;
+  positions[iAtom][2] = z;
 }

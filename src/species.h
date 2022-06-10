@@ -40,13 +40,15 @@ class Species {
 
 class SpeciesSimple : public Species {
   private:
-    double mass;
+    vector<double> typeMass;
+    vector<double> numAtomsOfType;
 
   public:
-    SpeciesSimple(int numAtoms, double mass);
+    SpeciesSimple(int numAtoms, int numAtomTypes);
     virtual ~SpeciesSimple() {}
     virtual void init(AtomInfo& atomInfo);
-    void setAtomPosition(int iAtom, double* iPosition);
+    virtual void addAtomType(double m, int aot);
+    void setAtomPosition(int iAtom, double x, double y, double z);
 };
 
 class SpeciesFile : public Species {
