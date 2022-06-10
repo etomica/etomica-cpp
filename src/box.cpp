@@ -414,8 +414,10 @@ const bool* Box::getPeriodic() {
   return periodic;
 }
 
-void Box::setPeriodic(const bool* newPeriodic) {
-  for (int i=0; i<3; i++) periodic[i] = newPeriodic[i];
+void Box::setPeriodic(bool x, bool y, bool z) {
+  periodic[0] = x;
+  periodic[1] = y;
+  periodic[2] = z;
 }
 
 void Box::setBoxSize(double x, double y, double z) {

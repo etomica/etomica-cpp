@@ -100,7 +100,7 @@ class Box {
     void getMoleculeInfo(int iMolecule, int &iSpecies, int &iMoleculeInSpecies, int &firstAtom, int &lastAtom);
     void getMoleculeInfoAtom(int iAtom, int &iMoleculeInSpecies, int &iSpecies, int &firstAtom);
     const bool* getPeriodic();
-    void setPeriodic(const bool* newPeriodic);
+    void setPeriodic(bool x, bool y, bool z);
     Matrix* getH();
     Matrix* getHInv();
 };
