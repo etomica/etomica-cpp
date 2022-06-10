@@ -121,6 +121,7 @@ interface PotentialMaster {
   void PotentialMaster([Ref] SpeciesList sl, [Ref] Box box, boolean doEmbed);
   void setPairPotential(long iType, long jType, Potential pij);
   void setDoTruncationCorrection(boolean doCorrection);
+  void setDoSingleTruncationCorrection(boolean doCorrection);
   void setRhoPotential(long jType, Potential rhoj);
   void setEmbedF(long iType, EmbedF Fi);
   void init();
@@ -281,6 +282,12 @@ interface MeterDensity : Meter {
 };
 
 MeterDensity implements Meter;
+
+interface MeterWidomInsertion : Meter {
+  void MeterWidomInsertion([Ref] Box box, long is, [Ref] PotentialMaster pm, [Ref] Random r, double t, long numTrials);
+};
+
+MeterWidomInsertion implements Meter;
 
 interface DataPump : IntegratorListener {
   void DataPump([Ref] Meter meter, long interval);
