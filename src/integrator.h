@@ -108,6 +108,7 @@ class IntegratorMD : public Integrator {
     Box& getBox() {return box;}
     void setTimeStep(double tStep);
     double getTimeStep();
+    double getTime() { return stepCount * tStep; }
     void setNbrCheckInterval(int interval);
     virtual void allComputeFinished(double uTot, double virialTot, double** f, double* virialTensor);
     virtual void doStep() = 0;
