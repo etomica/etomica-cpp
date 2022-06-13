@@ -143,7 +143,7 @@ class History : public DataSink {
     void unset();
 
   public:
-    History(int nData, int historyType, int historySize, Meter* meter);
+    History(int nData, int historyType, int historySize, Meter* xMeter);
     virtual ~History();
     virtual void addData(double* x);
     double** getHistory();

@@ -107,3 +107,23 @@ class MeterWidomInsertion : public Meter {
     ~MeterWidomInsertion();
     double* getData();
 };
+
+class MeterSteps : public Meter {
+  private:
+    Integrator& integrator;
+    double data[1];
+  public:
+    MeterSteps(Integrator& integrator);
+    ~MeterSteps() {}
+    double* getData();
+};
+
+class MeterTime : public Meter {
+  private:
+    IntegratorMD& integrator;
+    double data[1];
+  public:
+    MeterTime(IntegratorMD& integrator);
+    ~MeterTime() {}
+    double* getData();
+};
