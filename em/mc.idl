@@ -230,6 +230,15 @@ interface AverageRatio : Average {
 
 AverageRatio implements Average;
 
+interface History : DataSink {
+  void History(long nData, long historyType, long historySize, Meter xMeter);
+  VoidPtr getHistory();
+  long getHistorySize();
+  void reset();
+};
+
+History implements DataSink;
+
 interface Meter {
   long getNumData();
   VoidPtr getData();
@@ -289,10 +298,23 @@ interface MeterWidomInsertion : Meter {
 
 MeterWidomInsertion implements Meter;
 
+interface MeterSteps : Meter {
+  void MeterSteps([Ref] Integrator integrator);
+};
+
+MeterSteps implements Meter;
+
+interface MeterTime : Meter {
+  void MeterTime([Ref] IntegratorMD integrator);
+};
+
+MeterTime implements Meter;
+
 interface DataPump : IntegratorListener {
   void DataPump([Ref] Meter meter, long interval);
   void DataPump([Ref] Meter meter, long interval, DataSink sink);
   DataSink getDataSink(long i);
+  void addDataSink(DataSink dataSink);
 };
 
 DataPump implements IntegratorListener;
