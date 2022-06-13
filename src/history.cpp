@@ -9,7 +9,7 @@
 #include "alloc2d.h"
 #include "meter.h"
 
-History::History(int n, int ht, int hs, Meter* xm) : xMeter(xm), nData(n), historySize(hs), historyType(ht), collapseSize(1), skipCount(0), collapseSum(0) {
+History::History(int n, int ht, int hs, Meter* xm) : xMeter(xm), nData(n), historySize(hs), historyType(ht), collapseSize(1), skipCount(0) {
   unset();
   if (historyType < 0 || historyType > 3) {
     fprintf(stderr, "Unrecognized history type %d\n", historyType);
@@ -47,22 +47,24 @@ void History::reset() {
 
 void History::collapseDiscard() {
   // discard all odd data, keep the even (starting with 0)
-  for (int i=0; i<nData; i++) {
+  for (int i=0; i<1+nData; i++) {
     for (int j=0; j<historySize; j+=2) {
       data[i][j/2] = data[i][j];
     }
   }
   pointer = historySize / 2;
+  collapseSize *= 2;
 }
 
 void History::collapseAverage() {
   // average together each pair (0+1, 2+3, 4+5) of data
-  for (int i=0; i<nData; i++) {
-    for (int j=0; j<historySize-1; j+=2) {
+  for (int i=0; i<1+nData; i++) {
+    for (int j=0; j<historySize; j+=2) {
       data[i][j/2] = 0.5 * (data[i][j]+data[i][j+1]);
     }
   }
   pointer = historySize / 2;
+  collapseSize *= 2;
 }
 
 void History::addData(double* x) {
@@ -108,7 +110,7 @@ void History::addData(double* x) {
         collapseAverage();
       }
       // sum this data for later
-      collapseSum[0] = xMeter->getData()[0];
+      collapseSum[0] += xMeter->getData()[0];
       for (int i=0; i<nData; i++) collapseSum[1+i] += x[i];
       skipCount++;
       if (skipCount < collapseSize) {
@@ -116,7 +118,7 @@ void History::addData(double* x) {
         break;
       }
       skipCount = 0;
-      for (int i=0; i<nData; i++) {
+      for (int i=0; i<nData+1; i++) {
         data[i][pointer] = collapseSum[i] / collapseSize;
         collapseSum[i] = 0;
       }
@@ -133,7 +135,7 @@ void History::addData(double* x) {
 int History::getHistorySize() {
   switch (historyType) {
     case 0:
-      return count > historySize ? historySize : pointer;
+      return count > historySize ? historySize : count;
     case 1:
     case 2:
     case 3:
@@ -147,13 +149,14 @@ double** History::getHistory() {
     case 0:
       {
         int offset = 0;
+        pointer = count % historySize;
         if (count > historySize && historySize > pointer) {
           offset = historySize - pointer;
-          for (int i=0; i<nData; i++) {
+          for (int i=0; i<nData+1; i++) {
             std::copy(data[i]+pointer, data[i]+historySize, history[i]);
           }
         }
-        for (int i=0; i<nData; i++) {
+        for (int i=0; i<nData+1; i++) {
           std::copy(data[i], data[i]+pointer, history[i]+offset);
         }
       }
@@ -161,7 +164,7 @@ double** History::getHistory() {
     case 1:
     case 2:
     case 3:
-      for (int i=0; i<nData; i++) {
+      for (int i=0; i<nData+1; i++) {
         std::copy(data[i], data[i]+pointer, history[i]);
       }
       break;
