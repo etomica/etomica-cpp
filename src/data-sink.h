@@ -147,6 +147,7 @@ class History : public DataSink {
     virtual ~History();
     virtual void addData(double* x);
     double** getHistory();
+    void setHistoryType(int type);
     long getRawCount() {return count;}
     int getHistorySize();
     void setNumData(int newNumData);

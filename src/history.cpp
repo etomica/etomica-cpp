@@ -38,6 +38,12 @@ void History::unset() {
   collapseSum = nullptr;
 }
 
+void History::setHistoryType(int t) {
+  historyType = t;
+  dispose();
+  reset();
+}
+
 void History::reset() {
   data = (double**)malloc2D(1+nData, historySize, sizeof(double));
   history = (double**)malloc2D(1+nData, historySize, sizeof(double));

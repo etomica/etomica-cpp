@@ -232,6 +232,7 @@ AverageRatio implements Average;
 
 interface History : DataSink {
   void History(long nData, long historyType, long historySize, Meter xMeter);
+  void setHistoryType(long historyType);
   VoidPtr getHistory();
   long getHistorySize();
   void reset();
