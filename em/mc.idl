@@ -215,6 +215,7 @@ interface DataSink { };
 interface Average : DataSink {
   void Average(long nData, long blockSize, long maxBlockCount, boolean doCovariance);
   void setNumData(long newNumData);
+  long getNumData();
   long getBlockSize();
   long getBlockCount();
   VoidPtr getStatistics();
@@ -310,6 +311,16 @@ interface MeterTime : Meter {
 };
 
 MeterTime implements Meter;
+
+interface MeterRDF : Meter {
+  void MeterRDF([Ref] Box box, double rMax, long nBins);
+  void reset();
+  VoidPtr getRData();
+  void setRMax(double rMax);
+  void setNBins(double nBins);
+};
+
+MeterRDF implements Meter;
 
 interface DataPump : IntegratorListener {
   void DataPump([Ref] Meter meter, long interval);

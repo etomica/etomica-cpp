@@ -127,3 +127,21 @@ class MeterTime : public Meter {
     ~MeterTime() {}
     double* getData();
 };
+
+class MeterRDF : public Meter {
+  private:
+    Box& box;
+    double rMax;
+    double *data;
+    double *rData;
+  public:
+    MeterRDF(Box& box, double rMax, int nBins);
+    virtual ~MeterRDF();
+    void dispose();
+    void reset();
+    void setup();
+    double* getData();
+    double* getRData();
+    void setNBins(int nBins);
+    void setRMax(double rMax);
+};
