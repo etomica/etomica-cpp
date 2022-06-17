@@ -55,9 +55,8 @@ class MeterKineticEnergy : public Meter {
     IntegratorMD* integrator;
     double data[2];
   public:
-    MeterKineticEnergy();
+    MeterKineticEnergy(IntegratorMD* integrator);
     ~MeterKineticEnergy() {}
-    void setIntegrator(IntegratorMD* integrator);
     double* getData();
 };
 

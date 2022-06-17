@@ -65,8 +65,7 @@ int main(int argc, char** argv) {
     integrator.addPotentialCallback(&pcHMA);
   }
   DataPump pumpFull(meterFull, 1);
-  MeterKineticEnergy meterKE;
-  meterKE.setIntegrator(&integrator);
+  MeterKineticEnergy meterKE(&integrator);
   DataPump pumpKE(meterKE, 10);
   if (doData) {
     integrator.addListener(&pumpPE);

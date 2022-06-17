@@ -268,8 +268,7 @@ interface MeterPotentialEnergy : Meter {
 MeterPotentialEnergy implements Meter;
 
 interface MeterKineticEnergy : Meter {
-  void MeterKineticEnergy();
-  void setIntegrator(IntegratorMD integrator);
+  void MeterKineticEnergy(IntegratorMD integrator);
 };
 
 MeterKineticEnergy implements Meter;
