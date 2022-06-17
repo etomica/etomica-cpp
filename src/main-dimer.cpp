@@ -30,10 +30,8 @@ int main(int argc, char** argv) {
   PotentialLJ plj(1,1,TRUNC_SIMPLE, 3.0);
   SpeciesList speciesList;
   SpeciesSimple dimer(2,1);
-  double xyz0[] = {-0.25,0.0,0.0};
-  dimer.setAtomPosition(0, xyz0);
-  double xyz1[] = {+0.25,0.0,0.0};
-  dimer.setAtomPosition(1, xyz1);
+  dimer.setAtomPosition(0, -0.25, 0, 0);
+  dimer.setAtomPosition(1, +0.25, 0, 0);
   speciesList.add(&dimer);
   Box box(speciesList);
   double L = pow(numMolecules/density, 1.0/3.0);
