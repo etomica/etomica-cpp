@@ -356,6 +356,7 @@ interface IntegratorMD : Integrator {
   void setTimeStep(double tStep);
   void setNbrCheckInterval(long interval);
   void addPotentialCallback(PotentialCallback pc, long interval);
+  void randomizeVelocities(boolean zeroMomentum);
 };
 
 IntegratorMD implements Integrator;
@@ -365,6 +366,12 @@ interface IntegratorMDVelocityVerlet : IntegratorMD {
 };
 
 IntegratorMDVelocityVerlet implements IntegratorMD;
+
+interface IntegratorNHC : IntegratorMD {
+  void IntegratorNHC([Ref] AtomInfo atomInfo, [Ref] PotentialMaster potentialMaster, [Ref] Random random, [Ref] Box box, long nChains, double tau);
+};
+
+IntegratorNHC implements IntegratorMD;
 
 interface Cluster { };
 
