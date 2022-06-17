@@ -47,7 +47,10 @@ void History::reset() {
   dispose();
   data = (double**)malloc2D(1+nData, historySize, sizeof(double));
   history = (double**)malloc2D(1+nData, historySize, sizeof(double));
-  if (historyType == 3) collapseSum = (double*)malloc((1+nData)*sizeof(double));
+  if (historyType == 3) {
+    collapseSum = (double*)malloc((1+nData)*sizeof(double));
+    for (int k=0; k<1+nData; k++) collapseSum[k] = 0;
+  }
   collapseSize = 1;
   skipCount = count = pointer = 0;
 }
