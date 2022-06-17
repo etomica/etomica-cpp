@@ -20,6 +20,7 @@ void MeterRDF::dispose() {
 }
 
 void MeterRDF::reset() {
+  dispose();
   data = (double*)malloc(nData*sizeof(double));
   rData = (double*)malloc(nData*sizeof(double));
   setup();
@@ -67,7 +68,6 @@ double* MeterRDF::getRData() {
 
 void MeterRDF::setNBins(int nb) {
   nData = nb;
-  dispose();
   reset();
 }
 

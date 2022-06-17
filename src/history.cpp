@@ -40,15 +40,16 @@ void History::unset() {
 
 void History::setHistoryType(int t) {
   historyType = t;
-  dispose();
   reset();
 }
 
 void History::reset() {
+  dispose();
   data = (double**)malloc2D(1+nData, historySize, sizeof(double));
   history = (double**)malloc2D(1+nData, historySize, sizeof(double));
   if (historyType == 3) collapseSum = (double*)malloc((1+nData)*sizeof(double));
-  count = pointer = 0;
+  collapseSize = 1;
+  skipCount = count = pointer = 0;
 }
 
 void History::collapseDiscard() {
