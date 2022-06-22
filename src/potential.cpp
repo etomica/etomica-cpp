@@ -126,6 +126,14 @@ void PotentialLJ::u012TC(double &u, double &du, double &d2u) {
   d2u = 4*M_PI*4*epsilon*12*(13*sc12/(12-3) - 0.5*7*sc6/(6-3))*rc3;
 }
 
+double PotentialLJ::hessianTC() {
+  if (truncType == TRUNC_NONE || !correctTruncation) {
+    return 0;
+  }
+  double s = sigma / rCut;
+  return 16*M_PI*epsilon*(-pow(s,11) + pow(s,5));
+}
+
 PotentialSS::PotentialSS(double e, int p, int tt, double rc) : Potential(tt, rc), epsilon(e), exponent(p) {
   init();
 }

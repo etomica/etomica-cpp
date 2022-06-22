@@ -30,6 +30,7 @@ class Potential {
     virtual double d2u(double r2) {return 0;}
     virtual void u012(double r2, double &u, double &du, double &d2u);
     virtual void u012TC(double &u, double &du, double &d2u) {u=du=d2u=0;}
+    virtual double hessianTC() {return 0;}
     void setCutoff(double rc);
     void setCorrectTruncation(bool doCorrection);
     double getCutoff();
@@ -49,6 +50,7 @@ class PotentialLJ: public Potential {
     double d2u(double r2);
     void u012(double r2, double &u, double &du, double &d2u);
     virtual void u012TC(double &u, double &du, double &d2u);
+    virtual double hessianTC();
 };
 
 class PotentialSS: public Potential {
