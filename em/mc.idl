@@ -436,21 +436,3 @@ interface ArrayUtil {
   void free2Dau();
 };
 
-interface LatticeDynamics {
-  void LatticeDynamics(double d, Potential p, boolean doLRC, long nBasis);
-  long getStatus();
-  void setNumCells(long x, long y, long z);
-  void setUnitCell(double x, double y, double z);
-  void setBasis(long i, double x, double y, double z);
-  void setup();
-  long goLS(long nMax);
-  long countLS();
-  long doSelfSum();
-  long goEVD(long nwv);
-  long getWaveVectorCount();
-  boolean getUnstable();
-  double getU();
-  double getLogSum();
-  VoidPtr getEigenvalues();
-};
-
