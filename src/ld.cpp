@@ -37,6 +37,8 @@ LatticeDynamics::LatticeDynamics(double d, Potential* p, bool lrc, int nb) {
   basis = (double**)malloc2D(nBasis, 3, sizeof(double));
   cellSize[0] = cellSize[1] = cellSize[2] = 1;
   strain[0] = strain[1] = strain[2] = 1;
+
+  eigenvalues = nullptr;
 }
 
 LatticeDynamics::~LatticeDynamics() {
@@ -45,6 +47,7 @@ LatticeDynamics::~LatticeDynamics() {
   free3D((void***)matrix);
   free(wvCount);
   free2D((void**)basis);
+  free2D((void**)eigenvalues);
 }
 
 void LatticeDynamics::setUnitCell(double x, double y, double z) {
@@ -69,6 +72,63 @@ void LatticeDynamics::setStrain(double x, double y, double z) {
   strain[0] = x;
   strain[1] = y;
   strain[2] = z;
+}
+
+void LatticeDynamics::setupForWV(int n, double** wv) {
+
+  double vol = cellSize[0] * cellSize[1] * cellSize[2];
+  double targetVol = nBasis/density;
+  double scale = pow(targetVol/vol, 1.0/3.0);
+  for (int k=0; k<3; k++) cellSize[k] *= scale;
+  for (int i=0; i<nBasis; i++) {
+    for (int k=0; k<3; k++) basis[i][k] *= cellSize[k];
+  }
+
+  wCount = n;
+  waveVectors = (double**)malloc2D(wCount, 3, sizeof(double));
+
+  matrix = (std::complex<double>***)malloc3D(wCount, 3*nBasis, 3*nBasis, sizeof(std::complex<double>));
+  for (int i=0; i<wCount; i++) {
+    for (int j=0; j<3*nBasis; j++) {
+      for (int k=0; k<3*nBasis; k++) {
+        matrix[i][j][k] = 0;
+      }
+    }
+  }
+
+  wCount = n;
+  wvCount = (int*)malloc(wCount*sizeof(int));
+
+  for (int i=0; i<n; i++) {
+    waveVectors[i][0] = wv[i][0];
+    waveVectors[i][1] = wv[i][1];
+    waveVectors[i][2] = wv[i][2];
+    wvCount[i] = 1;
+  }
+
+  selfSum = (double***)malloc3D(nBasis, 3, 3, sizeof(double));
+  for (int i=0; i<nBasis; i++) {
+    for (int j=0; j<3; j++) {
+      for (int k=0; k<3; k++) selfSum[i][j][k] = 0;
+    }
+  }
+
+  free2D((void**)eigenvalues);
+  eigenvalues = (double**)malloc2D(wCount, 3*nBasis, sizeof(double));
+
+  uLat = 0;
+  logSum = 0;
+  status = 1;
+  for (int i=0; i<3; i++) {
+    latticeShells[i] = floor(rCut/cellSize[i])+1;
+  }
+  rNext = rCut;
+  xcellNext = -latticeShells[0];
+  ycellNext = -latticeShells[1];
+  zcellNext = -latticeShells[2];
+  wvNext = wCount-1;
+  doneXYZ = 0;
+  unstable = false;
 }
 
 void LatticeDynamics::setup() {
@@ -177,6 +237,9 @@ donef:  if (flip) {
       for (int k=0; k<3; k++) selfSum[i][j][k] = 0;
     }
   }
+
+  free2D((void**)eigenvalues);
+  eigenvalues = (double**)malloc2D(wCount, 3*nBasis, sizeof(double));
 
   uLat = 0;
   logSum = 0;
@@ -370,6 +433,20 @@ long long LatticeDynamics::goLS(int nMax) {
       }
     }
   }
+  if (false && doLRC) {
+    // unclear why 2 is needed
+    double htc = 2 * potential->hessianTC() * density / nBasis;
+    for (int i=0; i<nBasis; i++) {
+      for (int j=0; j<nBasis; j++) {
+        for (int k=0; k<3; k++) {
+          matrix[0][3*i+k][3*j+k] += htc;
+        }
+      }
+      for (int k=0; k<3; k++) {
+        selfSum[i][k][k] += nBasis*htc;
+      }
+    }
+  }
   return -1;
 }
 
@@ -404,8 +481,9 @@ int LatticeDynamics::goEVD(int nwv) {
     double klnsum = 0;
     for (int i=0; i<3*nBasis; i++) {
       //printf("%d %d %25.15e\n", k, i, std::real(eVals(i)));
+      double ev = std::real(eVals(i));
+      eigenvalues[k][i] = ev;
       if (k>0 || i>2) {
-        double ev = std::real(eVals(i));
         if (ev < 0) {
           unstable = true;
           wvNext = -1;
@@ -420,6 +498,10 @@ int LatticeDynamics::goEVD(int nwv) {
   wvNext -= nwv;
   if (wvNext<0) wvNext = -1;
   return wvNext;
+}
+
+double** LatticeDynamics::getEigenvalues() {
+  return eigenvalues;
 }
 
 double LatticeDynamics::getU() {

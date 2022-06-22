@@ -35,6 +35,7 @@ class LatticeDynamics {
     double logSum;
     bool unstable;
     double uLat;
+    double** eigenvalues;
   public:
     LatticeDynamics(double d, Potential *p, bool doLRC, int nBasis);
     ~LatticeDynamics();
@@ -44,13 +45,17 @@ class LatticeDynamics {
     void setNumCells(int x, int y, int z);
     int getStatus() {return status;}
     void setup();
+    void setupForWV(int n, double** wv);
     long long countLS();
     long long goLS(int nMax);
     int doSelfSum();
     int goEVD(int nwv);
+    double** getEigenvalues();
     int getWaveVectorCount() {return wCount;}
+    int* getWaveVectorDegeneracy() {return wvCount;}
+    double** getWaveVectors() {return waveVectors;}
     bool getUnstable() {return unstable;}
     double getLogSum() {return logSum;}
     double getU();
-#endif
 };
+#endif
