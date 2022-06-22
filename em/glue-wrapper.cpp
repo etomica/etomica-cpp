@@ -10,5 +10,6 @@
 #include "virial.h"
 #include "move-virial.h"
 #include "move-volume.h"
+#include "ld.h"
 
 #include "glue-mc.cpp"
