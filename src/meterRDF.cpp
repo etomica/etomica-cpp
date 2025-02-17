@@ -41,23 +41,27 @@ double* MeterRDF::getData() {
     double* ri = box.getAtomPosition(ia);
     for (int ja=ia+1; ja<na; ja++) {
       double* rj = box.getAtomPosition(ja);
+      double dr[3];
+      for (int k=0; k<3; k++) {
+        dr[k] = rj[k] - ri[k];
+      }
+      box.nearestImage(dr);
       double r2 = 0;
       for (int k=0; k<3; k++) {
-        double dxyz = rj[k] - ri[k];
-        r2 += dxyz*dxyz;
+        r2 += dr[k]*dr[k];
       }
       if (r2 > r2Max) continue;
       int idx = sqrt(r2) * nData / rMax;
       data[idx]++;
     }
   }
-  double density = na / box.volume();
+  double pairDensity = na*(na-1)/2 / box.volume();
   for (int i=0; i<nData; i++) {
     double ri = i*rMax/nData;
     double ro = (i+1)*rMax/nData;
     double Vi = 4.0/3.0*M_PI*(ro*ro*ro-ri*ri*ri);
     data[i] /= Vi;  // now we have N / V
-    data[i] /= density;
+    data[i] /= pairDensity;
   }
   return data;
 }
