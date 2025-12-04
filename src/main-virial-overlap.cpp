@@ -35,6 +35,7 @@ int main(int argc, char** argv) {
   PotentialHS pHS(1.5);
   SpeciesList speciesList;
   SpeciesSimple species(1,1);
+  species.addAtomType(1,1);
   speciesList.add(&species);
 
   Box refBox(speciesList);
