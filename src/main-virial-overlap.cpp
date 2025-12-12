@@ -2,14 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "potential-master.h"
 #include "integrator.h"
 #include "potential.h"
 #include "move-virial.h"
 #include "box.h"
-#include "meter-virial.h"
 #include "data-sink.h"
 #include "random.h"
 #include "util.h"
@@ -17,9 +16,9 @@
 #include "virial.h"
 
 int main(int argc, char** argv) {
-  int order = 4;
-  int nDer = 1;
-  double temperature = 1.0;
+  int order = 5;
+  int nDer = 3;
+  double temperature = 3.0;
   long steps = 10000000;
   double sigmaRef = 1.5;
 

@@ -13,6 +13,7 @@
 #include "box.h"
 #include "potential.h"
 #include "potential-callback.h"
+#include "TraPPEParams.h"
 
 class EwaldBase;
 class PotentialAngle;

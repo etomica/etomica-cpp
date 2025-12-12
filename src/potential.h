@@ -227,3 +227,19 @@ class PotentialEwald6 : public Potential {
     static double getEta(double rc, double sigma, double epsilon, double uTol);
 };
 
+class P2SoftSphericalSum : public Potential {
+  //Wraps up to 2 soft-spherical potential and sums them
+  Potential& p1;
+  Potential& p2;
+public:
+  P2SoftSphericalSum(Potential& p1, Potential& p2);
+  double u(double r2);
+  double du(double r2);
+  double d2u(double r2);
+protected:
+  double uWrapped(double r2);
+  double duWrapped(double r2);
+  double d2uWrapped(double r2);
+
+};
+

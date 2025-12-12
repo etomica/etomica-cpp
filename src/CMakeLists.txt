@@ -55,11 +55,18 @@ foreach(f ${ALL_CPP})
 endforeach()
 
 # Mains
-set(MAIN_NAMES mc md dimer mix virial virial-overlap eam eam-mc water-mc)
+set(MAIN_NAMES mc md dimer mix virial virial-overlap virial-trappe eam eam-mc water-mc)
 
 # ----- Build each main-* executable -----
 foreach(name ${MAIN_NAMES})
-    set(main_src "main-${name}.cpp")
+    set(main_src "main-${name}.cpp"
+            TraPPEParams.cpp
+            TraPPEParams.h
+            unit.h
+            constants.h
+            P2PotentialGroupBuilder.cpp
+            P2PotentialGroupBuilder.h
+            unit.cpp)
     add_executable(${name} ${SRC_FILES} ${main_src})
 
     # Windows doesn't need -lm; on Linux/macOS link against libm

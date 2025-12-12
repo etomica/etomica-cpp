@@ -705,3 +705,36 @@ void PotentialEwaldBare::u012TC(double &u, double &du, double &d2u) {
   u += -4*M_PI*uShift*rc3/3 + du;
 }
 
+P2SoftSphericalSum::P2SoftSphericalSum(Potential &p1, Potential &p2) : p1(p1), p2(p2) {
+  truncType = 0;
+  rCut = 1.0/0.0;
+}
+
+double P2SoftSphericalSum::u(double r2) {
+  return uWrapped(r2);
+}
+
+double P2SoftSphericalSum::uWrapped(double r2) {
+  double u = p1.u(r2);
+  u += p2.u(r2);
+  return u;
+}
+
+double P2SoftSphericalSum::du(double r2) {
+  return duWrapped(r2);
+}
+
+double P2SoftSphericalSum::duWrapped(double r2) {
+  double du = p1.du(r2);
+  du += p2.du(r2);
+  return du;
+}
+double P2SoftSphericalSum::d2u(double r2) {
+  return d2uWrapped(r2);
+}
+
+double P2SoftSphericalSum::d2uWrapped(double r2) {
+  double d2u = p1.d2u(r2);
+  d2u += p2.d2u(r2);
+  return d2u;
+}
