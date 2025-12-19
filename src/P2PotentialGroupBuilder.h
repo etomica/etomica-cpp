@@ -15,7 +15,7 @@ class P2PotentialGroupBuilder {
 
 public:
 
-    static PotentialMasterVirial builder(const SpeciesList &species_list, int numAtomTypes, vector<double> sigma, vector<double> epsilon, vector<double> charge, Box
+    static PotentialMasterVirial builder(PotentialMasterVirial& potentialGroup, const SpeciesList &species_list, int numAtomTypes, vector<double> sigma, vector<double> epsilon, vector<double> charge, Box
                                          &box);
 };
 

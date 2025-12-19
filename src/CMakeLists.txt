@@ -55,7 +55,7 @@ foreach(f ${ALL_CPP})
 endforeach()
 
 # Mains
-set(MAIN_NAMES mc md dimer mix virial virial-overlap virial-trappe eam eam-mc water-mc)
+set(MAIN_NAMES virial-trappe)
 
 # ----- Build each main-* executable -----
 foreach(name ${MAIN_NAMES})

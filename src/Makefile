@@ -28,7 +28,7 @@ endif
 OBJDIR = build
 
 SRC = $(filter-out main%cpp, $(wildcard *.cpp))
-MAINS := mc md dimer mix virial virial-overlap eam eam-mc water-mc
+MAINS := mc md dimer mix virial virial-overlap eam eam-mc water-mc virial-trappe
 MAINSRC = $(patsubst %,main-%.cpp,$(MAINS))
 INC = $(wildcard *.h)
 OBJECTS := $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC))

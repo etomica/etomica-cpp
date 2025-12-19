@@ -42,8 +42,9 @@ int main(int argc, char** argv) {
   Box refBox(TP.speciesList);
   refBox.setBoxSize(5,5,5);
   refBox.setNumMolecules(0, nPoints);
+  PotentialMasterVirial potentialGroup(TP.speciesList, refBox);
 
-  PotentialMasterVirial refPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(TP.speciesList, TP.numAtomTypes, TP.sigma, TP.epsilon, TP.charge, refBox);
+  PotentialMasterVirial refPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroup, TP.speciesList, TP.numAtomTypes, TP.sigma, TP.epsilon, TP.charge, refBox);
   PotentialMasterVirial refPotentialMasterHS(TP.speciesList, refBox);
   refPotentialMasterHS.setPairPotential(0, 0, &pHS);
   IntegratorMC refIntegrator(refPotentialMasterHS, seed);
@@ -56,7 +57,9 @@ int main(int argc, char** argv) {
   Box targetBox(TP.speciesList);
   targetBox.setBoxSize(5,5,5);
   targetBox.setNumMolecules(0, nPoints);
-  PotentialMasterVirial targetPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(TP.speciesList, TP.numAtomTypes, TP.sigma, TP.epsilon, TP.charge, targetBox);
+  PotentialMasterVirial potentialGroupTarget(TP.speciesList, targetBox);
+
+  PotentialMasterVirial targetPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroupTarget, TP.speciesList, TP.numAtomTypes, TP.sigma, TP.epsilon, TP.charge, targetBox);
 
   PotentialMasterVirial targetPotentialMasterHS(TP.speciesList, targetBox);
   targetPotentialMasterHS.setPairPotential(0, 0, &pHS);
