@@ -81,6 +81,7 @@ double* MeterVirialOverlap::getData() {
       data[i] = primaryValues[i] / pi;
     }
     data[nData-1] = perturbValue / (perturbValue + alpha[0]*pi);
+    // printf("%f, %f, %f \n",perturbValue, alpha[0], pi);
   }
   else {
     for (int i=0; i<numAlpha; i++) {

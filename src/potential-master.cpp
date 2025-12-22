@@ -194,6 +194,11 @@ Box& PotentialMaster::getBox() {
   return box;
 }
 
+Box* PotentialMaster::getBoxP() {
+  return &box;
+}
+
+
 void PotentialMaster::computeAll(vector<PotentialCallback*> &callbacks) {
   pairCallbacks.resize(0);
   bool doForces = false, doPhi = false, doDFDV = false, doVirialTensor = false;

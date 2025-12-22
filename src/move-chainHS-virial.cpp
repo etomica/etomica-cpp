@@ -24,18 +24,26 @@ bool MCMoveChainVirial::doTrial() {
   for (int iMolecule=1; iMolecule<nm; iMolecule++) {
     double dr[3];
     random.inSphere(dr);
+    // dr[0] = random.nextDouble()*2-1;
+    // dr[1] = dr[2] = 0;
     double dr2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
     box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
     com = speciesList.get(iSpecies)->getMoleculeCOM(box, firstAtom, lastAtom);
     for (int k=0; k<3; k++) {
       dr[k] = -com[k] + rPrev[k] + dr[k]*sigma;
+
     }
-    //printf("move %d %e %e\n", iAtom, r[0]*r[0]+r[1]*r[1]+r[2]*r[2], sigma);
+    // printf("move %d %e %e\n", iMolecule, dr[0]*dr[0]+dr[1]*dr[1]+dr[2]*dr[2], sigma);
+
     for (int iAtom=firstAtom; iAtom<=lastAtom; iAtom++) {
       double* r = box.getAtomPosition(iAtom);
+
       r[0] += dr[0];
       r[1] += dr[1];
       r[2] += dr[2];
+//       if (iAtom==3){      printf("move %d %e %e\n", iAtom, r[0]*r[0]+r[1]*r[1]+r[2]*r[2], sigma);
+// }
+
     }
     for (int k=0; k<3; k++) {
       rPrev[k] = com[k] + dr[k];

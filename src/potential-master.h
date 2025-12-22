@@ -334,6 +334,7 @@ class PotentialMaster {
     PotentialMaster(const SpeciesList &speciesList, Box& box, bool doEmbed);
     virtual ~PotentialMaster();
     virtual void init();
+    Box* getBoxP();
     Box& getBox();
     void setEwald(EwaldBase* ewald);
     void setDoTruncationCorrection(bool doCorrection);

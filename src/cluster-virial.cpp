@@ -42,6 +42,21 @@ const double* ClusterVirial::getValues() {
       moleculePair[1] = iMol2;
       double u12;
       potentialMaster.computeMolecules(moleculePair, 2, u12);
+      Box *box = potentialMaster.getBoxP();
+      double *r0 = box->getAtomPosition(0);
+      double *r1 = box->getAtomPosition(3);
+      double dr[3];
+      for (int k=0; k<3; k++) dr[k] = r1[k]-r0[k];
+      double r2 = 0;
+      for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
+
+
+      // printf("%f %f\n", sqrt(r2), u12);
+      // if (abs(r2-5.5*5.5)<0.001)
+      // {
+      //   exit(0);
+      // }
+
       fQ[i|(1<<iMol2)][0] = exp(-beta*u12);
     }
   }
@@ -222,5 +237,15 @@ const double* ClusterVirial::getValues() {
   for (int m=1; m<=nDer; m++) {
     values[m] = prefac*fB[NF-1][m];
   }
+  // Box *box = potentialMaster.getBoxP();
+  // double *r0 = box->getAtomPosition(0);
+  // double *r1 = box->getAtomPosition(3);
+  // double dr[3];
+  // for (int k=0; k<3; k++) dr[k] = r1[k]-r0[k];
+  // double r2 = 0;
+  // for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
+  //
+  //
+  // // printf("%f %f\n", sqrt(r2), values[0]);
   return values;
 }

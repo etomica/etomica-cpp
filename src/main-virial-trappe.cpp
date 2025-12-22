@@ -14,6 +14,7 @@
 #include "util.h"
 #include "cluster.h"
 #include "P2PotentialGroupBuilder.h"
+#include "potential-molecular.h"
 #include "unit.h"
 #include "virial.h"
 #include "TraPPEParams.h"
@@ -21,10 +22,11 @@
 int main(int argc, char** argv) {
   TraPPEParams TP;
   int nPoints = 2;
-  int nDer = 3;
+  int nDer = 0;
   double temperatureK = 1000;
   double temperature = Kelvin::toSim(1000);
-  long numSteps = 10000000;
+  printf("temp: %f\n", temperature);
+  long numSteps = 100000000;
   double sigmaHSRef = 6;
   printf("Overlap sampling for TraPPE CO2 at %.1f K for B%d and %d derivatives\n", temperatureK, nPoints, nDer);
   double vhs = 4.0/3.0*M_PI*sigmaHSRef*sigmaHSRef*sigmaHSRef;
@@ -38,42 +40,49 @@ int main(int argc, char** argv) {
 
 
   PotentialHS pHS(6);
-
+  PotentialMolecularAtomic pHSMolecule(3, pHS);
   Box refBox(TP.speciesList);
   refBox.setBoxSize(5,5,5);
+  refBox.setPeriodic(false, false, false);
   refBox.setNumMolecules(0, nPoints);
   PotentialMasterVirial potentialGroup(TP.speciesList, refBox);
 
   PotentialMasterVirial refPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroup, TP.speciesList, TP.numAtomTypes, TP.sigma, TP.epsilon, TP.charge, refBox);
-  PotentialMasterVirial refPotentialMasterHS(TP.speciesList, refBox);
-  refPotentialMasterHS.setPairPotential(0, 0, &pHS);
+  PotentialMasterVirialMolecular refPotentialMasterHS(TP.speciesList, refBox);
+  refPotentialMasterHS.setMoleculePairPotential(0, 0, &pHSMolecule);
   IntegratorMC refIntegrator(refPotentialMasterHS, seed);
   ClusterVirial refClusterTraPPE(refPotentialMasterTraPPE, temperature, 0, false);
   ClusterChain refClusterHS(refPotentialMasterHS, temperature, 1.0, 0, false);
-  MCMoveChainVirial refMove(TP.speciesList, refBox, refPotentialMasterHS, seed, 1.5);
+  MCMoveChainVirial refMove(TP.speciesList, refBox, refPotentialMasterHS, seed, sigmaHSRef);
   refIntegrator.addMove(&refMove, 1);
+  MCMoveMoleculeRotateVirial refMove1(TP.speciesList, 0, refBox, refPotentialMasterHS, seed, 1.5, refClusterHS);
+  // refIntegrator.addMove(&refMove1, 1);
   refIntegrator.setTemperature(temperature);
 
   Box targetBox(TP.speciesList);
   targetBox.setBoxSize(5,5,5);
+  targetBox.setPeriodic(false, false, false);
   targetBox.setNumMolecules(0, nPoints);
   PotentialMasterVirial potentialGroupTarget(TP.speciesList, targetBox);
 
   PotentialMasterVirial targetPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroupTarget, TP.speciesList, TP.numAtomTypes, TP.sigma, TP.epsilon, TP.charge, targetBox);
 
-  PotentialMasterVirial targetPotentialMasterHS(TP.speciesList, targetBox);
-  targetPotentialMasterHS.setPairPotential(0, 0, &pHS);
+  PotentialMasterVirialMolecular targetPotentialMasterHS(TP.speciesList, targetBox);
+  targetPotentialMasterHS.setMoleculePairPotential(0, 0, &pHSMolecule);
   IntegratorMC targetIntegrator(targetPotentialMasterTraPPE, seed);
   ClusterVirial targetClusterTraPPE0(targetPotentialMasterTraPPE, temperature, 0, true);
   targetIntegrator.addListener(&targetClusterTraPPE0);
   ClusterChain targetClusterHS(targetPotentialMasterHS, temperature, 1, 0, true);
   targetIntegrator.addListener(&targetClusterHS);
-  MCMoveDisplacementVirial targetMove0(targetBox, targetPotentialMasterTraPPE, seed, 0.2, targetClusterTraPPE0);
+  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMove0, 1);
+  MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, targetClusterTraPPE0);
+  // targetIntegrator.addMove(&targetMove1, 1);
   targetIntegrator.setTemperature(temperature);
 
   double t1 = getTime();
   VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, targetClusterTraPPE0);
+  virialAlpha->setVerbose(true);
   virialAlpha->run();
   double t2 = getTime();
 
@@ -83,6 +92,7 @@ int main(int argc, char** argv) {
   virialAlpha->getNewAlpha(alpha, alphaErr, alphaCor);
   printf("alpha  avg: %22.15e   err: %12.5e   cor: % 6.4f\n", alpha, alphaErr, alphaCor);
   printf("alpha time: %4.3f\n\n", t2-t1);
+  // exit(0);
   long blockSize = virialAlpha->getTargetAverage().getBlockSize();
   if (blockSize > numSteps/10) {
     fprintf(stderr, "block size for uncorrelated data is large (%ld) compared to number of steps (%ld)\n", blockSize, numSteps);
@@ -95,7 +105,7 @@ int main(int argc, char** argv) {
   printf("target step size: %f\n", targetStepSize);
 
   ClusterVirial targetClusterTraPPE(targetPotentialMasterTraPPE, temperature, nDer, true);
-  MCMoveDisplacementVirial targetMove(targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, targetClusterTraPPE);
+  MCMoveMoleculeDisplacementVirial targetMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, targetClusterTraPPE);
   targetIntegrator.addMove(&targetMove, 1);
   targetIntegrator.addListener(&targetClusterTraPPE);
   targetIntegrator.setTuning(false);

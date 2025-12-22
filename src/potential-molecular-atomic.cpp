@@ -25,6 +25,9 @@ double PotentialMolecularAtomic::u(Box& box, int iFirstAtom, int jFirstAtom) {
   double rj[3] = {0.0,0.0,0.0};
   for (int jAtom = jFirstAtom; jAtom<jFirstAtom+nAtoms; jAtom++) {
     double* rjj = box.getAtomPosition(jAtom);
+
+    // printf("%d %f %f %f \n", jAtom, rjj[0], rjj[1], rjj[2]);
+
     rj[0] += rjj[0]; rj[1] += rjj[1]; rj[2] += rjj[2];
   }
   rj[0] /= nAtoms; rj[1] /= nAtoms; rj[2] /= nAtoms;
@@ -32,5 +35,6 @@ double PotentialMolecularAtomic::u(Box& box, int iFirstAtom, int jFirstAtom) {
   dr = ri[0]-rj[0]; r2 += dr*dr;
   dr = ri[1]-rj[1]; r2 += dr*dr;
   dr = ri[2]-rj[2]; r2 += dr*dr;
+  // printf("%f %f %f %f %f %f %f\n", ri[0], ri[1], ri[2], rj[0], rj[1], rj[2], r2);
   return potential.u(r2);
 }

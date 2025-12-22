@@ -12,8 +12,8 @@ class Kelvin{
     public:
     static constexpr double convFactor = Constants::BOLTZMANN_K;
 
-    static double fromSim(double x) { return x * convFactor; }
-    static double toSim(double x)   { return x / convFactor; }
+    static double fromSim(double x) { return x / convFactor; }
+    static double toSim(double x)   { return x * convFactor; }
 };
 
 class Electron{
@@ -21,8 +21,8 @@ class Electron{
     static double convFactor;
 
 
-    static double fromSim(double x) { return x * convFactor; }
-    static double toSim(double x)   { return x / convFactor; }
+    static double fromSim(double x) { return x / convFactor; }
+    static double toSim(double x)   { return x * convFactor; }
 };
 
 

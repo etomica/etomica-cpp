@@ -5,3 +5,7 @@ em/WebIDLGrammar.pkl
 em/parser.out
 em/webidl.mk
 src/config.mk
+/.idea/.gitignore
+/.idea/etomica-cpp.iml
+/.idea/modules.xml
+/.idea/vcs.xml
