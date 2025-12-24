@@ -20,7 +20,7 @@ TraPPEParams::TraPPEParams() : species(3, 2), chemForm(CO2) {
             double qO = Electron::toSim(-0.350);
             sigma = {sigmaC, sigmaO};
             epsilon = {epsilonC, epsilonO};
-            charge = {0.0, 0.0};
+            charge = {qC, qO};
             // printf("%f\n", qO);
             species.addAtomType(12, 1);
             species.addAtomType(16, 2);

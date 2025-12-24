@@ -61,6 +61,8 @@ class MCMoveMoleculeRotateVirial : public MCMove {
     double wOld, wNew;
     int iMolecule;
     int iSpecies;
+    int nTimesPointedX = 0;
+    int total = 0;
 
   public:
 

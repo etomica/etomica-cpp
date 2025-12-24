@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
   MCMoveChainVirial refMove(TP.speciesList, refBox, refPotentialMasterHS, seed, sigmaHSRef);
   refIntegrator.addMove(&refMove, 1);
   MCMoveMoleculeRotateVirial refMove1(TP.speciesList, 0, refBox, refPotentialMasterHS, seed, 1.5, refClusterHS);
-  // refIntegrator.addMove(&refMove1, 1);
+  refIntegrator.addMove(&refMove1, 1);
   refIntegrator.setTemperature(temperature);
 
   Box targetBox(TP.speciesList);
@@ -77,9 +77,17 @@ int main(int argc, char** argv) {
   MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMove0, 1);
   MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, targetClusterTraPPE0);
-  // targetIntegrator.addMove(&targetMove1, 1);
+  targetIntegrator.addMove(&targetMove1, 1);
+  // for (int i=3; i<=5 ; i++)
+  // {
+  //   targetBox.getAtomPosition(i)[0]+=4;
+  // }
   targetIntegrator.setTemperature(temperature);
-
+  // for (int i = 0 ; i <= 10 ; i ++)
+  // {
+  //   targetIntegrator.doStep();
+  // }
+  // exit(0);
   double t1 = getTime();
   VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, targetClusterTraPPE0);
   virialAlpha->setVerbose(true);
@@ -92,6 +100,7 @@ int main(int argc, char** argv) {
   virialAlpha->getNewAlpha(alpha, alphaErr, alphaCor);
   printf("alpha  avg: %22.15e   err: %12.5e   cor: % 6.4f\n", alpha, alphaErr, alphaCor);
   printf("alpha time: %4.3f\n\n", t2-t1);
+  // alpha = 1;
   // exit(0);
   long blockSize = virialAlpha->getTargetAverage().getBlockSize();
   if (blockSize > numSteps/10) {
@@ -99,6 +108,7 @@ int main(int argc, char** argv) {
   }
   delete virialAlpha;
   targetIntegrator.removeMove(&targetMove0);
+  targetIntegrator.removeMove(&targetMove1);
   targetIntegrator.removeListener(&targetClusterTraPPE0);
 
   double targetStepSize = targetMove0.getStepSize();
@@ -106,6 +116,8 @@ int main(int argc, char** argv) {
 
   ClusterVirial targetClusterTraPPE(targetPotentialMasterTraPPE, temperature, nDer, true);
   MCMoveMoleculeDisplacementVirial targetMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, targetClusterTraPPE);
+  MCMoveMoleculeRotateVirial targetRotateMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, targetClusterTraPPE);
+  targetIntegrator.addMove(&targetRotateMove, 1);
   targetIntegrator.addMove(&targetMove, 1);
   targetIntegrator.addListener(&targetClusterTraPPE);
   targetIntegrator.setTuning(false);
@@ -115,6 +127,11 @@ int main(int argc, char** argv) {
   double acceptance = targetMove.getAcceptance();
   printf("target move acceptance: %5.3f\n", acceptance);
   virialProduction.printResults(nullptr);
+  // for (int i=0; i<=5 ; i++)
+  // {
+  //   double *r = targetBox.getAtomPosition(i);
+  //   printf("%f %f %f \n", r[0], r[1], r[2]);
+  // }
 
   printf("time: %4.3f\n", t3-t2);
 }

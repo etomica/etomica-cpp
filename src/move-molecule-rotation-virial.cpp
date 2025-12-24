@@ -17,14 +17,27 @@ MCMoveMoleculeRotateVirial::~MCMoveMoleculeRotateVirial() {
 }
 
 bool MCMoveMoleculeRotateVirial::doTrial() {
+  // total++;
+  // if (abs(box.getAtomPosition(4)[0] - 4)> 0.5)
+  // {
+  //   nTimesPointedX++;
+  //   printf("x\n");
+  // }
+  // if (total % 100000 == 0 && abs(box.getAtomPosition(4)[0] - 4) < 0.0001)
+  // {
+  //   printf("%f \n", (double)nTimesPointedX/total);
+  // }
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
   }
   int nm = box.getNumMolecules(iSpecies);
   iMolecule = box.getGlobalMoleculeIndex(iSpecies, random.nextInt(nm));
+  // iMolecule = 0;
   wOld = fabs(cluster.getValues()[0]);
   int axis = random.nextInt(3);
+  // axis = 1;
   double theta = stepSize*2*(random.nextDouble32()-0.5);
+  // theta = M_PI / 2;
   mat.setSimpleAxisAngle(axis, theta);
   int iSpecies, iMoleculeInSpecies, firstAtom, lastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
@@ -47,6 +60,15 @@ double MCMoveMoleculeRotateVirial::getChi(double T) {
   wNew = fabs(cluster.getValues()[0]);
   double chi = wNew>wOld ? 1 : wNew/wOld;
   chiSum += chi;
+  // printf("%f %f \n", wOld, wNew);
+  // if (wNew < 0.4 && wOld < 0.4)
+  // {
+  //   exit(0);
+  // }
+  // if (wNew < 1)
+  // {
+  //   exit(0);
+  // }
   return chi;
 }
 
