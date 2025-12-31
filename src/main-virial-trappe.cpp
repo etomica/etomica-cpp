@@ -20,15 +20,15 @@
 #include "TraPPEParams.h"
 
 int main(int argc, char** argv) {
-  TraPPEParams TP;
+  TraPPEParams TP(TraPPEParams::propane);
   int nPoints = 2;
   int nDer = 0;
   double temperatureK = 1000;
   double temperature = Kelvin::toSim(1000);
   printf("temp: %f\n", temperature);
-  long numSteps = 100000000;
+  long numSteps = 10000000;
   double sigmaHSRef = 6;
-  printf("Overlap sampling for TraPPE CO2 at %.1f K for B%d and %d derivatives\n", temperatureK, nPoints, nDer);
+  printf("Overlap sampling for TraPPE %d at %.1f K for B%d and %d derivatives\n", TP.chemForm,temperatureK, nPoints, nDer);
   double vhs = 4.0/3.0*M_PI*sigmaHSRef*sigmaHSRef*sigmaHSRef;
   double HSBn = pow(vhs, nPoints-1)/2;
   for (int i=2; i<=nPoints; i++) HSBn *= i;

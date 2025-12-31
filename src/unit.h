@@ -25,5 +25,16 @@ class Electron{
     static double toSim(double x)   { return x * convFactor; }
 };
 
+class Degree
+{
+public:
+    static double convFactor;
+
+
+    static double fromSim(double x) { return x / convFactor; }
+    static double toSim(double x)   { return x * convFactor; }
+
+};
+
 
 #endif //MYPROJECT_UNIT_H

@@ -11,10 +11,11 @@
 
 class TraPPEParams {
 public:
-    TraPPEParams();
-
-    void buildPotentials();
-
+    enum ChemForm {
+        CO2, propane
+        };
+    TraPPEParams(ChemForm chemForm);
+    ChemForm chemForm;
     int numAtomTypes;
     vector<double> sigma;
     vector<double> epsilon;
@@ -28,22 +29,10 @@ public:
     SpeciesSimple species;
     SpeciesList speciesList;
     // Box box;
-    enum chemForm {
-        CO2
-        };
-
-    chemForm chemForm;
-    // struct params {
-    //     int numAtomTypes;
-    //     vector<double> sigma;
-    //     vector<double> epsilon;
-    //     vector<double> charge;
-    // };
-    // params params;
-    // PotentialMasterVirial potentialGroup;
     bool isFlex = false;
     bool polar = false;
-
+private:
+    SpeciesSimple makeSpecies(ChemForm chemForm);
 
 };
 
