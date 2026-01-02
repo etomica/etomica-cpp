@@ -66,7 +66,8 @@ foreach(name ${MAIN_NAMES})
             constants.h
             P2PotentialGroupBuilder.cpp
             P2PotentialGroupBuilder.h
-            unit.cpp)
+            unit.cpp
+            move-cluster-angle-general.cpp)
     add_executable(${name} ${SRC_FILES} ${main_src})
 
     # Windows doesn't need -lm; on Linux/macOS link against libm

@@ -4,9 +4,12 @@
 
 #pragma once
 
+#include <utility>
+
 #include "move.h"
 #include "cluster.h"
 #include "rotation-matrix.h"
+#include "vector.h"
 
 class MCMoveDisplacementVirial : public MCMove {
   private:
@@ -94,4 +97,52 @@ class MCMoveChainVirial : public MCMove {
     virtual double energyChange() {return 0;}
     double* getHistogram();
 };
+
+class MCMoveClusterAngleGeneral : public MCMove
+{
+  private:
+    SpeciesList& speciesList;
+    AtomInfo& atomInfo;
+    bool oneSide;
+    double uOld = 0;
+    double uNew = 0;
+    double wOld = 0;
+    double wNew = 0;
+    vector<int> modified;
+    int modifiedIndex = 0;
+    int b = 0;
+    Cluster &cluster;
+    RotationMatrix mat;
+    int iAtomFirst{}, iAtomLast{};
+    int numOldPositions{};
+    double **oldPositions{};
+
+
+  protected:
+    double dt = 0;
+    vector<vector<int>> triplets;
+    int iMolecule;
+    int iSpecies{}, mySpecies{};
+    vector<vector<int>> bonding;
+    int* constraintMap{};
+    void transformBondedAtoms(RotationMatrix rm, int index, double* shift);
+    void transform(RotationMatrix rm, int index, double* shift);
+
+
+  public:
+
+    MCMoveClusterAngleGeneral(SpeciesList& sl, Box& b, PotentialMaster& p, bool oneSide, Random& r, double stepSize);
+    ~MCMoveClusterAngleGeneral();
+
+    // void setBox(Box& p);
+    void setConstraintMap(vector<int> newConstraintMap) {constraintMap = std::move(newConstraintMap);}
+    MCMoveClusterAngleGeneral(SpeciesList& sl, Box& b, PotentialMaster& p, bool oneSide, Random& r, double stepSize,
+                              Cluster& cluster);
+    virtual bool doTrial();
+    virtual double getChi(double temperature);
+    virtual void acceptNotify();
+    virtual void rejectNotify();
+    virtual double energyChange();
+
+}
 
