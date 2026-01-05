@@ -101,7 +101,6 @@ class MCMoveChainVirial : public MCMove {
 class MCMoveClusterAngleGeneral : public MCMove
 {
   private:
-    SpeciesList& speciesList;
     AtomInfo& atomInfo;
     bool oneSide;
     double uOld = 0;
@@ -118,9 +117,8 @@ class MCMoveClusterAngleGeneral : public MCMove
     double **oldPositions{};
 
 
-  protected:
     double dt = 0;
-    vector<vector<int>> triplets;
+    vector<int *> triplets;
     int iMolecule;
     int iSpecies{}, mySpecies{};
     vector<vector<int>> bonding;
@@ -131,13 +129,13 @@ class MCMoveClusterAngleGeneral : public MCMove
 
   public:
 
-    MCMoveClusterAngleGeneral(SpeciesList& sl, Box& b, PotentialMaster& p, bool oneSide, Random& r, double stepSize);
+    MCMoveClusterAngleGeneral(Box &b, PotentialMaster &p, bool oneSide, Random &r, vector<int *> t, AtomInfo at,
+                              double stepSize, Cluster &cluster);
+
     ~MCMoveClusterAngleGeneral();
 
     // void setBox(Box& p);
     void setConstraintMap(vector<int> newConstraintMap) {constraintMap = newConstraintMap.data();}
-    MCMoveClusterAngleGeneral(SpeciesList& sl, Box& b, PotentialMaster& p, bool oneSide, Random& r, double stepSize,
-                              Cluster& cluster);
     virtual bool doTrial();
     virtual double getChi(double temperature);
     virtual void acceptNotify();

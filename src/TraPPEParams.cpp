@@ -50,7 +50,11 @@ TraPPEParams::TraPPEParams(ChemForm chemForm) : chemForm(chemForm), species(make
         charge = {qCH3, qCH2};
         k_theta = {kCCC};
         theta_eq = {thetaCCH};
-        triplets = {{0, 1, 2}};
+        int* t = (int*)malloc(3*sizeof(int));
+        t[0] = 0;
+        t[1] = 1;
+        t[2] = 2;
+        triplets.push_back(t);
         bonding = {{1}, {0, 2}, {1}};
 
         species.addAtomType(12, 1);

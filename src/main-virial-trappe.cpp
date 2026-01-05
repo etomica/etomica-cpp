@@ -14,13 +14,14 @@
 #include "util.h"
 #include "cluster.h"
 #include "P2PotentialGroupBuilder.h"
+#include "potential-angle.h"
 #include "potential-molecular.h"
 #include "unit.h"
 #include "virial.h"
 #include "TraPPEParams.h"
 
 int main(int argc, char** argv) {
-  TraPPEParams TP(TraPPEParams::CO2);
+  TraPPEParams TP(TraPPEParams::propane);
   int nPoints = 2;
   int nDer = 0;
   double temperatureK = 1000;
@@ -46,6 +47,14 @@ int main(int argc, char** argv) {
   refBox.setPeriodic(false, false, false);
   refBox.setNumMolecules(0, nPoints);
   PotentialMasterVirial potentialGroup(TP.speciesList, refBox);
+  //flex moves
+
+  PotentialMaster potentialMasterIntraRef(TP.speciesList, refBox, false);
+  int nSpheres = TP.species.getNumAtoms();
+  printf("nSpheres = %d", nSpheres);
+  bool isFlex = TP.isFlex && (TP.diagram.empty() || TP.diagram != "BC");
+  printf("isFlex = %s", isFlex ? "true" : "false");
+  printf("Diagram %s" , TP.diagram.c_str());
 
   PotentialMasterVirial refPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroup, TP.speciesList, TP.species.getNumAtomTypes(), TP.sigma, TP.epsilon, TP.charge, refBox);
   PotentialMasterVirialMolecular refPotentialMasterHS(TP.speciesList, refBox);
@@ -58,7 +67,8 @@ int main(int argc, char** argv) {
   MCMoveMoleculeRotateVirial refMove1(TP.speciesList, 0, refBox, refPotentialMasterHS, seed, 1.5, refClusterHS);
   refIntegrator.addMove(&refMove1, 1);
   refIntegrator.setTemperature(temperature);
-
+  MCMoveClusterAngleGeneral refMoveAngle(refBox, potentialMasterIntraRef, false, seed, TP.triplets, TP.speciesList, 0.1, refClusterTraPPE);
+  refIntegrator.addMove(&refMoveAngle, 1);
   Box targetBox(TP.speciesList);
   targetBox.setBoxSize(5,5,5);
   targetBox.setPeriodic(false, false, false);
@@ -69,26 +79,20 @@ int main(int argc, char** argv) {
 
   //flex moves
 
-  PotentialMaster bondingInfo(TP.speciesList, targetBox, false);
-  int nSpheres = TP.species.getNumAtoms();
-  printf("nSpheres = %d", nSpheres);
-  bool isFlex = TP.isFlex && (TP.diagram.empty() || TP.diagram != "BC");
-  printf("isFlex = %s", isFlex ? "true" : "false");
-  printf("Diagram %s" , TP.diagram.c_str());
+  PotentialMaster potentialMasterIntraTarget(TP.speciesList, targetBox, false);
 
   //P3 bond angle
   if (!TP.theta_eq.empty())
   {
+    for (int j = 0 ; j < (int)TP.theta_eq.size(); j++) {
+      PotentialAngleHarmonic *p3 = new PotentialAngleHarmonic(0.5*TP.k_theta[j], TP.theta_eq[j]);
+      potentialMasterIntraRef.setBondAnglePotential(0, TP.triplets, p3);
+      potentialMasterIntraTarget.setBondAnglePotential(0, TP.triplets, p3);
 
+    }
   }
-
-
-
-
-
-
-
-
+  potentialMasterIntraRef.init();
+  potentialMasterIntraTarget.init();
   PotentialMasterVirialMolecular targetPotentialMasterHS(TP.speciesList, targetBox);
   targetPotentialMasterHS.setMoleculePairPotential(0, 0, &pHSMolecule);
   IntegratorMC targetIntegrator(targetPotentialMasterTraPPE, seed);
@@ -100,6 +104,8 @@ int main(int argc, char** argv) {
   targetIntegrator.addMove(&targetMove0, 1);
   MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMove1, 1);
+  MCMoveClusterAngleGeneral targetMoveAngle(targetBox, potentialMasterIntraRef, false, seed, TP.triplets, TP.speciesList.getAtomInfo(), 0.1, targetClusterTraPPE0);
+  targetIntegrator.addMove(&targetMoveAngle, 1);
   // for (int i=3; i<=5 ; i++)
   // {
   //   targetBox.getAtomPosition(i)[0]+=4;

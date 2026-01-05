@@ -10,12 +10,16 @@
  * Originally developed by Arpit for alkanes.
  */
 
-MCMoveClusterAngleGeneral::MCMoveClusterAngleGeneral(SpeciesList& sl, Box& b, PotentialMaster& p, bool oneSide, Random& r, double stepSize, Cluster& cluster) :
+MCMoveClusterAngleGeneral::MCMoveClusterAngleGeneral(Box& b, PotentialMaster& p, bool oneSide, Random& r, vector<int*> t, SpeciesList& sl, double stepSize, Cluster& cluster) :
   MCMove(b, p, r, stepSize),
-  speciesList(sl), atomInfo(atomInfo), oneSide(oneSide), cluster(cluster), iMolecule(0)
+  atomInfo(sl.getAtomInfo()), oneSide(oneSide), cluster(cluster), triplets(t),  iMolecule(0)
 {
   maxStepSize = M_PI / 2;
 }
+
+MCMoveClusterAngleGeneral::~MCMoveClusterAngleGeneral() {
+}
+
 
 // void MCMoveClusterAngleGeneral::setBox(Box& p)
 // {
@@ -88,8 +92,6 @@ bool MCMoveClusterAngleGeneral::doTrial() {
   }
   double theta = stepSize*2*(random.nextDouble32()-0.5); //dt
   mat.setAxisAngle(axis, theta);
-  Species* species = speciesList.get(mySpecies);
-  double* center = species->getMoleculeCOM(box, iAtomFirst, iAtomLast);
   double shift[3];
   transform(mat, triplets[d][0], shift);
   transformBondedAtoms(mat, triplets[d][0], shift);
@@ -123,50 +125,24 @@ bool MCMoveClusterAngleGeneral::doTrial() {
 
 
   numTrials++;
-  uNew = potentialMaster.oldMoleculeEnergy(iMolecule);
+  potentialMaster.computeOneMolecule(iMolecule, uNew);
   wNew = cluster.getValues()[0];
 
   return true;
 }
 
-double MCMoveMoleculeRotate::getChi(double T) {
-  uNew = 0;
-  potentialMaster.computeOneMolecule(iMolecule, uNew);
-  double chi = uNew<uOld ? 1 : exp(-(uNew-uOld)/T);
-  //printf("%f => %f  ==>  %f\n", uOld, uNew, uNew-uOld);
-  chiSum += chi;
-  return chi;
-}
 
 
 double MCMoveClusterAngleGeneral::getChi(double temperature)
 {
-    return (wOld == 0 ? 1 : wNew / wOld) * exp(-(uNew - uOld) / temperature);
+    double chi =  (wOld == 0 ? 1 : wNew / wOld) * exp(-(uNew - uOld) / temperature);
+    chiSum += chi;
+    return chi;
 }
 
 void MCMoveClusterAngleGeneral::acceptNotify()
 {
     //printf("accepted\n");
-    potentialMaster.processAtomU(1);
-    int na = iAtomLast-iAtomFirst+1;
-    for (int i=0; i<na; i++) {
-        int iAtom = iAtomFirst + i;
-        double *ri = box.getAtomPosition(iAtom);
-        for (int j=0; j<3; j++) ri[j] = oldPositions[i][j];
-        potentialMaster.updateAtom(iAtom);
-    }
-    double uTmp = 0;
-    potentialMaster.computeOneMolecule(iMolecule, uTmp);
-    // this call is designed to set up the next call.  uTmp won't necessarily be correct
-    potentialMaster.processAtomU(-1);
-    Species* species = speciesList.get(mySpecies);
-    double* center = species->getMoleculeCOM(box, iAtomFirst, iAtomLast);
-    for (int i=0; i<na; i++) {
-        int iAtom = iAtomFirst + i;
-        double *ri = box.getAtomPosition(iAtom);
-        mat.transformAbout(ri, center, box);
-        potentialMaster.updateAtom(iAtom);
-    }
     numAccepted++;
 
 }
@@ -180,11 +156,7 @@ void MCMoveClusterAngleGeneral::rejectNotify()
         int iAtom = iAtomFirst + i;
         double *ri = box.getAtomPosition(iAtom);
         for (int j=0; j<3; j++) ri[j] = oldPositions[i][j];
-        potentialMaster.updateAtom(iAtom);
     }
-    uNew = uOld;
-    potentialMaster.resetAtomDU();
-
 }
 
 void MCMoveClusterAngleGeneral::transform(RotationMatrix rm, const int index, double* shift)
@@ -220,4 +192,8 @@ void MCMoveClusterAngleGeneral::transformBondedAtoms(RotationMatrix rm, const in
     }
   }
 
+}
+double MCMoveClusterAngleGeneral::energyChange() {
+  //bogus
+  return 0;
 }
