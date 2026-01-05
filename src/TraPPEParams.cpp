@@ -10,7 +10,6 @@ TraPPEParams::TraPPEParams(ChemForm chemForm) : chemForm(chemForm), species(make
     if (chemForm == CO2)
     {
         //TraPPE Parameters
-        numAtomTypes = 2;
         double bondLengthCO = 1.160; // Angstrom
         double sigmaC = 2.800; // Angstrom
         double epsilonC = Kelvin::toSim(27.0);
@@ -33,7 +32,6 @@ TraPPEParams::TraPPEParams(ChemForm chemForm) : chemForm(chemForm), species(make
     else if (chemForm == propane)
     {
         //TraPPE-UA
-        numAtomTypes = 2; //CH3, CH2
         isFlex = true;
         //TraPPE Parameters
         double bondLengthCHxCHy = 1.54; // Angstrom

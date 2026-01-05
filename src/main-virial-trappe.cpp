@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
   refBox.setNumMolecules(0, nPoints);
   PotentialMasterVirial potentialGroup(TP.speciesList, refBox);
 
-  PotentialMasterVirial refPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroup, TP.speciesList, TP.numAtomTypes, TP.sigma, TP.epsilon, TP.charge, refBox);
+  PotentialMasterVirial refPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroup, TP.speciesList, TP.species.getNumAtomTypes(), TP.sigma, TP.epsilon, TP.charge, refBox);
   PotentialMasterVirialMolecular refPotentialMasterHS(TP.speciesList, refBox);
   refPotentialMasterHS.setMoleculePairPotential(0, 0, &pHSMolecule);
   IntegratorMC refIntegrator(refPotentialMasterHS, seed);
@@ -65,7 +65,29 @@ int main(int argc, char** argv) {
   targetBox.setNumMolecules(0, nPoints);
   PotentialMasterVirial potentialGroupTarget(TP.speciesList, targetBox);
 
-  PotentialMasterVirial targetPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroupTarget, TP.speciesList, TP.numAtomTypes, TP.sigma, TP.epsilon, TP.charge, targetBox);
+  PotentialMasterVirial targetPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroupTarget, TP.speciesList, TP.species.getNumAtomTypes(), TP.sigma, TP.epsilon, TP.charge, targetBox);
+
+  //flex moves
+
+  PotentialMaster bondingInfo(TP.speciesList, targetBox, false);
+  int nSpheres = TP.species.getNumAtoms();
+  printf("nSpheres = %d", nSpheres);
+  bool isFlex = TP.isFlex && (TP.diagram.empty() || TP.diagram != "BC");
+  printf("isFlex = %s", isFlex ? "true" : "false");
+  printf("Diagram %s" , TP.diagram.c_str());
+
+  //P3 bond angle
+  if (!TP.theta_eq.empty())
+  {
+
+  }
+
+
+
+
+
+
+
 
   PotentialMasterVirialMolecular targetPotentialMasterHS(TP.speciesList, targetBox);
   targetPotentialMasterHS.setMoleculePairPotential(0, 0, &pHSMolecule);

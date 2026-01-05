@@ -37,6 +37,10 @@ int Species::getNumAtoms() {
   return numAtoms;
 }
 
+int Species::getNumAtomTypes() {
+  return numAtomTypes;
+}
+
 int* Species::getAtomTypes() {
   return atomTypes;
 }

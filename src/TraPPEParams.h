@@ -16,7 +16,6 @@ public:
         };
     TraPPEParams(ChemForm chemForm);
     ChemForm chemForm;
-    int numAtomTypes;
     vector<double> sigma;
     vector<double> epsilon;
     vector<double> charge;
@@ -28,6 +27,7 @@ public:
     vector<vector<int>> bonding;
     SpeciesSimple species;
     SpeciesList speciesList;
+    string diagram;
     // Box box;
     bool isFlex = false;
     bool polar = false;

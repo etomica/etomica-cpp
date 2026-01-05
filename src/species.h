@@ -31,6 +31,7 @@ class Species {
     virtual void init(AtomInfo& atomInfo);
     int* getAtomTypes();
     int getNumAtoms();
+    int getNumAtomTypes();
     double* getAtomPosition(int iAtom);
     double* getMoleculeCOM(Box& box, int iFirstAtom, int iLastAtom);
     void getMoleculeOrientation(Box& box, int iFirstAtom, double* direction1, double* direction2);

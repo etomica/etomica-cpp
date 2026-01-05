@@ -135,7 +135,7 @@ class MCMoveClusterAngleGeneral : public MCMove
     ~MCMoveClusterAngleGeneral();
 
     // void setBox(Box& p);
-    void setConstraintMap(vector<int> newConstraintMap) {constraintMap = std::move(newConstraintMap);}
+    void setConstraintMap(vector<int> newConstraintMap) {constraintMap = newConstraintMap.data();}
     MCMoveClusterAngleGeneral(SpeciesList& sl, Box& b, PotentialMaster& p, bool oneSide, Random& r, double stepSize,
                               Cluster& cluster);
     virtual bool doTrial();
@@ -143,6 +143,4 @@ class MCMoveClusterAngleGeneral : public MCMove
     virtual void acceptNotify();
     virtual void rejectNotify();
     virtual double energyChange();
-
-}
-
+};
