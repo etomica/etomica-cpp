@@ -10,9 +10,9 @@
  * Originally developed by Arpit for alkanes.
  */
 
-MCMoveClusterAngleGeneral::MCMoveClusterAngleGeneral(Box& b, PotentialMaster& p, bool oneSide, Random& r, vector<int*> t, SpeciesList& sl, double stepSize, Cluster& cluster) :
-  MCMove(b, p, r, stepSize),
-  atomInfo(sl.getAtomInfo()), oneSide(oneSide), cluster(cluster), triplets(t),  iMolecule(0)
+MCMoveClusterAngleGeneral::MCMoveClusterAngleGeneral(Box& b, PotentialMaster& p, bool oneSide, Random& r, vector<vector <int>> bnd, vector<int*> t, SpeciesList& sl, double stepSize, Cluster& cluster) :
+  MCMove(b, p, r, stepSize), speciesList(sl),
+   oneSide(oneSide), cluster(cluster), triplets(t), bonding(bnd), iMolecule(0)
 {
   maxStepSize = M_PI / 2;
 }
@@ -30,20 +30,20 @@ bool MCMoveClusterAngleGeneral::doTrial() {
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
   }
-  int nm = iSpecies<0 ? box.getTotalNumMolecules() : box.getNumMolecules(iSpecies);
+  int nm = mySpecies<0 ? box.getTotalNumMolecules() : box.getNumMolecules(mySpecies);
   if (nm==0) {
     iMolecule = -1;
     return false;
   }
   iMolecule = random.nextInt(nm);
   int iMoleculeInSpecies = 0;
-  if (iSpecies>=0) {
+  if (mySpecies>=0) {
     iMoleculeInSpecies = iMolecule;
-    iMolecule = box.getGlobalMoleculeIndex(iSpecies, iMolecule);
+    iMolecule = box.getGlobalMoleculeIndex(mySpecies, iMolecule);
   }
   uOld = potentialMaster.oldMoleculeEnergy(iMolecule);
   wNew = wOld = 1;
-  wOld = cluster.getValues()[0];
+  wOld = fabs(cluster.getValues()[0]);
   if (false) {
     // see if we can recompute the molecule energy and get the same result
     // this messes up future computation, so abort afterwards
@@ -54,9 +54,9 @@ bool MCMoveClusterAngleGeneral::doTrial() {
     abort();
   }
   int na = numOldPositions;
-  mySpecies = iSpecies;
-  if (iSpecies<0) {
-    box.getMoleculeInfo(iMolecule, mySpecies, iMoleculeInSpecies, iAtomFirst, iAtomLast);
+  if (mySpecies<0) {
+    int iSpecies;
+    box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iAtomFirst, iAtomLast);
     na = iAtomLast-iAtomFirst+1;
     if (na==1) {
       iMolecule = -1;
@@ -68,14 +68,23 @@ bool MCMoveClusterAngleGeneral::doTrial() {
     }
   }
   else {
+    fprintf(stderr, "I don't know how to get atoms from a specific species \n");
+    abort();
     iAtomFirst = box.getFirstAtom(mySpecies, iMoleculeInSpecies);
     iAtomLast = iAtomFirst + na - 1;
   }
-  modifiedIndex = 0;
+  for (int i=0; i<na; i++) {
+    int iAtom = iAtomFirst + i;
+    double *ri = box.getAtomPosition(iAtom);
+
+    for (int j=0; j<3; j++) oldPositions[i][j] = ri[j];
+  }
+
+  modified.clear();
   int d = random.nextInt(triplets.size());
   b = triplets[d][1];
-  modified[modifiedIndex]=b;
-  ++modifiedIndex;
+  modified.push_back(iAtomFirst + b);
+  double temp1[3];
   double axis[3];
   double temp[3];
   if (oneSide)
@@ -84,24 +93,25 @@ bool MCMoveClusterAngleGeneral::doTrial() {
   }
   else
   {
-    Vector::Ev1Mv2(box.getAtomPosition(triplets[d][0]), box.getAtomPosition(b), axis);
+    Vector::Ev1Mv2(box.getAtomPosition(triplets[d][0]), box.getAtomPosition(b), temp1);
     Vector::Ev1Mv2(box.getAtomPosition(triplets[d][2]), box.getAtomPosition(b), temp);
-    Vector::cross(axis, temp, axis);
+    Vector::cross(temp1, temp, axis);
     Vector::normalize(axis);
 
   }
   double theta = stepSize*2*(random.nextDouble32()-0.5); //dt
   mat.setAxisAngle(axis, theta);
-  double shift[3];
-  transform(mat, triplets[d][0], shift);
-  transformBondedAtoms(mat, triplets[d][0], shift);
+  double shift[3] = {0, 0, 0};
+  transform(iAtomFirst + triplets[d][0], shift);
+  transformBondedAtoms(triplets[d][0], shift);
   if (!oneSide) {
-    mat.setAxisAngle(axis, -dt);
+    mat.setAxisAngle(axis, -theta);
 
-    transform(mat, triplets[d][2], shift);
+    transform(iAtomFirst + triplets[d][2], shift);
 
-    transformBondedAtoms(mat, triplets[d][2], shift);
+    transformBondedAtoms(triplets[d][2], shift);
   }
+
   if (iMolecule==0 || (constraintMap != nullptr && constraintMap[iMolecule] == 0)) {
     double mt = 0;
     int na = iAtomLast-iAtomFirst+1;
@@ -109,7 +119,7 @@ bool MCMoveClusterAngleGeneral::doTrial() {
     {
       int iAtom = iAtomFirst + i;
       int iType = box.getAtomType(iAtom);
-      double m = atomInfo.getMass(iType);
+      double m = speciesList.getAtomInfo().getMass(iType);
       mt += m;
     }
     Vector::TE(-1.0/mt, shift);
@@ -126,8 +136,7 @@ bool MCMoveClusterAngleGeneral::doTrial() {
 
   numTrials++;
   potentialMaster.computeOneMolecule(iMolecule, uNew);
-  wNew = cluster.getValues()[0];
-
+  wNew = fabs(cluster.getValues()[0]);
   return true;
 }
 
@@ -149,46 +158,41 @@ void MCMoveClusterAngleGeneral::acceptNotify()
 
 void MCMoveClusterAngleGeneral::rejectNotify()
 {
-    //printf("rejected\n");
+    // printf("rejected\n");
     if (iMolecule < 0) return;
     int na = iAtomLast-iAtomFirst+1;
     for (int i=0; i<na; i++) {
         int iAtom = iAtomFirst + i;
         double *ri = box.getAtomPosition(iAtom);
+
         for (int j=0; j<3; j++) ri[j] = oldPositions[i][j];
     }
 }
 
-void MCMoveClusterAngleGeneral::transform(RotationMatrix rm, const int index, double* shift)
+void MCMoveClusterAngleGeneral::transform(const int index, double* shift)
 {
-    double r[3];
     double* p = box.getAtomPosition(index);
     int iType = box.getAtomType(index);
-    double m = atomInfo.getMass(iType);
+    double m = speciesList.getAtomInfo().getMass(iType);
     Vector::PEa1Tv1(-m, p, shift);
-    Vector::Ev1Mv2(p, box.getAtomPosition(b), r);
-    rm.transform(r);
-    Vector::PE(box.getAtomPosition(b), r);
-    Vector::E(r, p);
+    mat.transformAbout(p, box.getAtomPosition(iAtomFirst + b), box);
     Vector::PEa1Tv1(m, p, shift);
-    modified[modifiedIndex] = index;
-    modifiedIndex++;
-
+    modified.push_back(index);
 }
 
-void MCMoveClusterAngleGeneral::transformBondedAtoms(RotationMatrix rm, const int index, double* shift)
+void MCMoveClusterAngleGeneral::transformBondedAtoms(const int index, double* shift)
 {
   for(int k : bonding[index]){
     bool rotated = false;
-    for (int l = 0; l < modifiedIndex; l++) {
-      if (k == modified[l]) {
+    for (int l : modified) {
+      if (iAtomFirst + k == l) {
         rotated = true;
         break;
       }
     }
     if (!rotated) {
-      transform(rm, k, shift);
-      transformBondedAtoms(rm, k, shift);
+      transform(iAtomFirst + k, shift);
+      transformBondedAtoms(k, shift);
     }
   }
 

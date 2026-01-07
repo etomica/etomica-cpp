@@ -101,14 +101,13 @@ class MCMoveChainVirial : public MCMove {
 class MCMoveClusterAngleGeneral : public MCMove
 {
   private:
-    AtomInfo& atomInfo;
+    SpeciesList& speciesList;
     bool oneSide;
     double uOld = 0;
     double uNew = 0;
     double wOld = 0;
     double wNew = 0;
     vector<int> modified;
-    int modifiedIndex = 0;
     int b = 0;
     Cluster &cluster;
     RotationMatrix mat;
@@ -117,19 +116,19 @@ class MCMoveClusterAngleGeneral : public MCMove
     double **oldPositions{};
 
 
-    double dt = 0;
     vector<int *> triplets;
+    vector<vector <int>> bonding;
+
     int iMolecule;
-    int iSpecies{}, mySpecies{};
-    vector<vector<int>> bonding;
+    int mySpecies = -1;
     int* constraintMap{};
-    void transformBondedAtoms(RotationMatrix rm, int index, double* shift);
-    void transform(RotationMatrix rm, int index, double* shift);
+    void transformBondedAtoms(int index, double* shift);
+    void transform(int index, double* shift);
 
 
   public:
 
-    MCMoveClusterAngleGeneral(Box &b, PotentialMaster &p, bool oneSide, Random &r, vector<int *> t, AtomInfo at,
+    MCMoveClusterAngleGeneral(Box &b, PotentialMaster &p, bool oneSide, Random &r, vector<vector <int>> bnd, vector<int *> t, SpeciesList& sl,
                               double stepSize, Cluster &cluster);
 
     ~MCMoveClusterAngleGeneral();

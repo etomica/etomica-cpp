@@ -81,6 +81,7 @@ void IntegratorMC::doStep() {
       (*it)->moveAccepted(*m, chi);
     }
   }
+  fflush(nullptr);
 #ifdef DEBUG
   if (fabs(energy-potentialMaster.uTotalFromAtoms()) > 1e-4) {
     double x = potentialMaster.uTotalFromAtoms();
