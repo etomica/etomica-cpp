@@ -65,10 +65,10 @@ int main(int argc, char** argv) {
   MCMoveChainVirial refMove(TP.speciesList, refBox, refPotentialMasterHS, seed, sigmaHSRef);
   refIntegrator.addMove(&refMove, 1);
   MCMoveMoleculeRotateVirial refMove1(TP.speciesList, 0, refBox, refPotentialMasterHS, seed, 1.5, refClusterHS);
-  // refIntegrator.addMove(&refMove1, 1);
+  refIntegrator.addMove(&refMove1, 1);
   refIntegrator.setTemperature(temperature);
   MCMoveClusterAngleGeneral refMoveAngle(refBox, potentialMasterIntraRef, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, refClusterHS);
-  // refIntegrator.addMove(&refMoveAngle, 1);
+  refIntegrator.addMove(&refMoveAngle, 1);
   Box targetBox(TP.speciesList);
   targetBox.setBoxSize(5,5,5);
   targetBox.setPeriodic(false, false, false);
@@ -103,9 +103,9 @@ int main(int argc, char** argv) {
   MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMove0, 1);
   MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, targetClusterTraPPE0);
-  // targetIntegrator.addMove(&targetMove1, 1);
+  targetIntegrator.addMove(&targetMove1, 1);
   MCMoveClusterAngleGeneral targetMoveAngle(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, targetClusterTraPPE0);
-  // targetIntegrator.addMove(&targetMoveAngle, 1);
+  targetIntegrator.addMove(&targetMoveAngle, 1);
   // for (int i=3; i<=5 ; i++)
   // {
   //   targetBox.getAtomPosition(i)[0]+=4;
@@ -136,8 +136,8 @@ int main(int argc, char** argv) {
   }
   delete virialAlpha;
   targetIntegrator.removeMove(&targetMove0);
-  // targetIntegrator.removeMove(&targetMove1);
-  // targetIntegrator.removeMove(&targetMoveAngle);
+  targetIntegrator.removeMove(&targetMove1);
+  targetIntegrator.removeMove(&targetMoveAngle);
 
   targetIntegrator.removeListener(&targetClusterTraPPE0);
 
@@ -146,11 +146,11 @@ int main(int argc, char** argv) {
 
   ClusterVirial targetClusterTraPPE(targetPotentialMasterTraPPE, temperature, nDer, true);
   MCMoveMoleculeDisplacementVirial targetMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, targetClusterTraPPE);
-  // MCMoveMoleculeRotateVirial targetRotateMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, targetClusterTraPPE);
-  // MCMoveClusterAngleGeneral targetAngleMove(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, targetClusterTraPPE0);
-  // targetIntegrator.addMove(&targetRotateMove, 1);
+  MCMoveMoleculeRotateVirial targetRotateMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, targetClusterTraPPE);
+  MCMoveClusterAngleGeneral targetAngleMove(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, targetClusterTraPPE0);
+  targetIntegrator.addMove(&targetRotateMove, 1);
   targetIntegrator.addMove(&targetMove, 1);
-  // targetIntegrator.addMove(&targetAngleMove, 1);
+  targetIntegrator.addMove(&targetAngleMove, 1);
   targetIntegrator.addListener(&targetClusterTraPPE);
   targetIntegrator.setTuning(false);
   VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, targetClusterTraPPE, alpha, HSBn);

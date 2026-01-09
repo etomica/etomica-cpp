@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <cstdio>
+
 #include "potential-angle.h"
 #include <math.h>
 
@@ -11,6 +13,7 @@ PotentialAngleHarmonic::~PotentialAngleHarmonic() {}
 
 double PotentialAngleHarmonic::u(double costheta) {
   double dtheta = acos(costheta) - theta0;
+  printf("%f\n", dtheta);
   return k*dtheta*dtheta;
 }
 

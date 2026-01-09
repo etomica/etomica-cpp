@@ -42,6 +42,11 @@ bool MCMoveClusterAngleGeneral::doTrial() {
     iMolecule = box.getGlobalMoleculeIndex(mySpecies, iMolecule);
   }
   uOld = potentialMaster.oldMoleculeEnergy(iMolecule);
+  sum += uOld;
+  counter++;
+  if (counter % 100000 == 0) {
+    printf("counter = %d %f \n", counter, sum/counter);
+  }
   wNew = wOld = 1;
   wOld = fabs(cluster.getValues()[0]);
   if (false) {
@@ -146,6 +151,7 @@ double MCMoveClusterAngleGeneral::getChi(double temperature)
 {
     double chi =  (wOld == 0 ? 1 : wNew / wOld) * exp(-(uNew - uOld) / temperature);
     chiSum += chi;
+    printf("%f %f %f %f \n", uOld, uNew, wOld, wNew);
     return chi;
 }
 
@@ -167,6 +173,8 @@ void MCMoveClusterAngleGeneral::rejectNotify()
 
         for (int j=0; j<3; j++) ri[j] = oldPositions[i][j];
     }
+    potentialMaster.resetAtomDU();
+
 }
 
 void MCMoveClusterAngleGeneral::transform(const int index, double* shift)

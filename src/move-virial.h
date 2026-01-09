@@ -114,7 +114,8 @@ class MCMoveClusterAngleGeneral : public MCMove
     int iAtomFirst{}, iAtomLast{};
     int numOldPositions{};
     double **oldPositions{};
-
+    int counter =0;
+    double sum = 0;
 
     vector<int *> triplets;
     vector<vector <int>> bonding;

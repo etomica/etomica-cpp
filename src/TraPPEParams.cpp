@@ -52,19 +52,19 @@ TraPPEParams::TraPPEParams(ChemForm chemForm) : chemForm(chemForm), species(make
         theta_eq = {thetaCCH};
         int* t = (int*)malloc(3*sizeof(int));
         t[0] = 0;
-        t[1] = 1;
-        t[2] = 2;
+        t[1] = 2;
+        t[2] = 1;
         triplets.push_back(t);
-        bonding = {{1}, {0, 2}, {1}};
+        bonding = {{2}, {2}, {0, 1}};
 
-        species.addAtomType(12, 1);
         species.addAtomType(12, 2);
+        species.addAtomType(12, 1);
 
         //Get Coordinates
         double posCavg = (2 * bondLengthCHxCHy  - bondLengthCHxCHy * cos(thetaCCH))/3;
         species.setAtomPosition(0, 0 - posCavg, -yy / 3, 0);
-        species.setAtomPosition(1, bondLengthCHxCHy - posCavg, -yy / 3, 0);
-        species.setAtomPosition(2, bondLengthCHxCHy - bondLengthCHxCHy * cos(thetaCCH) - posCavg, 2 * yy / 3, 0);
+        species.setAtomPosition(2, bondLengthCHxCHy - posCavg, -yy / 3, 0);
+        species.setAtomPosition(1, bondLengthCHxCHy - bondLengthCHxCHy * cos(thetaCCH) - posCavg, 2 * yy / 3, 0);
 
         speciesList.add(&species);
 
