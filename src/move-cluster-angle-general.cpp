@@ -14,7 +14,7 @@ MCMoveClusterAngleGeneral::MCMoveClusterAngleGeneral(Box& b, PotentialMaster& p,
   MCMove(b, p, r, stepSize), speciesList(sl),
    oneSide(oneSide), cluster(cluster), triplets(t), bonding(bnd), iMolecule(0)
 {
-  maxStepSize = M_PI / 2;
+  maxStepSize = 0.2;
 }
 
 MCMoveClusterAngleGeneral::~MCMoveClusterAngleGeneral() {
@@ -36,17 +36,20 @@ bool MCMoveClusterAngleGeneral::doTrial() {
     return false;
   }
   iMolecule = random.nextInt(nm);
+  // iMolecule = 1;
   int iMoleculeInSpecies = 0;
   if (mySpecies>=0) {
     iMoleculeInSpecies = iMolecule;
     iMolecule = box.getGlobalMoleculeIndex(mySpecies, iMolecule);
   }
-  uOld = potentialMaster.oldMoleculeEnergy(iMolecule);
+  uOld = potentialMaster.oldMoleculeEnergyIntra(iMolecule);
   sum += uOld;
   counter++;
-  if (counter % 100000 == 0) {
-    printf("counter = %d %f \n", counter, sum/counter);
-  }
+
+  // if (counter % 100000 == 0) {
+  //   printf("%d counter = %d %f \n", idx, counter, sum/counter);
+  // }
+
   wNew = wOld = 1;
   wOld = fabs(cluster.getValues()[0]);
   if (false) {
@@ -98,14 +101,15 @@ bool MCMoveClusterAngleGeneral::doTrial() {
   }
   else
   {
-    Vector::Ev1Mv2(box.getAtomPosition(triplets[d][0]), box.getAtomPosition(b), temp1);
-    Vector::Ev1Mv2(box.getAtomPosition(triplets[d][2]), box.getAtomPosition(b), temp);
+    Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst + triplets[d][0]), box.getAtomPosition(iAtomFirst +b), temp1);
+    Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst + triplets[d][2]), box.getAtomPosition(iAtomFirst +b), temp);
     Vector::cross(temp1, temp, axis);
     Vector::normalize(axis);
 
   }
   double theta = stepSize*2*(random.nextDouble32()-0.5); //dt
   mat.setAxisAngle(axis, theta);
+  // if (idx == 0) printf("axis %f %f %f %f \n", axis[0], axis[1], axis[2], theta);
   double shift[3] = {0, 0, 0};
   transform(iAtomFirst + triplets[d][0], shift);
   transformBondedAtoms(triplets[d][0], shift);
@@ -140,7 +144,7 @@ bool MCMoveClusterAngleGeneral::doTrial() {
 
 
   numTrials++;
-  potentialMaster.computeOneMolecule(iMolecule, uNew);
+  uNew = potentialMaster.computeOneMoleculeIntra(iMolecule);
   wNew = fabs(cluster.getValues()[0]);
   return true;
 }
@@ -151,20 +155,26 @@ double MCMoveClusterAngleGeneral::getChi(double temperature)
 {
     double chi =  (wOld == 0 ? 1 : wNew / wOld) * exp(-(uNew - uOld) / temperature);
     chiSum += chi;
-    printf("%f %f %f %f \n", uOld, uNew, wOld, wNew);
+    // if (idx == 0)
+    // {
+    //   printf("%d %f %f %f %f %f \n", idx, temperature, uOld, uNew, wOld, wNew);
+    //
+    // }
     return chi;
 }
 
 void MCMoveClusterAngleGeneral::acceptNotify()
 {
-    //printf("accepted\n");
+    // if (idx == 0) printf("accepted\n");
+    potentialMaster.setMoleculeEnergy(iMolecule, uNew);
+
     numAccepted++;
 
 }
 
 void MCMoveClusterAngleGeneral::rejectNotify()
 {
-    // printf("rejected\n");
+    // if (idx == 0) printf("rejected\n");
     if (iMolecule < 0) return;
     int na = iAtomLast-iAtomFirst+1;
     for (int i=0; i<na; i++) {
@@ -173,7 +183,7 @@ void MCMoveClusterAngleGeneral::rejectNotify()
 
         for (int j=0; j<3; j++) ri[j] = oldPositions[i][j];
     }
-    potentialMaster.resetAtomDU();
+
 
 }
 
@@ -183,7 +193,10 @@ void MCMoveClusterAngleGeneral::transform(const int index, double* shift)
     int iType = box.getAtomType(index);
     double m = speciesList.getAtomInfo().getMass(iType);
     Vector::PEa1Tv1(-m, p, shift);
+    // if (idx == 0) printf("oldpos %d %f %f %f \n", index, p[0], p[1], p[2]);
     mat.transformAbout(p, box.getAtomPosition(iAtomFirst + b), box);
+    // if (idx == 0) printf("newpos %d %f %f %f \n", index, p[0], p[1], p[2]);
+
     Vector::PEa1Tv1(m, p, shift);
     modified.push_back(index);
 }

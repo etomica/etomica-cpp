@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <stdio.h>
 #include "potential-master.h"
+
+#include <limits>
+
 #include "potential-angle.h"
 #include "ewald.h"
 #include "alloc2d.h"
@@ -90,6 +93,13 @@ void PotentialMaster::init() {
   if (s < na || s > 2*na) {
     uAtom.resize(na);
   }
+  int nm = box.getTotalNumMolecules();
+  s = uMolecule.size();
+  if (s < nm || s > 2*nm)
+  {
+    uMolecule.resize(nm);
+  }
+  std::fill(uMolecule.begin(), uMolecule.end(), NAN);
 }
 
 void PotentialMaster::setDoTruncationCorrection(bool doCorrection) {
@@ -418,6 +428,7 @@ void PotentialMaster::handleOneBondAngleTriplet(bool doForces, double &uTot, int
   else if (costheta>1) costheta=1;
   double u, du, d2u;
   p->u012(costheta, u, du, d2u);
+  // printf("%f %f \n", costheta, u);
   uAtom[iAtom] += 0.3333333333333333333*u;
   uAtom[jAtom] += 0.3333333333333333333*u;
   uAtom[kAtom] += 0.3333333333333333333*u;
@@ -541,20 +552,6 @@ void PotentialMaster::computeOneMoleculeBonds(const int iSpecies, const int iMol
         int kAtom = firstAtom + lBondAngleTriplets[2];
         double uTot = 0;
         handleOneBondAngleTriplet(false, uTot, iAtom, jAtom, kAtom, p);
-        if (duAtom[iAtom] == 0) {
-          uAtomsChanged.push_back(iAtom);
-        }
-
-        if (duAtom[jAtom] == 0) {
-          uAtomsChanged.push_back(jAtom);
-        }
-        if (duAtom[kAtom] == 0) {
-          uAtomsChanged.push_back(kAtom);
-        }
-
-        duAtom[iAtom] += uTot/3;
-        duAtom[jAtom] += uTot/3;
-        duAtom[kAtom] += uTot/3;
         u1 += uTot;
       }
     }
@@ -598,8 +595,33 @@ double PotentialMaster::oldEmbeddingEnergy(int iAtom) {
   return u;
 }
 
+double PotentialMaster::oldMoleculeEnergyIntra(int iMolecule)
+{
+  // We may not have saved energies at the beginning of a simulation, so need to check for nan
+  if (!std::isnan(uMolecule[iMolecule]))
+  {
+    // double uCheck = computeOneMoleculeIntra(iMolecule);
+    // if (fabs(uCheck - uMolecule[iMolecule])>0.001)
+    // {
+    //   printf("%f %f \n", uCheck, uMolecule[iMolecule]);
+    //   abort();
+    // }
+    return uMolecule[iMolecule];
+  }
+  double u1 = computeOneMoleculeIntra(iMolecule);
+  uMolecule[iMolecule] = u1;
+  return u1;
+
+}
+
+void PotentialMaster::setMoleculeEnergy(int iMolecule, double u1)
+{
+  uMolecule[iMolecule] = u1;
+}
+
 double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
   // only works for rigid molecules, handles monatomic EAM
+
   int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
   double u = 0;
@@ -747,6 +769,17 @@ void PotentialMaster::computeOneInternal(const int iAtom, const double *ri, doub
   }
 }
 
+double PotentialMaster::computeOneMoleculeIntra(int iMolecule)
+{
+  int iSpecies, iMoleculeInSpecies, firstAtom, lastAtom;
+  box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
+  double u1 = 0;
+  if (!pureAtoms && !rigidMolecules) {
+    computeOneMoleculeBonds(iSpecies, iMolecule, u1);
+  }
+  return u1;
+}
+
 void PotentialMaster::computeOneMolecule(int iMolecule, double &u1) {
   duAtomMulti = true;
   int numAtoms = box.getNumAtoms();
@@ -792,6 +825,7 @@ void PotentialMaster::newMolecule(int iSpecies) {
     uAtom[jAtom] = 0;
     numAtomsByType[box.getAtomType(jAtom)]++;
   }
+  uMolecule.resize(box.getTotalNumMolecules());
 }
 
 void PotentialMaster::removeMolecule(int iSpecies, int iMolecule) {
@@ -809,6 +843,7 @@ void PotentialMaster::removeMolecule(int iSpecies, int iMolecule) {
     uAtom[jAtom-speciesAtoms] = uAtom[jAtom];
   }
   uAtom.resize(numAtoms-speciesAtoms);
+  uMolecule.resize(box.getTotalNumMolecules() - 1);
 }
 
 double PotentialMaster::uTotalFromAtoms() {

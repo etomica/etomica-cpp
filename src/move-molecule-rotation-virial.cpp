@@ -17,6 +17,8 @@ MCMoveMoleculeRotateVirial::~MCMoveMoleculeRotateVirial() {
 }
 
 bool MCMoveMoleculeRotateVirial::doTrial() {
+  // if (!first) {return false;}
+  // first = false;
   // total++;
   // if (abs(box.getAtomPosition(4)[0] - 4)> 0.5)
   // {
@@ -32,12 +34,12 @@ bool MCMoveMoleculeRotateVirial::doTrial() {
   }
   int nm = box.getNumMolecules(iSpecies);
   iMolecule = box.getGlobalMoleculeIndex(iSpecies, random.nextInt(nm));
-  // iMolecule = 0;
+  // iMolecule = 1;
   wOld = fabs(cluster.getValues()[0]);
   int axis = random.nextInt(3);
   // axis = 1;
   double theta = stepSize*2*(random.nextDouble32()-0.5);
-  // theta = M_PI / 2;
+  // theta = M_PI;
   mat.setSimpleAxisAngle(axis, theta);
   int iSpecies, iMoleculeInSpecies, firstAtom, lastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);

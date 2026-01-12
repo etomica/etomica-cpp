@@ -92,6 +92,7 @@ class PotentialMaster {
     vector<double> duAtom;
     bool duAtomSingle, duAtomMulti;
     vector<int> uAtomsChanged;
+    vector<double> uMolecule;
     double** force;
     int numForceAtoms, numRhoSumAtoms;
     double* rhoSum;
@@ -99,6 +100,7 @@ class PotentialMaster {
     vector<double> rdrho;
     vector<int> rhoAtomsChanged;
     vector<double> drhoSum;
+
 
     vector<PotentialCallback*> pairCallbacks;
     const int numAtomTypes;
@@ -127,6 +129,7 @@ class PotentialMaster {
     EwaldBase* ewald;
 
     void computeOneMoleculeBonds(const int iSpecies, const int iMolecule, double &u1);
+
     void handleOneBondPair(bool doForces, double &uTot, int iAtom, int jAtom, Potential* p);
     void handleOneBondAngleTriplet(bool doForces, double &uTot, int iAtom, int jAtom, int kATom, PotentialAngle* p);
     void computeAllBonds(bool doForces, double &uTot);
@@ -362,6 +365,10 @@ class PotentialMaster {
     void addCallback(PotentialCallback* pcb);
     virtual double uTotalFromAtoms();
     virtual void updateVolume() {}
+    double oldMoleculeEnergyIntra(int iMolecule);
+    double computeOneMoleculeIntra(int iMolecule);
+    void setMoleculeEnergy(int iMolecule, double u1);
+
 };
 
 class PotentialMasterCell : public PotentialMaster {

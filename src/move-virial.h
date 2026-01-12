@@ -66,6 +66,7 @@ class MCMoveMoleculeRotateVirial : public MCMove {
     int iSpecies;
     int nTimesPointedX = 0;
     int total = 0;
+    bool first = true;
 
   public:
 
@@ -128,7 +129,7 @@ class MCMoveClusterAngleGeneral : public MCMove
 
 
   public:
-
+    int idx = -1;
     MCMoveClusterAngleGeneral(Box &b, PotentialMaster &p, bool oneSide, Random &r, vector<vector <int>> bnd, vector<int *> t, SpeciesList& sl,
                               double stepSize, Cluster &cluster);
 

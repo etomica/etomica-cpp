@@ -69,6 +69,7 @@ int main(int argc, char** argv) {
   refIntegrator.setTemperature(temperature);
   MCMoveClusterAngleGeneral refMoveAngle(refBox, potentialMasterIntraRef, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, refClusterHS);
   refIntegrator.addMove(&refMoveAngle, 1);
+  refMoveAngle.idx = 0;
   Box targetBox(TP.speciesList);
   targetBox.setBoxSize(5,5,5);
   targetBox.setPeriodic(false, false, false);
@@ -106,6 +107,7 @@ int main(int argc, char** argv) {
   targetIntegrator.addMove(&targetMove1, 1);
   MCMoveClusterAngleGeneral targetMoveAngle(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMoveAngle, 1);
+  targetMoveAngle.idx = 1;
   // for (int i=3; i<=5 ; i++)
   // {
   //   targetBox.getAtomPosition(i)[0]+=4;
@@ -149,6 +151,7 @@ int main(int argc, char** argv) {
   MCMoveMoleculeRotateVirial targetRotateMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, targetClusterTraPPE);
   MCMoveClusterAngleGeneral targetAngleMove(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, targetClusterTraPPE0);
   targetIntegrator.addMove(&targetRotateMove, 1);
+  targetAngleMove.idx = 2;
   targetIntegrator.addMove(&targetMove, 1);
   targetIntegrator.addMove(&targetAngleMove, 1);
   targetIntegrator.addListener(&targetClusterTraPPE);
