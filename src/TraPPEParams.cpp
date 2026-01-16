@@ -17,9 +17,23 @@ TraPPEParams::TraPPEParams(ChemForm chemForm) : chemForm(chemForm), species(make
         double sigmaO = 3.050; // Angstrom
         double epsilonO = Kelvin::toSim(79.0);
         double qO = Electron::toSim(-0.350);
+        double k_r = Kelvin::toSim(10);
         sigma = {sigmaC, sigmaO};
         epsilon = {epsilonC, epsilonO};
         charge = {qC, qO};
+        k_b = {k_r};
+        r_eq = {bondLengthCO};
+        bonding = {{1, 2}, {0}, {0}};
+        int* p1 = (int*)malloc(2*sizeof(int));
+        int* p2 = (int*)malloc(2*sizeof(int));
+
+        p1[0] = 0;
+        p1[1] = 1;
+        p2[0] = 0;
+        p2[1] = 2;
+        pairs.push_back(p1);
+        pairs.push_back(p2);
+
         species.addAtomType(12, 1);
         species.addAtomType(16, 2);
         species.setAtomPosition(0, 0, 0, 0);

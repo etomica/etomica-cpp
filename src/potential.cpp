@@ -738,3 +738,33 @@ double P2SoftSphericalSum::d2uWrapped(double r2) {
   d2u += p2.d2u(r2);
   return d2u;
 }
+
+/**
+ *
+ * @param Kb energy constant
+ * @param r0  Separation at which potential is at its minimum.  Default is
+ * zero.
+ */
+
+
+P2BondStretch::P2BondStretch(const double Kb, const double r0)
+{
+  setK(Kb);
+  setR0(r0);
+}
+
+double P2BondStretch::u(double r2) {
+  double dx = sqrt(r2) - r0;
+  return Kb*dx*dx;
+}
+
+/**
+ * The derivative r*du/dr.
+ */
+double P2BondStretch::du(double r2) {
+  double r = sqrt(r2);
+  double dx = r - r0;
+  return 2*Kb*r*dx;
+}
+
+

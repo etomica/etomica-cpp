@@ -243,3 +243,14 @@ protected:
 
 };
 
+class P2BondStretch: public Potential {
+protected:
+  double Kb{}, r0{};
+public:
+  P2BondStretch(double Kb, double r0);
+  ~P2BondStretch() {}
+  double u(double r2);
+  double du(double r2);
+  void setK(double K) {Kb = K;}
+  void setR0(double r0) {this->r0 = r0;}
+};

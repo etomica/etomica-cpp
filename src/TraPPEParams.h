@@ -21,7 +21,10 @@ public:
     vector<double> charge;
     vector<double> k_theta;
     vector<double> theta_eq;
+    vector<double> k_b;
+    vector<double> r_eq;
     vector<vector<double>> a;
+    vector<int *> pairs;
     vector<int *> triplets;
     vector<vector<int>> quads;
     vector<vector<int>> bonding;

@@ -21,7 +21,7 @@
 #include "TraPPEParams.h"
 
 int main(int argc, char** argv) {
-  TraPPEParams TP(TraPPEParams::propane);
+  TraPPEParams TP(TraPPEParams::CO2);
   int nPoints = 2;
   int nDer = 0;
   double temperatureK = 1000;
@@ -70,6 +70,9 @@ int main(int argc, char** argv) {
   MCMoveClusterAngleGeneral refMoveAngle(refBox, potentialMasterIntraRef, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, refClusterHS);
   refIntegrator.addMove(&refMoveAngle, 1);
   refMoveAngle.idx = 0;
+  MCMoveClusterStretch refMoveStretch(refBox, potentialMasterIntraRef, seed, TP.bonding, TP.pairs, TP.speciesList, 0.1, refClusterHS);
+  refIntegrator.addMove(&refMoveStretch, 1);
+
   Box targetBox(TP.speciesList);
   targetBox.setBoxSize(5,5,5);
   targetBox.setPeriodic(false, false, false);
@@ -81,6 +84,18 @@ int main(int argc, char** argv) {
   //flex moves
 
   PotentialMaster potentialMasterIntraTarget(TP.speciesList, targetBox, false);
+  //P2 Stretch
+
+  if (!TP.r_eq.empty())
+  {
+    for (int j = 0 ; j < (int)TP.r_eq.size(); j++)
+    {
+      P2BondStretch *p2 = new P2BondStretch(TP.k_b[j], TP.r_eq[j]);
+      potentialMasterIntraRef.setBondPotential(0, TP.pairs, p2);
+      potentialMasterIntraTarget.setBondPotential(0, TP.pairs, p2);
+    }
+
+  }
 
   //P3 bond angle
   if (!TP.theta_eq.empty())
@@ -108,6 +123,9 @@ int main(int argc, char** argv) {
   MCMoveClusterAngleGeneral targetMoveAngle(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMoveAngle, 1);
   targetMoveAngle.idx = 1;
+  MCMoveClusterStretch targetMoveStretch(targetBox, potentialMasterIntraTarget, seed, TP.bonding, TP.pairs, TP.speciesList, 0.1, targetClusterTraPPE0);
+  targetIntegrator.addMove(&targetMoveStretch, 1);
+
   // for (int i=3; i<=5 ; i++)
   // {
   //   targetBox.getAtomPosition(i)[0]+=4;
@@ -140,6 +158,7 @@ int main(int argc, char** argv) {
   targetIntegrator.removeMove(&targetMove0);
   targetIntegrator.removeMove(&targetMove1);
   targetIntegrator.removeMove(&targetMoveAngle);
+  targetIntegrator.removeMove(&targetMoveStretch);
 
   targetIntegrator.removeListener(&targetClusterTraPPE0);
 
@@ -150,10 +169,13 @@ int main(int argc, char** argv) {
   MCMoveMoleculeDisplacementVirial targetMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, targetClusterTraPPE);
   MCMoveMoleculeRotateVirial targetRotateMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, targetClusterTraPPE);
   MCMoveClusterAngleGeneral targetAngleMove(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, targetClusterTraPPE0);
+  MCMoveClusterStretch targetStretchMove(targetBox, potentialMasterIntraTarget, seed, TP.bonding, TP.pairs, TP.speciesList, 0.1, targetClusterTraPPE0);
   targetIntegrator.addMove(&targetRotateMove, 1);
   targetAngleMove.idx = 2;
   targetIntegrator.addMove(&targetMove, 1);
   targetIntegrator.addMove(&targetAngleMove, 1);
+  targetIntegrator.addMove(&targetStretchMove, 1);
+
   targetIntegrator.addListener(&targetClusterTraPPE);
   targetIntegrator.setTuning(false);
   VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, targetClusterTraPPE, alpha, HSBn);

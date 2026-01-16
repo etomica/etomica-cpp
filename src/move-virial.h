@@ -143,3 +143,44 @@ class MCMoveClusterAngleGeneral : public MCMove
     virtual void rejectNotify();
     virtual double energyChange();
 };
+
+class MCMoveClusterStretch : public MCMove
+{
+private:
+  SpeciesList& speciesList;
+  double uOld = 0;
+  double uNew = 0;
+  double wOld = 0;
+  double wNew = 0;
+  vector<int> modified;
+  int b = 0;
+  Cluster &cluster;
+  int iAtomFirst{}, iAtomLast{};
+  int numOldPositions{};
+  double **oldPositions{};
+  int counter =0;
+  double sum = 0;
+  double step = 0;
+  vector<int *> pairs;
+  vector<vector <int>> bonding;
+
+  int iMolecule;
+  int mySpecies = -1;
+  double transformBondedAtoms(double* dr, int index, double* shift);
+  double transform(double* dr, int index, double* shift);
+
+
+public:
+  int idx = -1;
+  MCMoveClusterStretch(Box &b, PotentialMaster &p, Random &r, vector<vector <int>> bnd, vector<int *> pr, SpeciesList& sl,
+                            double stepSize, Cluster &cluster);
+
+  ~MCMoveClusterStretch();
+
+  // void setBox(Box& p);
+  virtual bool doTrial();
+  virtual double getChi(double temperature);
+  virtual void acceptNotify();
+  virtual void rejectNotify();
+  virtual double energyChange();
+};

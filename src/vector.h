@@ -53,5 +53,9 @@ class Vector {
       out[2] *= a;
 
     }
+    static double squared(double *u)
+    {
+      return u[0]*u[0] + u[1]*u[1] + u[2]*u[2];
+    }
 
 };
