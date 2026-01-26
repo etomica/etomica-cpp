@@ -12,29 +12,27 @@
  * Mayer sampling.
  */
 
-PotentialMolecularAtomic::PotentialMolecularAtomic(int na, Potential& p) : PotentialMolecular(), nAtoms(na), potential(p) {
+PotentialMolecularAtomic::PotentialMolecularAtomic(SpeciesList& sl, Potential& p) : PotentialMolecular(), potential(p), speciesList(sl)
+{
 }
 
-double PotentialMolecularAtomic::u(Box& box, int iFirstAtom, int jFirstAtom) {
-  double ri[3] = {0.0,0.0,0.0};
-  for (int iAtom = iFirstAtom; iAtom<iFirstAtom+nAtoms; iAtom++) {
-    double* rii = box.getAtomPosition(iAtom);
-    ri[0] += rii[0]; ri[1] += rii[1]; ri[2] += rii[2];
-  }
-  ri[0] /= nAtoms; ri[1] /= nAtoms; ri[2] /= nAtoms;
-  double rj[3] = {0.0,0.0,0.0};
-  for (int jAtom = jFirstAtom; jAtom<jFirstAtom+nAtoms; jAtom++) {
-    double* rjj = box.getAtomPosition(jAtom);
+double PotentialMolecularAtomic::u(Box& box, int iMolecule, int jMolecule) {
+  int iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom;
 
-    // printf("%d %f %f %f \n", jAtom, rjj[0], rjj[1], rjj[2]);
+  box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, iFirstAtom, iLastAtom);
 
-    rj[0] += rjj[0]; rj[1] += rjj[1]; rj[2] += rjj[2];
-  }
-  rj[0] /= nAtoms; rj[1] /= nAtoms; rj[2] /= nAtoms;
+  double* com = speciesList.get(iSpecies)->getMoleculeCOM(box, iFirstAtom, iLastAtom);
+  double ri[3] = {com[0], com[1], com[2]};
+  int jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom;
+
+  box.getMoleculeInfo(jMolecule, jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom);
+
+  com = speciesList.get(jSpecies)->getMoleculeCOM(box, jFirstAtom, jLastAtom);
+
   double dr, r2=0;
-  dr = ri[0]-rj[0]; r2 += dr*dr;
-  dr = ri[1]-rj[1]; r2 += dr*dr;
-  dr = ri[2]-rj[2]; r2 += dr*dr;
-  // printf("%f %f %f %f %f %f %f\n", ri[0], ri[1], ri[2], rj[0], rj[1], rj[2], r2);
+  dr = ri[0]-com[0]; r2 += dr*dr;
+  dr = ri[1]-com[1]; r2 += dr*dr;
+  dr = ri[2]-com[2]; r2 += dr*dr;
+  // printf("%f %f %f %f %f %f %f\n", ri[0], ri[1], ri[2], com[0], com[1], com[2], r2);
   return potential.u(r2);
 }

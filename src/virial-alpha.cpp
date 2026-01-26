@@ -18,6 +18,8 @@ VirialAlpha::VirialAlpha(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, C
   int numAlpha = refMeter.getNumAlpha();
   const double *alpha = refMeter.getAlpha();
   alphaSpan = log(alpha[numAlpha-1]/alpha[0]);
+  refMeter.idx = 0;
+  targetMeter.idx = 1;
 }
 
 VirialAlpha::~VirialAlpha() {
@@ -81,6 +83,8 @@ void VirialAlpha::analyze(double &jBest) {
       double ac1 = targetOverStats[j-1][AVG_ACOR];
       double ac2 = targetOverStats[j][AVG_ACOR];
       alphaCor = ac1 > ac2 ? ac1 : ac2;
+      printf("%f %f %f %f %f %f\n", refOverStats[j-1][AVG_AVG], refOverStats[j-1][AVG_ERR],
+                               targetOverStats[j-1][AVG_AVG], targetOverStats[j-1][AVG_ERR], ac1, ac2);
       return;
     }
   }

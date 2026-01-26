@@ -161,7 +161,6 @@ private:
   int counter =0;
   double sum = 0;
   double step = 0;
-  vector<int *> pairs;
   vector<vector <int>> bonding;
 
   int iMolecule;
@@ -172,7 +171,7 @@ private:
 
 public:
   int idx = -1;
-  MCMoveClusterStretch(Box &b, PotentialMaster &p, Random &r, vector<vector <int>> bnd, vector<int *> pr, SpeciesList& sl,
+  MCMoveClusterStretch(Box &b, PotentialMaster &p, Random &r, vector<vector <int>> bnd, SpeciesList& sl,
                             double stepSize, Cluster &cluster);
 
   ~MCMoveClusterStretch();

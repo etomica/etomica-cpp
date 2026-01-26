@@ -16,11 +16,11 @@ class PotentialMolecular {
 
 class PotentialMolecularAtomic : public PotentialMolecular {
   private:
-    const int nAtoms;
     Potential& potential;
+    SpeciesList& speciesList;
 
   public:
-    PotentialMolecularAtomic(int nAtoms, Potential& p);
+    PotentialMolecularAtomic(SpeciesList& sl, Potential& p);
     virtual ~PotentialMolecularAtomic() {}
     double u(Box& box, int iFirstAtom, int jFirstAtom);
 };

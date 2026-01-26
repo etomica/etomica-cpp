@@ -7,8 +7,8 @@
  * the bond are translated with the overall molecule COM fixed.
  *
  */
-MCMoveClusterStretch::MCMoveClusterStretch(Box& b, PotentialMaster& p, Random& r, vector<vector <int>> bnd, vector<int*> pr, SpeciesList& sl, double stepSize, Cluster& cluster) :
-  MCMove(b, p, r, stepSize), speciesList(sl), cluster(cluster), pairs(pr), bonding(bnd), iMolecule(0)
+MCMoveClusterStretch::MCMoveClusterStretch(Box& b, PotentialMaster& p, Random& r, vector<vector <int>> bnd, SpeciesList& sl, double stepSize, Cluster& cluster) :
+  MCMove(b, p, r, stepSize), speciesList(sl), cluster(cluster), bonding(bnd), iMolecule(0)
 {
   maxStepSize = 0.2;
 }
@@ -96,7 +96,7 @@ bool MCMoveClusterStretch::doTrial() {
   double dr[3];
   Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst + b), box.getAtomPosition(iAtomFirst + a), dr);
   Vector::TE(step / sqrt(Vector::squared(dr)), dr);
-  double shift[3];
+  double shift[3] = {0, 0, 0};
   double m = 0;
   m += transform(dr, iAtomFirst + b, shift);
   m += transformBondedAtoms(dr, b, shift);
@@ -110,7 +110,6 @@ bool MCMoveClusterStretch::doTrial() {
     int iAtom = iAtomFirst + i;
     Vector::PE(shift, box.getAtomPosition(iAtom));
   }
-
   numTrials++;
   uNew = potentialMaster.computeOneMoleculeIntra(iMolecule);
   wNew = fabs(cluster.getValues()[0]);

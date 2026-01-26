@@ -92,21 +92,8 @@ bool MCMoveClusterAngleGeneral::doTrial() {
   int d = random.nextInt(triplets.size());
   b = triplets[d][1];
   modified.push_back(iAtomFirst + b);
-  double temp1[3];
   double axis[3];
-  double temp[3];
-  if (oneSide)
-  {
-    random.onSphere(axis);
-  }
-  else
-  {
-    Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst + triplets[d][0]), box.getAtomPosition(iAtomFirst +b), temp1);
-    Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst + triplets[d][2]), box.getAtomPosition(iAtomFirst +b), temp);
-    Vector::cross(temp1, temp, axis);
-    Vector::normalize(axis);
-
-  }
+  random.onSphere(axis);
   double theta = stepSize*2*(random.nextDouble32()-0.5); //dt
   mat.setAxisAngle(axis, theta);
   // if (idx == 0) printf("axis %f %f %f %f \n", axis[0], axis[1], axis[2], theta);

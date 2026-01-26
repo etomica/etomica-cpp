@@ -28,7 +28,7 @@ void PotentialMasterVirialMolecular::computeMolecules(const int* iMoleculeList, 
       int jMolecule = iMoleculeList[j];
       int jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom;
       box.getMoleculeInfo(jMolecule, jSpecies, jMoleculeInSpecies, jFirstAtom, jLastAtom);
-      double uij = iPotentials[jSpecies]->u(box, iFirstAtom, jFirstAtom);
+      double uij = iPotentials[jSpecies]->u(box, iMolecule, jMolecule);
       energy += uij;
     }
   }

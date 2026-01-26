@@ -525,16 +525,6 @@ void PotentialMaster::computeOneMoleculeBonds(const int iSpecies, const int iMol
         for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
         double u = p->u(r2);
         u1 += u;
-        if (duAtom[iAtom] == 0) {
-          uAtomsChanged.push_back(iAtom);
-        }
-
-        if (duAtom[jAtom] == 0) {
-          uAtomsChanged.push_back(jAtom);
-        }
-        duAtom[iAtom] += 0.5*u;
-        duAtom[jAtom] += 0.5*u;
-
       }
     }
 

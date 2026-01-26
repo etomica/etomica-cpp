@@ -10,6 +10,7 @@ TraPPEParams::TraPPEParams(ChemForm chemForm) : chemForm(chemForm), species(make
     if (chemForm == CO2)
     {
         //TraPPE Parameters
+        isFlex = true;
         double bondLengthCO = 1.160; // Angstrom
         double sigmaC = 2.800; // Angstrom
         double epsilonC = Kelvin::toSim(27.0);
@@ -17,13 +18,17 @@ TraPPEParams::TraPPEParams(ChemForm chemForm) : chemForm(chemForm), species(make
         double sigmaO = 3.050; // Angstrom
         double epsilonO = Kelvin::toSim(79.0);
         double qO = Electron::toSim(-0.350);
-        double k_r = Kelvin::toSim(10);
+        double k_r = Kelvin::toSim(10000);
+        double kCOO = Kelvin::toSim(62500);
+        double thetaCOO = Degree::toSim(180);
+
         sigma = {sigmaC, sigmaO};
         epsilon = {epsilonC, epsilonO};
         charge = {qC, qO};
         k_b = {k_r};
         r_eq = {bondLengthCO};
         bonding = {{1, 2}, {0}, {0}};
+        vector<int*> temp;
         int* p1 = (int*)malloc(2*sizeof(int));
         int* p2 = (int*)malloc(2*sizeof(int));
 
@@ -31,8 +36,16 @@ TraPPEParams::TraPPEParams(ChemForm chemForm) : chemForm(chemForm), species(make
         p1[1] = 1;
         p2[0] = 0;
         p2[1] = 2;
-        pairs.push_back(p1);
-        pairs.push_back(p2);
+        temp.push_back(p1);
+        temp.push_back(p2);
+        pairs.push_back(temp);
+        k_theta = {kCOO};
+        theta_eq = {thetaCOO};
+        int* t = (int*)malloc(3*sizeof(int));
+        t[0] = 1;
+        t[1] = 0;
+        t[2] = 2;
+        triplets.push_back(t);
 
         species.addAtomType(12, 1);
         species.addAtomType(16, 2);

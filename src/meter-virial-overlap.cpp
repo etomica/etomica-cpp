@@ -72,7 +72,7 @@ double* MeterVirialOverlap::getData() {
   const double* primaryValues = primaryCluster.getValues();
   double pi = fabs(primaryValues[0]);
   if (pi == 0 || pi == std::numeric_limits<double>::infinity() || std::isnan(pi)) {
-    fprintf(stderr, "pi is %f\n", pi);
+    fprintf(stderr, "pi is %f in %d\n", pi, idx);
     abort();
   }
   double perturbValue = fabs(perturbCluster.getValues()[0]);

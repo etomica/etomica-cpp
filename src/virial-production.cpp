@@ -21,6 +21,8 @@ VirialProduction::VirialProduction(IntegratorMC &rIntegrator, IntegratorMC &tInt
   fullBCStats = (double**)malloc2D(numTargets-1, numTargets-1, sizeof(double));
   refIntegrator.addListener(&refPump);
   targetIntegrator.addListener(&targetPump);
+  refMeter.idx = 0;
+  targetMeter.idx = 1;
 }
 
 VirialProduction::~VirialProduction() {

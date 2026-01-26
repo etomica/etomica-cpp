@@ -24,7 +24,7 @@ public:
     vector<double> k_b;
     vector<double> r_eq;
     vector<vector<double>> a;
-    vector<int *> pairs;
+    vector<vector<int *>> pairs;
     vector<int *> triplets;
     vector<vector<int>> quads;
     vector<vector<int>> bonding;

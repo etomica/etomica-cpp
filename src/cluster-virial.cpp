@@ -237,15 +237,25 @@ const double* ClusterVirial::getValues() {
   for (int m=1; m<=nDer; m++) {
     values[m] = prefac*fB[NF-1][m];
   }
-  // Box *box = potentialMaster.getBoxP();
-  // double *r0 = box->getAtomPosition(0);
-  // double *r1 = box->getAtomPosition(3);
-  // double dr[3];
-  // for (int k=0; k<3; k++) dr[k] = r1[k]-r0[k];
-  // double r2 = 0;
-  // for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
-  //
-  //
-  // // printf("%f %f\n", sqrt(r2), values[0]);
+  Box *box = potentialMaster.getBoxP();
+  double *r0 = box->getAtomPosition(0);
+  double *r1 = box->getAtomPosition(3);
+  double dr[3];
+  for (int k=0; k<3; k++) dr[k] = r1[k]-r0[k];
+  double r2 = 0;
+  for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
+
+
+  if (r2 > 1000)
+  {
+    printf("%f %f\n", sqrt(r2), values[0]);
+    for (int i = 0; i < 6 ; i++)
+    {
+      double* r = box->getAtomPosition(i);
+      printf("r: %f %f %f %d \n", r[0], r[1], r[2], i);
+    }
+    exit(0);
+
+  }
   return values;
 }
