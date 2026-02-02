@@ -13,6 +13,7 @@
 #include "random.h"
 #include "util.h"
 #include "cluster.h"
+#include "diagrams.h"
 #include "P2PotentialGroupBuilder.h"
 #include "potential-angle.h"
 #include "potential-molecular.h"
@@ -33,6 +34,9 @@ int main(int argc, char** argv) {
   double vhs = 4.0/3.0*M_PI*sigmaHSRef*sigmaHSRef*sigmaHSRef;
   double HSBn = pow(vhs, nPoints-1)/2;
   for (int i=2; i<=nPoints; i++) HSBn *= i;
+  bool anyPolar = false, anyFlex = false;
+  anyPolar = anyPolar || TP.polar;
+  anyFlex = anyFlex || TP.isFlex;
 
   Random seed;
   printf("random seed: %d\n", seed.getSeed());
@@ -84,6 +88,7 @@ int main(int argc, char** argv) {
   //flex moves
 
   PotentialMaster potentialMasterIntraTarget(TP.speciesList, targetBox, false);
+
   //P2 Stretch
 
   if (!TP.r_eq.empty())
@@ -112,6 +117,12 @@ int main(int argc, char** argv) {
   PotentialMasterVirialMolecular targetPotentialMasterHS(TP.speciesList, targetBox);
   targetPotentialMasterHS.setMoleculePairPotential(0, 0, &pHSMolecule);
   IntegratorMC targetIntegrator(targetPotentialMasterTraPPE, seed);
+  if (anyFlex && nPoints==2 && anyPolar)
+  {
+    //flipping for flexible polar B2
+    vector<vector <int>> flipPoints = diagrams::getFlipPointsforDiagram("1");
+    targetClusterTraPPE0 = ClusterFlippedPoints(, TP.speciesList, targetBox, false, 3);
+  }
   ClusterVirial targetClusterTraPPE0(targetPotentialMasterTraPPE, temperature, 0, true);
   targetIntegrator.addListener(&targetClusterTraPPE0);
   ClusterChain targetClusterHS(targetPotentialMasterHS, temperature, 1, 0, true);
