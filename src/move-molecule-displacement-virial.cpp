@@ -20,6 +20,7 @@ MCMoveMoleculeDisplacementVirial::~MCMoveMoleculeDisplacementVirial() {
 }
 
 bool MCMoveMoleculeDisplacementVirial::doTrial() {
+  if (false) return false;
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
   }
@@ -41,6 +42,11 @@ bool MCMoveMoleculeDisplacementVirial::doTrial() {
     r[0] += deltaR[0];
     r[1] += deltaR[1];
     r[2] += deltaR[2];
+    // if (iAtom == firstAtom) printf("%f \n", r[0]);
+    // if (iAtom == firstAtom && r[0] > 3)
+    // {
+    //   printf("breakpoint \n");
+    // }
   }
   cluster.trialNotify();
   numTrials++;
@@ -55,7 +61,7 @@ double MCMoveMoleculeDisplacementVirial::getChi(double T) {
 }
 
 void MCMoveMoleculeDisplacementVirial::acceptNotify() {
-  //printf("accepted\n");
+  // printf("accepted\n");
   numAccepted++;
   addToHistogram(wNew);
 }
@@ -95,7 +101,7 @@ void MCMoveMoleculeDisplacementVirial::addToHistogram(double pi) {
 }
 
 void MCMoveMoleculeDisplacementVirial::rejectNotify() {
-  //printf("rejected\n");
+  // printf("rejected\n");
   int iSpecies, iMoleculeInSpecies, firstAtom, lastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
   for (int iAtom = firstAtom; iAtom <= lastAtom; iAtom++) {

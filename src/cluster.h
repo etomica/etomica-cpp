@@ -12,7 +12,7 @@ class Cluster : public IntegratorListener {
     const int nValues;
     const int numMolecules;
     bool useCache, cacheDirty, inTrial;
-    const double* values;
+    double* values;
     double* oldValues;
 
   public:
@@ -84,10 +84,10 @@ protected:
   vector<vector <int>> flipPoints;
   double minFlipDistance;
 
-  void flip(int* molecules, vector<int> myFlipPoints);
+  void flip(vector<int> myFlipPoints);
 
 public:
-  ClusterFlippedPoints(Cluster& cluster, SpeciesList& speciesList, Box& box, bool cached, int mfd);
+  ClusterFlippedPoints(Cluster& cluster, SpeciesList& speciesList, Box& box, bool cached, vector <vector<int>> fl, int mfd);
   virtual ~ClusterFlippedPoints();
 
   const double* getValues();

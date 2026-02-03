@@ -246,16 +246,17 @@ const double* ClusterVirial::getValues() {
   for (int k=0; k<3; k++) r2 += dr[k]*dr[k];
 
 
-  if (r2 > 1000)
-  {
-    printf("%f %f\n", sqrt(r2), values[0]);
-    for (int i = 0; i < 6 ; i++)
-    {
-      double* r = box->getAtomPosition(i);
-      printf("r: %f %f %f %d \n", r[0], r[1], r[2], i);
-    }
-    exit(0);
-
-  }
+  // if (r2 > 1000)
+  // {
+  //   printf("%f %f\n", sqrt(r2), values[0]);
+  //   for (int i = 0; i < 6 ; i++)
+  //   {
+  //     double* r = box->getAtomPosition(i);
+  //     printf("r: %f %f %f %d \n", r[0], r[1], r[2], i);
+  //   }
+  //   exit(0);
+  //
+  // }
+  // values[0] -= 0.02;
   return values;
 }

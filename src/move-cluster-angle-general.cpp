@@ -27,6 +27,10 @@ MCMoveClusterAngleGeneral::~MCMoveClusterAngleGeneral() {
 // }
 
 bool MCMoveClusterAngleGeneral::doTrial() {
+  if (true)
+  {
+    return false;
+  }
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
   }

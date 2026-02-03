@@ -23,16 +23,22 @@ MCMoveClusterStretch::~MCMoveClusterStretch() {
 // }
 
 bool MCMoveClusterStretch::doTrial() {
+  if (false)
+  {
+    return false;
+  }
+
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
   }
+
   int nm = mySpecies<0 ? box.getTotalNumMolecules() : box.getNumMolecules(mySpecies);
   if (nm==0) {
     iMolecule = -1;
     return false;
   }
   iMolecule = random.nextInt(nm);
-  // iMolecule = 1;
+  iMolecule = 1;
   int iMoleculeInSpecies = 0;
   if (mySpecies>=0) {
     iMoleculeInSpecies = iMolecule;
@@ -89,9 +95,11 @@ bool MCMoveClusterStretch::doTrial() {
   do{
     b = random.nextInt(bonding.size());
   }while (bonding[b].size() < 1);
+  b = 0;
   modified.push_back(iAtomFirst + b);
   int a = random.nextInt(bonding[b].size());
   a = bonding[b][a];
+  a = 1;
   modified.push_back(iAtomFirst + a);
   double dr[3];
   Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst + b), box.getAtomPosition(iAtomFirst + a), dr);
@@ -113,6 +121,14 @@ bool MCMoveClusterStretch::doTrial() {
   numTrials++;
   uNew = potentialMaster.computeOneMoleculeIntra(iMolecule);
   wNew = fabs(cluster.getValues()[0]);
+  if (idx == 1)
+  {
+    double arr[3];
+    Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst + 0), box.getAtomPosition(iAtomFirst +1), arr);
+    // printf("%f %f \n", sqrt(Vector::squared(arr)), wNew );
+    // if (sqrt(Vector::dot(box.getAtomPosition(iAtomFirst + 0), box.getAtomPosition(iAtomFirst +1))) > 2) exit(0);
+
+  }
   return true;
 }
 

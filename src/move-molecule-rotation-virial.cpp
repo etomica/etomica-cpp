@@ -17,6 +17,7 @@ MCMoveMoleculeRotateVirial::~MCMoveMoleculeRotateVirial() {
 }
 
 bool MCMoveMoleculeRotateVirial::doTrial() {
+  if (true) return false;
   // if (!first) {return false;}
   // first = false;
   // total++;

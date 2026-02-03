@@ -162,7 +162,6 @@ private:
   double sum = 0;
   double step = 0;
   vector<vector <int>> bonding;
-
   int iMolecule;
   int mySpecies = -1;
   double transformBondedAtoms(double* dr, int index, double* shift);

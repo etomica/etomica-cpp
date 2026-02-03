@@ -33,7 +33,8 @@ public:
     string diagram;
     // Box box;
     bool isFlex = false;
-    bool polar = false;
+    bool isPolar = false;
+
 private:
     SpeciesSimple makeSpecies(ChemForm chemForm);
 

@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
   double HSBn = pow(vhs, nPoints-1)/2;
   for (int i=2; i<=nPoints; i++) HSBn *= i;
   bool anyPolar = false, anyFlex = false;
-  anyPolar = anyPolar || TP.polar;
+  anyPolar = anyPolar || TP.isPolar;
   anyFlex = anyFlex || TP.isFlex;
 
   Random seed;
@@ -117,29 +117,37 @@ int main(int argc, char** argv) {
   PotentialMasterVirialMolecular targetPotentialMasterHS(TP.speciesList, targetBox);
   targetPotentialMasterHS.setMoleculePairPotential(0, 0, &pHSMolecule);
   IntegratorMC targetIntegrator(targetPotentialMasterTraPPE, seed);
+  Cluster* targetClusterTraPPE0 = nullptr;
   if (anyFlex && nPoints==2 && anyPolar)
   {
+    targetClusterTraPPE0 = new ClusterVirial(targetPotentialMasterTraPPE, temperature, 0, false);
+
     //flipping for flexible polar B2
     vector<vector <int>> flipPoints = diagrams::getFlipPointsforDiagram("1");
-    targetClusterTraPPE0 = ClusterFlippedPoints(, TP.speciesList, targetBox, false, 3);
+    targetClusterTraPPE0 = new ClusterFlippedPoints(*targetClusterTraPPE0, TP.speciesList, targetBox, false, flipPoints, 3);
   }
-  ClusterVirial targetClusterTraPPE0(targetPotentialMasterTraPPE, temperature, 0, true);
-  targetIntegrator.addListener(&targetClusterTraPPE0);
+  else
+  {
+    targetClusterTraPPE0 = new ClusterVirial(targetPotentialMasterTraPPE, temperature, 0, true);
+  }
+
+  targetIntegrator.addListener(targetClusterTraPPE0);
   ClusterChain targetClusterHS(targetPotentialMasterHS, temperature, 1, 0, true);
   targetIntegrator.addListener(&targetClusterHS);
-  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, targetClusterTraPPE0);
+  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, *targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMove0, 1);
-  MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, targetClusterTraPPE0);
+  MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, *targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMove1, 1);
-  MCMoveClusterAngleGeneral targetMoveAngle(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, targetClusterTraPPE0);
+  MCMoveClusterAngleGeneral targetMoveAngle(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, *targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMoveAngle, 1);
   targetMoveAngle.idx = 1;
-  MCMoveClusterStretch targetMoveStretch(targetBox, potentialMasterIntraTarget, seed, TP.bonding, TP.speciesList, 0.1, targetClusterTraPPE0);
+  MCMoveClusterStretch targetMoveStretch(targetBox, potentialMasterIntraTarget, seed, TP.bonding, TP.speciesList, 0.1, *targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMoveStretch, 1);
+  targetMoveStretch.idx = 1;
 
   // for (int i=3; i<=5 ; i++)
   // {
-  //   targetBox.getAtomPosition(i)[0]+=4;
+  //   targetBox.getAtomPosition(i)[0]+=5.5;
   // }
   targetIntegrator.setTemperature(temperature);
   // for (int i = 0 ; i <= 10 ; i ++)
@@ -148,15 +156,15 @@ int main(int argc, char** argv) {
   // }
   // exit(0);
   double t1 = getTime();
-  VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, targetClusterTraPPE0);
+  VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE0);
   virialAlpha->setVerbose(true);
-  virialAlpha->run();
+  // virialAlpha->run();
   double t2 = getTime();
 
-  double alpha, alphaErr, alphaCor;
+  double alpha = 1, alphaErr, alphaCor;
   long alphaSteps = refIntegrator.getStepCount() + targetIntegrator.getStepCount();
   printf("alpha steps: %ld\n", alphaSteps);
-  virialAlpha->getNewAlpha(alpha, alphaErr, alphaCor);
+  // virialAlpha->getNewAlpha(alpha, alphaErr, alphaCor);
   printf("alpha  avg: %22.15e   err: %12.5e   cor: % 6.4f\n", alpha, alphaErr, alphaCor);
   printf("alpha time: %4.3f\n\n", t2-t1);
   // alpha = 1;
@@ -171,25 +179,39 @@ int main(int argc, char** argv) {
   targetIntegrator.removeMove(&targetMoveAngle);
   targetIntegrator.removeMove(&targetMoveStretch);
 
-  targetIntegrator.removeListener(&targetClusterTraPPE0);
+  targetIntegrator.removeListener(targetClusterTraPPE0);
 
   double targetStepSize = targetMove0.getStepSize();
   printf("target step size: %f\n", targetStepSize);
+  Cluster* targetClusterTraPPE = nullptr;
+  if (anyFlex && nPoints==2 && anyPolar)
+  {
+    targetClusterTraPPE = new ClusterVirial(targetPotentialMasterTraPPE, temperature, nDer, false);
 
-  ClusterVirial targetClusterTraPPE(targetPotentialMasterTraPPE, temperature, nDer, true);
-  MCMoveMoleculeDisplacementVirial targetMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, targetClusterTraPPE);
-  MCMoveMoleculeRotateVirial targetRotateMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, targetClusterTraPPE);
-  MCMoveClusterAngleGeneral targetAngleMove(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, targetClusterTraPPE0);
-  MCMoveClusterStretch targetStretchMove(targetBox, potentialMasterIntraTarget, seed, TP.bonding, TP.speciesList, 0.1, targetClusterTraPPE0);
+    //flipping for flexible polar B2
+    vector<vector <int>> flipPoints = diagrams::getFlipPointsforDiagram("1");
+    targetClusterTraPPE = new ClusterFlippedPoints(*targetClusterTraPPE, TP.speciesList, targetBox, false, flipPoints, 3);
+  }
+  else
+  {
+    targetClusterTraPPE = new ClusterVirial(targetPotentialMasterTraPPE, temperature, nDer, true);
+
+  }
+
+  MCMoveMoleculeDisplacementVirial targetMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, *targetClusterTraPPE);
+  MCMoveMoleculeRotateVirial targetRotateMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, *targetClusterTraPPE);
+  MCMoveClusterAngleGeneral targetAngleMove(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, *targetClusterTraPPE);
+  MCMoveClusterStretch targetStretchMove(targetBox, potentialMasterIntraTarget, seed, TP.bonding, TP.speciesList, 0.1, *targetClusterTraPPE);
+  targetStretchMove.idx = 1;
   targetIntegrator.addMove(&targetRotateMove, 1);
   // targetAngleMove.idx = 2;
   targetIntegrator.addMove(&targetMove, 1);
   targetIntegrator.addMove(&targetAngleMove, 1);
   targetIntegrator.addMove(&targetStretchMove, 1);
 
-  targetIntegrator.addListener(&targetClusterTraPPE);
+  targetIntegrator.addListener(targetClusterTraPPE);
   targetIntegrator.setTuning(false);
-  VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, targetClusterTraPPE, alpha, HSBn);
+  VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE, alpha, HSBn);
   virialProduction.runSteps(numSteps);
   double t3 = getTime();
   double acceptance = targetMove.getAcceptance();

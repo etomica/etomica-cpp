@@ -11,6 +11,7 @@ TraPPEParams::TraPPEParams(ChemForm chemForm) : chemForm(chemForm), species(make
     {
         //TraPPE Parameters
         isFlex = true;
+        isPolar = true;
         double bondLengthCO = 1.160; // Angstrom
         double sigmaC = 2.800; // Angstrom
         double epsilonC = Kelvin::toSim(27.0);
@@ -18,7 +19,7 @@ TraPPEParams::TraPPEParams(ChemForm chemForm) : chemForm(chemForm), species(make
         double sigmaO = 3.050; // Angstrom
         double epsilonO = Kelvin::toSim(79.0);
         double qO = Electron::toSim(-0.350);
-        double k_r = Kelvin::toSim(10000);
+        double k_r = Kelvin::toSim(1000000);
         double kCOO = Kelvin::toSim(62500);
         double thetaCOO = Degree::toSim(180);
 
