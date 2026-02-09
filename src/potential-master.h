@@ -78,7 +78,29 @@ class CellManager {
     int* getNumCells();
 };
 
-class PotentialMaster {
+class PotentialMasterIntra
+{
+protected:
+  vector<double> uMolecule;
+  Box& box;
+
+public:
+  PotentialMasterIntra(Box& box);
+
+  double oldMoleculeEnergyIntra(int iMolecule);
+  virtual double computeOneMoleculeIntra(int iMolecule) = 0;
+  void setMoleculeEnergy(int iMolecule, double u1);
+  virtual void init();
+
+};
+
+class PotentialMasterIntraMBnrg : public PotentialMasterIntra
+{
+public:
+  double computeOneMoleculeIntra(int iMolecule);
+};
+
+class PotentialMaster : public PotentialMasterIntra {
   protected:
     const SpeciesList& speciesList;
     Potential*** pairPotentials;
@@ -87,12 +109,10 @@ class PotentialMaster {
     int* numAtomsByType;
     double** pairCutoffs;
     double *rhoCutoffs;
-    Box& box;
     vector<double> uAtom;
     vector<double> duAtom;
     bool duAtomSingle, duAtomMulti;
     vector<int> uAtomsChanged;
-    vector<double> uMolecule;
     double** force;
     int numForceAtoms, numRhoSumAtoms;
     double* rhoSum;
@@ -365,9 +385,7 @@ class PotentialMaster {
     void addCallback(PotentialCallback* pcb);
     virtual double uTotalFromAtoms();
     virtual void updateVolume() {}
-    double oldMoleculeEnergyIntra(int iMolecule);
     double computeOneMoleculeIntra(int iMolecule);
-    void setMoleculeEnergy(int iMolecule, double u1);
 
 };
 

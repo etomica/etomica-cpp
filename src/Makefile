@@ -24,6 +24,7 @@ endif
 ifdef LATTICE_DYNAMICS
 CFLAGS += -DLATTICE_DYNAMICS -I/usr/include/eigen3
 endif
+CFLAGS += -I/home/raghu/MBX/include
 
 OBJDIR = build
 

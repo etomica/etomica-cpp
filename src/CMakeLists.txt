@@ -15,7 +15,9 @@ set(BASE_CFLAGS "-DSFMT_MEXP=19937 -DHAVE_SSE2")
 set(BASE_CFLAGS "${BASE_CFLAGS} -msse2")
 
 set(BASE_FLAGS "-Wall")
-
+# MBX paths (always on)
+set(MBX_INCLUDE_DIR /home/raghu/MBX/include)
+set(MBX_LIBRARY_DIR /home/raghu/MBX/lib)
 # Optimization/debug/profile flags
 if (DEBUG)
     set(BASE_FLAGS "${BASE_FLAGS} -O0 -g -DDEBUG")
@@ -38,7 +40,6 @@ if (LATTICE_DYNAMICS)
     set(BASE_CFLAGS "${BASE_CFLAGS} -DLATTICE_DYNAMICS")
     include_directories(/usr/include/eigen3)  # On Windows you'll change this path
 endif()
-
 # Apply flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BASE_FLAGS} ${BASE_CFLAGS}")
 
@@ -59,24 +60,22 @@ set(MAIN_NAMES virial-trappe)
 
 # ----- Build each main-* executable -----
 foreach(name ${MAIN_NAMES})
-    set(main_src "main-${name}.cpp"
-            TraPPEParams.cpp
-            TraPPEParams.h
-            unit.h
-            constants.h
-            P2PotentialGroupBuilder.cpp
-            P2PotentialGroupBuilder.h
-            unit.cpp
-            move-cluster-angle-general.cpp
-            move-cluster-stretch.cpp
-            cluster-flipped-points.cpp
-            diagrams.cpp
-            diagrams.h)
-    add_executable(${name} ${SRC_FILES} ${main_src})
+    add_executable(${name}
+            ${SRC_FILES}
+            main-${name}.cpp
+    )
 
-    # Windows doesn't need -lm; on Linux/macOS link against libm
-    if (UNIX)
-        target_link_libraries(${name} m)
-    endif()
+    target_include_directories(${name} PRIVATE
+            /home/raghu/MBX/include
+    )
+
+    target_link_directories(${name} PRIVATE
+            /home/raghu/MBX/lib
+    )
+
+    target_link_libraries(${name} PRIVATE
+            mbx
+            m
+    )
 endforeach()
 

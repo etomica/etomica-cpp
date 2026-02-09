@@ -38,7 +38,7 @@ bool MCMoveClusterStretch::doTrial() {
     return false;
   }
   iMolecule = random.nextInt(nm);
-  iMolecule = 1;
+  // iMolecule = 1;
   int iMoleculeInSpecies = 0;
   if (mySpecies>=0) {
     iMoleculeInSpecies = iMolecule;
@@ -95,11 +95,11 @@ bool MCMoveClusterStretch::doTrial() {
   do{
     b = random.nextInt(bonding.size());
   }while (bonding[b].size() < 1);
-  b = 0;
+  // b = 0;
   modified.push_back(iAtomFirst + b);
   int a = random.nextInt(bonding[b].size());
   a = bonding[b][a];
-  a = 1;
+  // a = 1;
   modified.push_back(iAtomFirst + a);
   double dr[3];
   Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst + b), box.getAtomPosition(iAtomFirst + a), dr);

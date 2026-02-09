@@ -147,7 +147,7 @@ int main(int argc, char** argv) {
 
   // for (int i=3; i<=5 ; i++)
   // {
-  //   targetBox.getAtomPosition(i)[0]+=5.5;
+  //   targetBox.getAtomPosition(i)[1]+=5.5;
   // }
   targetIntegrator.setTemperature(temperature);
   // for (int i = 0 ; i <= 10 ; i ++)
@@ -158,13 +158,13 @@ int main(int argc, char** argv) {
   double t1 = getTime();
   VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE0);
   virialAlpha->setVerbose(true);
-  // virialAlpha->run();
+  virialAlpha->run();
   double t2 = getTime();
 
-  double alpha = 1, alphaErr, alphaCor;
+  double alpha, alphaErr, alphaCor;
   long alphaSteps = refIntegrator.getStepCount() + targetIntegrator.getStepCount();
   printf("alpha steps: %ld\n", alphaSteps);
-  // virialAlpha->getNewAlpha(alpha, alphaErr, alphaCor);
+  virialAlpha->getNewAlpha(alpha, alphaErr, alphaCor);
   printf("alpha  avg: %22.15e   err: %12.5e   cor: % 6.4f\n", alpha, alphaErr, alphaCor);
   printf("alpha time: %4.3f\n\n", t2-t1);
   // alpha = 1;

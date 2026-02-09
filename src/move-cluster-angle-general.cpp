@@ -27,7 +27,7 @@ MCMoveClusterAngleGeneral::~MCMoveClusterAngleGeneral() {
 // }
 
 bool MCMoveClusterAngleGeneral::doTrial() {
-  if (true)
+  if (false)
   {
     return false;
   }

@@ -15,7 +15,7 @@
 
 PotentialCallback::PotentialCallback() : callPair(false), callFinished(false), takesForces(false), takesPhi(false), takesDFDV(false), takesVirialTensor(false) {}
 
-PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : speciesList(sl), box(b), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed), charges(nullptr), sFacAtom(nullptr), doEwald(false), ewald(nullptr) {
+PotentialMaster::PotentialMaster(const SpeciesList& sl, Box& b, bool doEmbed) : PotentialMasterIntra(b), speciesList(sl), duAtomSingle(false), duAtomMulti(false), force(nullptr), numForceAtoms(0), numRhoSumAtoms(0), rhoSum(nullptr), idf(nullptr), numAtomTypes(sl.getNumAtomTypes()), pureAtoms(sl.isPurelyAtomic()), rigidMolecules(true), doTruncationCorrection(true), doSingleTruncationCorrection(false), embeddingPotentials(doEmbed), charges(nullptr), sFacAtom(nullptr), doEwald(false), ewald(nullptr) {
 
   if (embeddingPotentials && !pureAtoms) {
     fprintf(stderr, "Embedding potentials require a purely atomic system");
@@ -93,13 +93,7 @@ void PotentialMaster::init() {
   if (s < na || s > 2*na) {
     uAtom.resize(na);
   }
-  int nm = box.getTotalNumMolecules();
-  s = uMolecule.size();
-  if (s < nm || s > 2*nm)
-  {
-    uMolecule.resize(nm);
-  }
-  std::fill(uMolecule.begin(), uMolecule.end(), NAN);
+  PotentialMasterIntra::init();
 }
 
 void PotentialMaster::setDoTruncationCorrection(bool doCorrection) {
@@ -585,29 +579,6 @@ double PotentialMaster::oldEmbeddingEnergy(int iAtom) {
   return u;
 }
 
-double PotentialMaster::oldMoleculeEnergyIntra(int iMolecule)
-{
-  // We may not have saved energies at the beginning of a simulation, so need to check for nan
-  if (!std::isnan(uMolecule[iMolecule]))
-  {
-    // double uCheck = computeOneMoleculeIntra(iMolecule);
-    // if (fabs(uCheck - uMolecule[iMolecule])>0.001)
-    // {
-    //   printf("%f %f \n", uCheck, uMolecule[iMolecule]);
-    //   abort();
-    // }
-    return uMolecule[iMolecule];
-  }
-  double u1 = computeOneMoleculeIntra(iMolecule);
-  uMolecule[iMolecule] = u1;
-  return u1;
-
-}
-
-void PotentialMaster::setMoleculeEnergy(int iMolecule, double u1)
-{
-  uMolecule[iMolecule] = u1;
-}
 
 double PotentialMaster::oldMoleculeEnergy(int iMolecule) {
   // only works for rigid molecules, handles monatomic EAM
