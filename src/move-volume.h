@@ -12,6 +12,7 @@ class MCMoveVolume : public MCMove {
     double pressure;
     double vOld;
     double uOld, uNew;
+   PotentialMaster& potentialMaster;
     SpeciesList& speciesList;
     Meter& oldMeterPE;
     vector<PotentialCallback*> callbacks;

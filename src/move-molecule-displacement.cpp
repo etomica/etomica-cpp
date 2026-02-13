@@ -5,7 +5,9 @@
 #include "move.h"
 #include "alloc2d.h"
 
-MCMoveMoleculeDisplacement::MCMoveMoleculeDisplacement(Box& b, PotentialMaster& p, Random& r, double ss) : MCMove(b,p,r,ss), numOldPositions(0), oldPositions(nullptr), iSpecies(-1) {
+MCMoveMoleculeDisplacement::MCMoveMoleculeDisplacement(Box& b, PotentialMaster& p, Random& r, double ss) :
+  MCMove(b, r, ss), numOldPositions(0), oldPositions(nullptr), iSpecies(-1), potentialMaster(p)
+{
 }
 
 MCMoveMoleculeDisplacement::~MCMoveMoleculeDisplacement() {

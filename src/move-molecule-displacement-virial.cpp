@@ -5,7 +5,7 @@
 #include "move-virial.h"
 #include "alloc2d.h"
 
-MCMoveMoleculeDisplacementVirial::MCMoveMoleculeDisplacementVirial(SpeciesList& sl, int is, Box& b, PotentialMaster& p, Random& r, double ss, Cluster& c) : MCMove(b,p,r,ss), cluster(c), iSpecies(is) {
+MCMoveMoleculeDisplacementVirial::MCMoveMoleculeDisplacementVirial(SpeciesList& sl, int is, Box& b, Random& r, double ss, Cluster& c) : MCMove(b,r,ss), cluster(c), iSpecies(is) {
   Species *sp = sl.get(iSpecies);
   int na = sp->getNumAtoms();
   rOld = (double**)malloc2D(na, 3, sizeof(double));

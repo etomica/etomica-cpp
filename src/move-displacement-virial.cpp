@@ -4,7 +4,7 @@
 
 #include "move-virial.h"
 
-MCMoveDisplacementVirial::MCMoveDisplacementVirial(Box& b, PotentialMaster& p, Random& r, double ss, Cluster& c) : MCMove(b,p,r,ss), cluster(c) {
+MCMoveDisplacementVirial::MCMoveDisplacementVirial(Box& b, Random& r, double ss, Cluster& c) : MCMove(b,r,ss), cluster(c) {
   maxStepSize = 100;
 }
 

@@ -5,7 +5,7 @@
 #include "move-virial.h"
 #include "alloc2d.h"
 
-MCMoveMoleculeRotateVirial::MCMoveMoleculeRotateVirial(SpeciesList& sl, int is, Box& b, PotentialMaster& p, Random& r, double ss, Cluster& c) : MCMove(b,p,r,ss), speciesList(sl), cluster(c), iSpecies(is) {
+MCMoveMoleculeRotateVirial::MCMoveMoleculeRotateVirial(SpeciesList& sl, int is, Box& b, Random& r, double ss, Cluster& c) : MCMove(b,r,ss), speciesList(sl), cluster(c), iSpecies(is) {
   Species *sp = speciesList.get(iSpecies);
   int na = sp->getNumAtoms();
   rOld = (double**)malloc2D(na, 3, sizeof(double));

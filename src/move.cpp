@@ -4,7 +4,7 @@
 
 #include "move.h"
 
-MCMove::MCMove(Box& b, PotentialMaster& p, Random& r, double ss) : box(b), potentialMaster(p), random(r), stepSize(ss) {
+MCMove::MCMove(Box& b, Random& r, double ss) : box(b),  random(r), stepSize(ss) {
   init();
 }
 

@@ -10,6 +10,8 @@
 #include <set>
 #include <algorithm>
 #include <complex>
+#include <potential/1b/x1b_A1B2_deg4_v1x.h>
+
 #include "box.h"
 #include "potential.h"
 #include "potential-callback.h"
@@ -96,8 +98,13 @@ public:
 
 class PotentialMasterIntraMBnrg : public PotentialMasterIntra
 {
+protected:
+  double* xyz1{};
+  x1b_A1B2_deg4::x1b_A1B2_v1x pot;
 public:
   double computeOneMoleculeIntra(int iMolecule);
+  PotentialMasterIntraMBnrg(Box& b);
+  ~PotentialMasterIntraMBnrg();
 };
 
 class PotentialMaster : public PotentialMasterIntra {

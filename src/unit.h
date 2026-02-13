@@ -16,6 +16,16 @@ class Kelvin{
     static double toSim(double x)   { return x * convFactor; }
 };
 
+class Energy
+{
+    public:
+    static constexpr double convFactor = 418.4;
+
+    static double fromSim(double x) { return x / convFactor; }
+    static double toSim(double x)   { return x * convFactor; }
+
+};
+
 class Electron{
     public:
     static double convFactor;

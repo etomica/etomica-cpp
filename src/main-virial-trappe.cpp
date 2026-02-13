@@ -53,7 +53,9 @@ int main(int argc, char** argv) {
   PotentialMasterVirial potentialGroup(TP.speciesList, refBox);
   //flex moves
 
-  PotentialMaster potentialMasterIntraRef(TP.speciesList, refBox, false);
+  // PotentialMaster potentialMasterIntraRef(TP.speciesList, refBox, false);
+  PotentialMasterIntraMBnrg potentialMasterIntraRef(refBox);
+
   int nSpheres = TP.species.getNumAtoms();
   printf("nSpheres = %d\n", nSpheres);
   bool isFlex = TP.isFlex && (TP.diagram.empty() || TP.diagram != "BC");
@@ -66,9 +68,9 @@ int main(int argc, char** argv) {
   IntegratorMC refIntegrator(refPotentialMasterHS, seed);
   ClusterVirial refClusterTraPPE(refPotentialMasterTraPPE, temperature, 0, false);
   ClusterChain refClusterHS(refPotentialMasterHS, temperature, 1.0, 0, false);
-  MCMoveChainVirial refMove(TP.speciesList, refBox, refPotentialMasterHS, seed, sigmaHSRef);
+  MCMoveChainVirial refMove(TP.speciesList, refBox, seed, sigmaHSRef);
   refIntegrator.addMove(&refMove, 1);
-  MCMoveMoleculeRotateVirial refMove1(TP.speciesList, 0, refBox, refPotentialMasterHS, seed, 1.5, refClusterHS);
+  MCMoveMoleculeRotateVirial refMove1(TP.speciesList, 0, refBox, seed, 1.5, refClusterHS);
   refIntegrator.addMove(&refMove1, 1);
   refIntegrator.setTemperature(temperature);
   MCMoveClusterAngleGeneral refMoveAngle(refBox, potentialMasterIntraRef, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, refClusterHS);
@@ -87,31 +89,32 @@ int main(int argc, char** argv) {
 
   //flex moves
 
-  PotentialMaster potentialMasterIntraTarget(TP.speciesList, targetBox, false);
+  // PotentialMaster potentialMasterIntraTarget(TP.speciesList, targetBox, false);
+  PotentialMasterIntraMBnrg potentialMasterIntraTarget(targetBox);
 
   //P2 Stretch
 
-  if (!TP.r_eq.empty())
-  {
-    for (int j = 0 ; j < (int)TP.r_eq.size(); j++)
-    {
-      P2BondStretch *p2 = new P2BondStretch(TP.k_b[j], TP.r_eq[j]);
-      potentialMasterIntraRef.setBondPotential(0, TP.pairs[j], p2);
-      potentialMasterIntraTarget.setBondPotential(0, TP.pairs[j], p2);
-    }
-
-  }
-
-  //P3 bond angle
-  if (!TP.theta_eq.empty())
-  {
-    for (int j = 0 ; j < (int)TP.theta_eq.size(); j++) {
-      PotentialAngleHarmonic *p3 = new PotentialAngleHarmonic(0.5*TP.k_theta[j], TP.theta_eq[j]);
-      potentialMasterIntraRef.setBondAnglePotential(0, TP.triplets, p3);
-      potentialMasterIntraTarget.setBondAnglePotential(0, TP.triplets, p3);
-
-    }
-  }
+  // if (!TP.r_eq.empty())
+  // {
+  //   for (int j = 0 ; j < (int)TP.r_eq.size(); j++)
+  //   {
+  //     P2BondStretch *p2 = new P2BondStretch(TP.k_b[j], TP.r_eq[j]);
+  //     potentialMasterIntraRef.setBondPotential(0, TP.pairs[j], p2);
+  //     potentialMasterIntraTarget.setBondPotential(0, TP.pairs[j], p2);
+  //   }
+  //
+  // }
+  //
+  // //P3 bond angle
+  // if (!TP.theta_eq.empty())
+  // {
+  //   for (int j = 0 ; j < (int)TP.theta_eq.size(); j++) {
+  //     PotentialAngleHarmonic *p3 = new PotentialAngleHarmonic(0.5*TP.k_theta[j], TP.theta_eq[j]);
+  //     potentialMasterIntraRef.setBondAnglePotential(0, TP.triplets, p3);
+  //     potentialMasterIntraTarget.setBondAnglePotential(0, TP.triplets, p3);
+  //
+  //   }
+  // }
   potentialMasterIntraRef.init();
   potentialMasterIntraTarget.init();
   PotentialMasterVirialMolecular targetPotentialMasterHS(TP.speciesList, targetBox);
@@ -134,9 +137,9 @@ int main(int argc, char** argv) {
   targetIntegrator.addListener(targetClusterTraPPE0);
   ClusterChain targetClusterHS(targetPotentialMasterHS, temperature, 1, 0, true);
   targetIntegrator.addListener(&targetClusterHS);
-  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, *targetClusterTraPPE0);
+  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMove0, 1);
-  MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, 1.5, *targetClusterTraPPE0);
+  MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMove1, 1);
   MCMoveClusterAngleGeneral targetMoveAngle(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, *targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMoveAngle, 1);
@@ -198,8 +201,8 @@ int main(int argc, char** argv) {
 
   }
 
-  MCMoveMoleculeDisplacementVirial targetMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, *targetClusterTraPPE);
-  MCMoveMoleculeRotateVirial targetRotateMove(TP.speciesList, 0, targetBox, targetPotentialMasterTraPPE, seed, targetStepSize, *targetClusterTraPPE);
+  MCMoveMoleculeDisplacementVirial targetMove(TP.speciesList, 0, targetBox, seed, targetStepSize, *targetClusterTraPPE);
+  MCMoveMoleculeRotateVirial targetRotateMove(TP.speciesList, 0, targetBox, seed, targetStepSize, *targetClusterTraPPE);
   MCMoveClusterAngleGeneral targetAngleMove(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, *targetClusterTraPPE);
   MCMoveClusterStretch targetStretchMove(targetBox, potentialMasterIntraTarget, seed, TP.bonding, TP.speciesList, 0.1, *targetClusterTraPPE);
   targetStretchMove.idx = 1;

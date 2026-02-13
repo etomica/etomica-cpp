@@ -14,13 +14,14 @@
 class MCMoveDisplacementVirial : public MCMove {
   private:
     Cluster &cluster;
+
     double rOld[3];
     double wOld, wNew;
     int iAtom;
 
   public:
 
-    MCMoveDisplacementVirial(Box& box, PotentialMaster& potentialMaster, Random& random, double stepSize, Cluster &cluster);
+    MCMoveDisplacementVirial(Box& box, Random& random, double stepSize, Cluster &cluster);
     ~MCMoveDisplacementVirial();
 
     virtual bool doTrial();
@@ -41,9 +42,10 @@ class MCMoveMoleculeDisplacementVirial : public MCMove {
     long hcount[91];
     void addToHistogram(double pi);
 
+
   public:
 
-    MCMoveMoleculeDisplacementVirial(SpeciesList& speciesList, int iSpecies, Box& box, PotentialMaster& potentialMaster, Random& random, double stepSize, Cluster &cluster);
+    MCMoveMoleculeDisplacementVirial(SpeciesList& speciesList, int iSpecies, Box& box, Random& random, double stepSize, Cluster &cluster);
     ~MCMoveMoleculeDisplacementVirial();
 
     virtual bool doTrial();
@@ -68,9 +70,10 @@ class MCMoveMoleculeRotateVirial : public MCMove {
     int total = 0;
     bool first = true;
 
+
   public:
 
-    MCMoveMoleculeRotateVirial(SpeciesList& speciesList, int iSpecies, Box& box, PotentialMaster& potentialMaster, Random& random, double stepSize, Cluster &cluster);
+    MCMoveMoleculeRotateVirial(SpeciesList& speciesList, int iSpecies, Box& box, Random& random, double stepSize, Cluster &cluster);
     ~MCMoveMoleculeRotateVirial();
 
     virtual bool doTrial();
@@ -88,7 +91,7 @@ class MCMoveChainVirial : public MCMove {
     long hcount[61];
 
   public:
-    MCMoveChainVirial(SpeciesList& speciesList, Box& box, PotentialMaster& potentialMaster, Random& random, double sigma);
+    MCMoveChainVirial(SpeciesList& speciesList, Box& box, Random& random, double sigma);
     ~MCMoveChainVirial();
 
     virtual bool doTrial();
@@ -117,6 +120,7 @@ class MCMoveClusterAngleGeneral : public MCMove
     double **oldPositions{};
     int counter =0;
     double sum = 0;
+    PotentialMasterIntra& potentialMasterIntra;
 
     vector<int *> triplets;
     vector<vector <int>> bonding;
@@ -130,7 +134,7 @@ class MCMoveClusterAngleGeneral : public MCMove
 
   public:
     int idx = -1;
-    MCMoveClusterAngleGeneral(Box &b, PotentialMaster &p, bool oneSide, Random &r, vector<vector <int>> bnd, vector<int *> t, SpeciesList& sl,
+    MCMoveClusterAngleGeneral(Box &b, PotentialMasterIntra &p, bool oneSide, Random &r, vector<vector <int>> bnd, vector<int *> t, SpeciesList& sl,
                               double stepSize, Cluster &cluster);
 
     ~MCMoveClusterAngleGeneral();
@@ -166,11 +170,12 @@ private:
   int mySpecies = -1;
   double transformBondedAtoms(double* dr, int index, double* shift);
   double transform(double* dr, int index, double* shift);
+  PotentialMasterIntra& potentialMasterIntra;
 
 
 public:
   int idx = -1;
-  MCMoveClusterStretch(Box &b, PotentialMaster &p, Random &r, vector<vector <int>> bnd, SpeciesList& sl,
+  MCMoveClusterStretch(Box &b, PotentialMasterIntra &p, Random &r, vector<vector <int>> bnd, SpeciesList& sl,
                             double stepSize, Cluster &cluster);
 
   ~MCMoveClusterStretch();

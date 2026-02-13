@@ -24,3 +24,14 @@ class PotentialMolecularAtomic : public PotentialMolecular {
     virtual ~PotentialMolecularAtomic() {}
     double u(Box& box, int iFirstAtom, int jFirstAtom);
 };
+
+class PotentialMolecularMBnrg : public PotentialMolecular
+{
+private:
+
+public:
+  PotentialMolecularMBnrg();
+  virtual ~PotentialMolecularMBnrg() {}
+  double u(Box& box, int iFirstAtom, int jFirstAtom);
+
+};

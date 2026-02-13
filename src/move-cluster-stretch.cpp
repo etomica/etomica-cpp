@@ -7,8 +7,8 @@
  * the bond are translated with the overall molecule COM fixed.
  *
  */
-MCMoveClusterStretch::MCMoveClusterStretch(Box& b, PotentialMaster& p, Random& r, vector<vector <int>> bnd, SpeciesList& sl, double stepSize, Cluster& cluster) :
-  MCMove(b, p, r, stepSize), speciesList(sl), cluster(cluster), bonding(bnd), iMolecule(0)
+MCMoveClusterStretch::MCMoveClusterStretch(Box& b, PotentialMasterIntra& p, Random& r, vector<vector <int>> bnd, SpeciesList& sl, double stepSize, Cluster& cluster) :
+  MCMove(b, r, stepSize), speciesList(sl), cluster(cluster), bonding(bnd), iMolecule(0), potentialMasterIntra(p)
 {
   maxStepSize = 0.2;
 }
@@ -44,7 +44,7 @@ bool MCMoveClusterStretch::doTrial() {
     iMoleculeInSpecies = iMolecule;
     iMolecule = box.getGlobalMoleculeIndex(mySpecies, iMolecule);
   }
-  uOld = potentialMaster.oldMoleculeEnergyIntra(iMolecule);
+  uOld = potentialMasterIntra.oldMoleculeEnergyIntra(iMolecule);
   sum += uOld;
   counter++;
 
@@ -58,8 +58,7 @@ bool MCMoveClusterStretch::doTrial() {
     // see if we can recompute the molecule energy and get the same result
     // this messes up future computation, so abort afterwards
     printf("got old, now recompute\n");
-    double uTmp = 0;
-    potentialMaster.computeOneMolecule(iMolecule, uTmp);
+    double uTmp = potentialMasterIntra.computeOneMoleculeIntra(iMolecule);
     printf("%d uOlds %f %f\n", iMolecule, uTmp, uOld);
     abort();
   }
@@ -119,7 +118,7 @@ bool MCMoveClusterStretch::doTrial() {
     Vector::PE(shift, box.getAtomPosition(iAtom));
   }
   numTrials++;
-  uNew = potentialMaster.computeOneMoleculeIntra(iMolecule);
+  uNew = potentialMasterIntra.computeOneMoleculeIntra(iMolecule);
   wNew = fabs(cluster.getValues()[0]);
   if (idx == 1)
   {
@@ -149,7 +148,7 @@ double MCMoveClusterStretch::getChi(double temperature)
 void MCMoveClusterStretch::acceptNotify()
 {
     // if (idx == 0) printf("accepted\n");
-    potentialMaster.setMoleculeEnergy(iMolecule, uNew);
+    potentialMasterIntra.setMoleculeEnergy(iMolecule, uNew);
 
     numAccepted++;
 

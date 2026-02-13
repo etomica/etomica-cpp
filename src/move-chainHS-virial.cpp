@@ -4,7 +4,7 @@
 
 #include "move-virial.h"
 
-MCMoveChainVirial::MCMoveChainVirial(SpeciesList& sl, Box& b, PotentialMaster& p, Random& r, double s) : MCMove(b,p,r,1), speciesList(sl), sigma(s) {
+MCMoveChainVirial::MCMoveChainVirial(SpeciesList& sl, Box& b, Random& r, double s) : MCMove(b,r,1), speciesList(sl), sigma(s) {
   tunable = false;
 }
 

@@ -4,7 +4,9 @@
 
 #include "move.h"
 
-MCMoveDisplacement::MCMoveDisplacement(Box& b, PotentialMaster& p, Random& r, double ss) : MCMove(b,p,r,ss) {
+MCMoveDisplacement::MCMoveDisplacement(Box& b, PotentialMaster& p, Random& r, double ss) : MCMove(b, r, ss),
+  potentialMaster(p)
+{
 }
 
 MCMoveDisplacement::~MCMoveDisplacement() {}

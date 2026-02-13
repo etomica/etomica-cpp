@@ -15,7 +15,6 @@ class SpeciesList;
 class MCMove {
   protected:
     Box& box;
-    PotentialMaster& potentialMaster;
     Random& random;
     double maxStepSize;
     long numTrials, numAccepted;
@@ -32,7 +31,7 @@ class MCMove {
     bool tunable;
     double stepSize;
 
-    MCMove(Box& box, PotentialMaster& potentialMaster, Random& random, double stepSize);
+    MCMove(Box& box, Random& random, double stepSize);
     virtual ~MCMove();
 
     virtual bool doTrial() = 0;
@@ -48,6 +47,7 @@ class MCMove {
 class MCMoveDisplacement : public MCMove {
   private:
     double rOld[3];
+    PotentialMaster& potentialMaster;
     double uOld, uNew;
     int iAtom;
 
@@ -73,6 +73,7 @@ class MCMoveInsertDelete : public MCMove {
     const int iSpecies;
     const int numAtoms;
     RotationMatrix rotMat;
+   PotentialMaster& potentialMaster;
 
   public:
 
@@ -96,6 +97,8 @@ class MCMoveMoleculeDisplacement : public MCMove {
     int iMolecule;
     int iAtomFirst, iAtomLast;
     int iSpecies;
+    PotentialMaster& potentialMaster;
+
 
   public:
 
@@ -114,6 +117,8 @@ class MCMoveMoleculeRotate : public MCMove {
   private:
     SpeciesList& speciesList;
     int numOldPositions;
+    PotentialMaster& potentialMaster;
+
     double **oldPositions;
     RotationMatrix mat;
     double uOld, uNew;

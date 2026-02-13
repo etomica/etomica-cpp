@@ -10,9 +10,9 @@
  * Originally developed by Arpit for alkanes.
  */
 
-MCMoveClusterAngleGeneral::MCMoveClusterAngleGeneral(Box& b, PotentialMaster& p, bool oneSide, Random& r, vector<vector <int>> bnd, vector<int*> t, SpeciesList& sl, double stepSize, Cluster& cluster) :
-  MCMove(b, p, r, stepSize), speciesList(sl),
-   oneSide(oneSide), cluster(cluster), triplets(t), bonding(bnd), iMolecule(0)
+MCMoveClusterAngleGeneral::MCMoveClusterAngleGeneral(Box& b, PotentialMasterIntra& p, bool oneSide, Random& r, vector<vector <int>> bnd, vector<int*> t, SpeciesList& sl, double stepSize, Cluster& cluster) :
+  MCMove(b, r, stepSize), speciesList(sl),
+  oneSide(oneSide), cluster(cluster), potentialMasterIntra(p), triplets(t), bonding(bnd), iMolecule(0)
 {
   maxStepSize = 0.2;
 }
@@ -46,7 +46,7 @@ bool MCMoveClusterAngleGeneral::doTrial() {
     iMoleculeInSpecies = iMolecule;
     iMolecule = box.getGlobalMoleculeIndex(mySpecies, iMolecule);
   }
-  uOld = potentialMaster.oldMoleculeEnergyIntra(iMolecule);
+  uOld = potentialMasterIntra.oldMoleculeEnergyIntra(iMolecule);
   sum += uOld;
   counter++;
 
@@ -60,8 +60,7 @@ bool MCMoveClusterAngleGeneral::doTrial() {
     // see if we can recompute the molecule energy and get the same result
     // this messes up future computation, so abort afterwards
     printf("got old, now recompute\n");
-    double uTmp = 0;
-    potentialMaster.computeOneMolecule(iMolecule, uTmp);
+    double uTmp = potentialMasterIntra.computeOneMoleculeIntra(iMolecule);
     printf("%d uOlds %f %f\n", iMolecule, uTmp, uOld);
     abort();
   }
@@ -135,7 +134,7 @@ bool MCMoveClusterAngleGeneral::doTrial() {
 
 
   numTrials++;
-  uNew = potentialMaster.computeOneMoleculeIntra(iMolecule);
+  uNew = potentialMasterIntra.computeOneMoleculeIntra(iMolecule);
   wNew = fabs(cluster.getValues()[0]);
   return true;
 }
@@ -157,7 +156,7 @@ double MCMoveClusterAngleGeneral::getChi(double temperature)
 void MCMoveClusterAngleGeneral::acceptNotify()
 {
     // if (idx == 0) printf("accepted\n");
-    potentialMaster.setMoleculeEnergy(iMolecule, uNew);
+    potentialMasterIntra.setMoleculeEnergy(iMolecule, uNew);
 
     numAccepted++;
 

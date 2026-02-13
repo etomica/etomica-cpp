@@ -4,7 +4,9 @@
 
 #include "move-volume.h"
 
-MCMoveVolume::MCMoveVolume(Box& b, PotentialMaster& pm, Random& r, double p, double ss, SpeciesList& sl, Meter& oldPE) : MCMove(b,pm,r,ss), pressure(p), speciesList(sl), oldMeterPE(oldPE) {
+MCMoveVolume::MCMoveVolume(Box& b, PotentialMaster& pm, Random& r, double p, double ss, SpeciesList& sl, Meter& oldPE) :
+  MCMove(b, r, ss), pressure(p), potentialMaster(pm), speciesList(sl), oldMeterPE(oldPE)
+{
   callbacks.push_back(&pce);
 }
 
