@@ -12,7 +12,7 @@
  * Mayer sampling.
  */
 
-PotentialMolecularAtomic::PotentialMolecularAtomic(SpeciesList& sl, Potential& p) : PotentialMolecular(), potential(p), speciesList(sl)
+PotentialMolecularAtomic::PotentialMolecularAtomic(SpeciesList& sl, Potential& p) : potential(p), speciesList(sl)
 {
 }
 

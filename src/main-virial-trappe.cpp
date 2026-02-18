@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
   refBox.setBoxSize(5,5,5);
   refBox.setPeriodic(false, false, false);
   refBox.setNumMolecules(0, nPoints);
-  PotentialMasterVirial potentialGroup(TP.speciesList, refBox);
+  // PotentialMasterVirial potentialGroup(TP.speciesList, refBox);
   //flex moves
 
   // PotentialMaster potentialMasterIntraRef(TP.speciesList, refBox, false);
@@ -62,7 +62,12 @@ int main(int argc, char** argv) {
   printf("isFlex = %s\n", isFlex ? "true" : "false");
   printf("Diagram %s\n" , TP.diagram.c_str());
 
-  PotentialMasterVirial refPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroup, TP.speciesList, TP.species.getNumAtomTypes(), TP.sigma, TP.epsilon, TP.charge, refBox);
+  // PotentialMasterVirial refPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroup, TP.speciesList, TP.species.getNumAtomTypes(), TP.sigma, TP.epsilon, TP.charge, refBox);
+  PotentialMolecularMBnrg potentialGroup;
+  PotentialMasterVirialMolecular refPotentialMasterTraPPE(_, refBox);
+  refPotentialMasterTraPPE.setMoleculePairPotential(0, 0, &potentialGroup);
+
+
   PotentialMasterVirialMolecular refPotentialMasterHS(TP.speciesList, refBox);
   refPotentialMasterHS.setMoleculePairPotential(0, 0, &pHSMolecule);
   IntegratorMC refIntegrator(refPotentialMasterHS, seed);
@@ -83,9 +88,10 @@ int main(int argc, char** argv) {
   targetBox.setBoxSize(5,5,5);
   targetBox.setPeriodic(false, false, false);
   targetBox.setNumMolecules(0, nPoints);
-  PotentialMasterVirial potentialGroupTarget(TP.speciesList, targetBox);
-
-  PotentialMasterVirial targetPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroupTarget, TP.speciesList, TP.species.getNumAtomTypes(), TP.sigma, TP.epsilon, TP.charge, targetBox);
+  // PotentialMasterVirial potentialGroupTarget(TP.speciesList, targetBox);
+  //
+  // // PotentialMasterVirial targetPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroupTarget, TP.speciesList, TP.species.getNumAtomTypes(), TP.sigma, TP.epsilon, TP.charge, targetBox);
+  PotentialMolecularMBnrg targetPotentialMasterTraPPE;
 
   //flex moves
 

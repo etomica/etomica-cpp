@@ -48,7 +48,8 @@ file(GLOB ALL_CPP *.cpp)
 file(GLOB HEADERS *.h)
 
 # Exclude main-* from general sources
-set(SRC_FILES "")
+set(SRC_FILES ""
+        potential-molecular-mbnrg.cpp)
 foreach(f ${ALL_CPP})
     if (NOT f MATCHES "main-.*\\.cpp$")
         list(APPEND SRC_FILES ${f})

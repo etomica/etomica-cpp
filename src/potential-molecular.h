@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <potential/2b/x2b_A1B2_A1B2_v1x.h>
+
 #include "potential.h"
 #include "box.h"
 
@@ -27,11 +29,13 @@ class PotentialMolecularAtomic : public PotentialMolecular {
 
 class PotentialMolecularMBnrg : public PotentialMolecular
 {
-private:
-
+protected:
+  double* xyz1{};
+  double* xyz2{};
+  x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot;
 public:
   PotentialMolecularMBnrg();
-  virtual ~PotentialMolecularMBnrg() {}
+  virtual ~PotentialMolecularMBnrg();
   double u(Box& box, int iFirstAtom, int jFirstAtom);
 
 };
