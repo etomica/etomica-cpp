@@ -20,8 +20,22 @@
 #include "unit.h"
 #include "virial.h"
 #include "TraPPEParams.h"
+#include "potential/2b/energy2b.h"
 
 int main(int argc, char** argv) {
+  vector<double> xyz1 = {
+    0.000000, 0.000000, 0.000000,
+-0.332280, 1.099680, -0.160915,
+0.332280, -1.099680, 0.160915
+  };
+  vector<double> xyz2 = {
+    -0.062697, 1.144255, 0.511376,
+-0.574729, 2.185132, 0.511376,
+0.449335, 0.103379, 0.511376,
+  };
+
+  double energy = e2b::get_2b_energy("co2", "co2", 2, xyz1, xyz2);
+  printf("%f \n", Energy::toSim(energy));
   TraPPEParams TP(TraPPEParams::CO2);
   int nPoints = 2;
   int nDer = 0;
@@ -50,10 +64,10 @@ int main(int argc, char** argv) {
   refBox.setBoxSize(5,5,5);
   refBox.setPeriodic(false, false, false);
   refBox.setNumMolecules(0, nPoints);
-  PotentialMasterVirial potentialGroup(TP.speciesList, refBox);
+  // PotentialMasterVirial potentialGroup(TP.speciesList, refBox);
   //flex moves
 
-  PotentialMaster potentialMasterIntraRef(TP.speciesList, refBox, false);
+  PotentialMasterIntraMBnrg potentialMasterIntraRef(refBox);
 
   int nSpheres = TP.species.getNumAtoms();
   printf("nSpheres = %d\n", nSpheres);
@@ -61,7 +75,10 @@ int main(int argc, char** argv) {
   printf("isFlex = %s\n", isFlex ? "true" : "false");
   printf("Diagram %s\n" , TP.diagram.c_str());
 
-  PotentialMasterVirial refPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroup, TP.speciesList, TP.species.getNumAtomTypes(), TP.sigma, TP.epsilon, TP.charge, refBox);
+  // PotentialMasterVirial refPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroup, TP.speciesList, TP.species.getNumAtomTypes(), TP.sigma, TP.epsilon, TP.charge, refBox);
+  PotentialMolecularMBnrg potentialGroup;
+  PotentialMasterVirialMolecular refPotentialMasterTraPPE(TP.speciesList, refBox);
+  refPotentialMasterTraPPE.setMoleculePairPotential(0, 0, &potentialGroup);
 
 
   PotentialMasterVirialMolecular refPotentialMasterHS(TP.speciesList, refBox);
@@ -84,37 +101,16 @@ int main(int argc, char** argv) {
   targetBox.setBoxSize(5,5,5);
   targetBox.setPeriodic(false, false, false);
   targetBox.setNumMolecules(0, nPoints);
-  PotentialMasterVirial potentialGroupTarget(TP.speciesList, targetBox);
-  //
-  PotentialMasterVirial targetPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroupTarget, TP.speciesList, TP.species.getNumAtomTypes(), TP.sigma, TP.epsilon, TP.charge, targetBox);
+  PotentialMolecularMBnrg potentialGroupTarget;
+  PotentialMasterVirialMolecular targetPotentialMasterTraPPE(TP.speciesList, targetBox);
+  targetPotentialMasterTraPPE.setMoleculePairPotential(0, 0, &potentialGroupTarget);
 
   //flex moves
 
-  PotentialMaster potentialMasterIntraTarget(TP.speciesList, targetBox, false);
+  PotentialMasterIntraMBnrg potentialMasterIntraTarget(targetBox);
 
   //P2 Stretch
 
-  if (!TP.r_eq.empty())
-  {
-    for (int j = 0 ; j < (int)TP.r_eq.size(); j++)
-    {
-      P2BondStretch *p2 = new P2BondStretch(TP.k_b[j], TP.r_eq[j]);
-      potentialMasterIntraRef.setBondPotential(0, TP.pairs[j], p2);
-      potentialMasterIntraTarget.setBondPotential(0, TP.pairs[j], p2);
-    }
-
-  }
-
-  //P3 bond angle
-  if (!TP.theta_eq.empty())
-  {
-    for (int j = 0 ; j < (int)TP.theta_eq.size(); j++) {
-      PotentialAngleHarmonic *p3 = new PotentialAngleHarmonic(0.5*TP.k_theta[j], TP.theta_eq[j]);
-      potentialMasterIntraRef.setBondAnglePotential(0, TP.triplets, p3);
-      potentialMasterIntraTarget.setBondAnglePotential(0, TP.triplets, p3);
-
-    }
-  }
   potentialMasterIntraRef.init();
   potentialMasterIntraTarget.init();
   PotentialMasterVirialMolecular targetPotentialMasterHS(TP.speciesList, targetBox);

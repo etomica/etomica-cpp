@@ -57,7 +57,7 @@ foreach(f ${ALL_CPP})
 endforeach()
 
 # Mains
-set(MAIN_NAMES virial-trappe)
+set(MAIN_NAMES virial-trappe virial-mbnrg)
 
 # ----- Build each main-* executable -----
 foreach(name ${MAIN_NAMES})

@@ -4,7 +4,7 @@
 #include "bblock/system.h"
 #include "unit.h"
 
-PotentialMasterIntraMBnrg::PotentialMasterIntraMBnrg(Box& b) : PotentialMasterIntra(b)
+PotentialMasterIntraMBnrg::PotentialMasterIntraMBnrg(Box& b) : PotentialMasterIntra(b), pot("co2")
 {
         xyz1 = (double*)malloc(sizeof(double)*3*3);
 
