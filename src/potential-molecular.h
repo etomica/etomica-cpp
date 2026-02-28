@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include <json/json.hpp>
 #include <potential/2b/x2b_A1B2_A1B2_v1x.h>
+#include <potential/3b/mbnrg_3b_A1B2_A1B2_A1B2_deg4_v1.h>
 
 #include "potential.h"
 #include "box.h"
@@ -32,7 +34,21 @@ class PotentialMolecularMBnrg : public PotentialMolecular
 protected:
   double* xyz1{};
   double* xyz2{};
+  double* xyz3{};
   x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot;
+  mbnrg_A1B2_A1B2_A1B2_deg4::mbnrg_A1B2_A1B2_A1B2_deg4_v1 pot3;
+  vector<double> c6_lr;
+  vector<double> lj_lr;
+  vector<double> grad;
+  vector<double>* virial;
+  vector<double> chg;
+  vector<double> chggrad;
+  vector<double> pol;
+  vector<double> polfac;
+
+  nlohmann::json monomers_j_;
+  vector<double> edge_vectors;
+
 public:
   PotentialMolecularMBnrg();
   virtual ~PotentialMolecularMBnrg();
