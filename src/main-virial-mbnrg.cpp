@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 0.449335, 0.103379, 0.511376,
   };
 
-  double energy = e2b::get_2b_energy("co2", "co2", 2, xyz1, xyz2);
+  double energy = e2b::get_2b_energy("co2", "co2", 1, xyz1, xyz2);
   printf("%f \n", Energy::toSim(energy));
   TraPPEParams TP(TraPPEParams::CO2);
   int nPoints = 2;
@@ -77,6 +77,28 @@ int main(int argc, char** argv) {
 
   // PotentialMasterVirial refPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroup, TP.speciesList, TP.species.getNumAtomTypes(), TP.sigma, TP.epsilon, TP.charge, refBox);
   PotentialMolecularMBnrg potentialGroup;
+  std::vector<double> xyz1ut = {6.6630444410e-01,  -3.8357176030e-01, 1.1519802350e-01,  1.7838183644e+00,
+                                    -1.9222069500e-01, -1.7587628680e-01, -4.4811475090e-01, -5.7997649630e-01,
+                                    4.1069507510e-01};
+  std::vector<double> xyz2ut = {2.4803292099e+00,  7.5103875900e-01,  -2.9043390394e+00, 2.2674715176e+00,
+                                    1.8651909097e+00,  -2.6082983571e+00, 2.7020706245e+00,  -3.5351972400e-01,
+                                    -3.2106052081e+00};
+  for (int i = 0; i < 3; i++)
+  {
+    double* r1 = refBox.getAtomPosition(i);
+    double* r2 = refBox.getAtomPosition(3+i);
+
+    for (int j = 0; j < 3; j++)
+    {
+      r1[j] = xyz1ut[3*i+j];
+      r2[j] = xyz2ut[3*i+j];
+    }
+
+  }
+  double e = e2b::get_2b_energy("co2_archive", "co2_archive", 1, xyz1ut, xyz2ut);
+  printf("%f \n", e);
+  potentialGroup.u(refBox, 0, 1);
+  exit(0);
   PotentialMasterVirialMolecular refPotentialMasterTraPPE(TP.speciesList, refBox);
   refPotentialMasterTraPPE.setMoleculePairPotential(0, 0, &potentialGroup);
 

@@ -23,7 +23,7 @@ MCMoveClusterStretch::~MCMoveClusterStretch() {
 // }
 
 bool MCMoveClusterStretch::doTrial() {
-  if (false)
+  if (true)
   {
     return false;
   }

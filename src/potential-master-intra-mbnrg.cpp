@@ -27,6 +27,7 @@ double PotentialMasterIntraMBnrg::computeOneMoleculeIntra(int iMolecule)
                 xyz1[3*(i-firstAtom)+2] = p[2];
         }
         vector<double> energies = pot.eval(xyz1, 1);
+        printf("1b %f\n", energies[0]);
         return Energy::toSim(energies[0]);
 
 }
