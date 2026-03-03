@@ -44,6 +44,7 @@ protected:
   vector<double> chggrad;
   vector<double> pol;
   vector<double> polfac;
+  double maxDist;
 
 public:
   PotentialMolecularMBnrg();

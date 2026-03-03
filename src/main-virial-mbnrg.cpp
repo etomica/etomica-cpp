@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 0.449335, 0.103379, 0.511376,
   };
 
-  double energy = e2b::get_2b_energy("co2", "co2", 1, xyz1, xyz2);
+  double energy = e2b::get_2b_energy("co2_archive", "co2_archive", 1, xyz1, xyz2);
   printf("%f \n", Energy::toSim(energy));
   TraPPEParams TP(TraPPEParams::CO2);
   int nPoints = 2;
@@ -68,7 +68,6 @@ int main(int argc, char** argv) {
   //flex moves
 
   PotentialMasterIntraMBnrg potentialMasterIntraRef(refBox);
-
   int nSpheres = TP.species.getNumAtoms();
   printf("nSpheres = %d\n", nSpheres);
   bool isFlex = TP.isFlex && (TP.diagram.empty() || TP.diagram != "BC");
@@ -95,10 +94,15 @@ int main(int argc, char** argv) {
     }
 
   }
-  double e = e2b::get_2b_energy("co2_archive", "co2_archive", 1, xyz1ut, xyz2ut);
-  printf("%f \n", e);
-  potentialGroup.u(refBox, 0, 1);
-  exit(0);
+  // double e = e2b::get_2b_energy("co2_archive", "co2_archive", 1, xyz1ut, xyz2ut);
+  // printf("%f \n", e);
+  double e1b_1 = potentialMasterIntraRef.computeOneMoleculeIntra(0);
+  double e1b_2 = potentialMasterIntraRef.computeOneMoleculeIntra(1);
+
+  printf("1b = %f %f \n", Energy::fromSim(e1b_1), Energy::fromSim(e1b_2));
+  double u = potentialGroup.u(refBox, 0, 1);
+  printf("sum = %f \n", Energy::fromSim(u+e1b_1+e1b_2));
+  // exit(0);
   PotentialMasterVirialMolecular refPotentialMasterTraPPE(TP.speciesList, refBox);
   refPotentialMasterTraPPE.setMoleculePairPotential(0, 0, &potentialGroup);
 

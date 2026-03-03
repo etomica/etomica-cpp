@@ -4,7 +4,7 @@
 #include "bblock/system.h"
 #include "unit.h"
 
-PotentialMasterIntraMBnrg::PotentialMasterIntraMBnrg(Box& b) : PotentialMasterIntra(b), pot("co2")
+PotentialMasterIntraMBnrg::PotentialMasterIntraMBnrg(Box& b) : PotentialMasterIntra(b), pot("co2_archive")
 {
         xyz1 = (double*)malloc(sizeof(double)*3*3);
 
@@ -27,7 +27,6 @@ double PotentialMasterIntraMBnrg::computeOneMoleculeIntra(int iMolecule)
                 xyz1[3*(i-firstAtom)+2] = p[2];
         }
         vector<double> energies = pot.eval(xyz1, 1);
-        printf("1b %f\n", energies[0]);
         return Energy::toSim(energies[0]);
 
 }
