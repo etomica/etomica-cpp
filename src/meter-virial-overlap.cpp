@@ -5,6 +5,7 @@
 #include <cmath>
 #include <limits>
 #include "meter-virial.h"
+#include "vector.h"
 
 // This meter takes 2 clusters -- a primary and a perturb cluster.  The sampling weight (pi) is
 // taken to be the absolute value of the first value from the primary cluster.  The absolute
@@ -43,6 +44,11 @@ MeterVirialOverlap::MeterVirialOverlap(Cluster &cluster1, Cluster &cluster2, dou
   data = new double[nData];
   alpha = new double[nData];
   setAlpha(aCenter, aSpan);
+  for (int i=0; i<100; i++)
+  {
+    histogram[i] = 0;
+  }
+  counter = 0;
 }
 
 MeterVirialOverlap::~MeterVirialOverlap() {
@@ -95,6 +101,23 @@ double* MeterVirialOverlap::getData() {
       //         ~= 1 (when alpha is optimal)
       data[i] = perturbValue / (perturbValue + alpha[i]*pi);
     }
+  }
+  if (box)
+  {
+    double dr[3];
+    for (int i=0; i<3; i++) {dr[i] = box->getAtomPosition(0)[i] - box->getAtomPosition(3)[i];}
+    double dist = sqrt(Vector::squared(dr));
+    int iDist = int(dist);
+    if (iDist < 100) histogram[iDist]++;
+    counter++;
+    if (counter % 10000 == 0)
+    {
+      for (int i = 0 ; i< 100; i++)
+      {
+        if (histogram[i] > 0) printf("%d %f\n", i, histogram[i]/counter);
+      }
+    }
+
   }
   return data;
 }

@@ -20,6 +20,7 @@ VirialAlpha::VirialAlpha(IntegratorMC &rIntegrator, IntegratorMC &tIntegrator, C
   alphaSpan = log(alpha[numAlpha-1]/alpha[0]);
   refMeter.idx = 0;
   targetMeter.idx = 1;
+
 }
 
 VirialAlpha::~VirialAlpha() {
@@ -83,8 +84,8 @@ void VirialAlpha::analyze(double &jBest) {
       double ac1 = targetOverStats[j-1][AVG_ACOR];
       double ac2 = targetOverStats[j][AVG_ACOR];
       alphaCor = ac1 > ac2 ? ac1 : ac2;
-      // printf("%f %f %f %f %f %f\n", refOverStats[j-1][AVG_AVG], refOverStats[j-1][AVG_ERR],
-      //                          targetOverStats[j-1][AVG_AVG], targetOverStats[j-1][AVG_ERR], ac1, ac2);
+      printf("%f %f %f %f %f %f\n", refOverStats[j-1][AVG_AVG], refOverStats[j-1][AVG_ERR],
+                               targetOverStats[j-1][AVG_AVG], targetOverStats[j-1][AVG_ERR], ac1, ac2);
       return;
     }
   }
@@ -141,8 +142,8 @@ void VirialAlpha::runSteps(int numSteps) {
     if (jBestAlpha<numAlpha*0.1 || jBestAlpha>(numAlpha-1)*0.9) alphaSpan *= 2;
     else if (alphaCor < 0.3 && alphaSpan > 0.5 && jBestAlpha>numAlpha*0.2 && jBestAlpha<(numAlpha-1)*0.8) alphaSpan *= 0.25;
     else if (alphaCor < 0.6 && alphaSpan > 0.5 && jBestAlpha>numAlpha*0.2 && jBestAlpha<(numAlpha-1)*0.8) alphaSpan *= 0.6;
-    else if (alphaCor > 0.2) nextCheckFac *= 2;
-    else if (alphaCor < 0.1 && newAlphaErr/newAlpha < 0.02) allDone = true;
+    else if (alphaCor > 0.7) nextCheckFac *= 2;
+    else if (alphaCor < 0.1 && newAlphaErr/newAlpha < 0.1) allDone = true;
     setAlpha(newAlpha, alphaSpan);
     nextCheck *= nextCheckFac;
     nextCheck = stepCount + nextCheck;

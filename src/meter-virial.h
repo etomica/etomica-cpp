@@ -25,9 +25,10 @@ class MeterVirialOverlap : public Meter {
     double *data;
     double *alpha;
     const int numAlpha;
-
-
+    double histogram[100];
+    long counter;
   public:
+    Box* box = nullptr;
     MeterVirialOverlap(Cluster &clusterPrimary, Cluster &clusterPerturb, double alphaCenter, double alphaSpan, int numAlpha);
     ~MeterVirialOverlap();
     void setAlpha(double alphaCenter, double alphaSpan);

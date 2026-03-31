@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
   double temperatureK = 1000;
   double temperature = Kelvin::toSim(1000);
   printf("temp: %f\n", temperature);
-  long numSteps = 100000000;
+  long numSteps = 10000;
   double sigmaHSRef = 6;
   printf("Overlap sampling for TraPPE %d at %.1f K for B%d and %d derivatives\n", TP.chemForm,temperatureK, nPoints, nDer);
   double vhs = 4.0/3.0*M_PI*sigmaHSRef*sigmaHSRef*sigmaHSRef;
@@ -182,6 +182,7 @@ int main(int argc, char** argv) {
   // exit(0);
   double t1 = getTime();
   VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE0);
+  // virialAlpha->targetMeter.box = &targetBox;
   virialAlpha->setVerbose(true);
   virialAlpha->run();
   double t2 = getTime();

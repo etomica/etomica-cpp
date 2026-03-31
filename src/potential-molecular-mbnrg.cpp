@@ -78,6 +78,7 @@ double PotentialMolecularMBnrg::u(Box& box, int iMolecule, int jMolecule)
         }
     }
     if (minDist < 1) return std::numeric_limits<double>::infinity();
+    // if (minDist > 50) printf("molecules too far apart %f\n", minDist);
 
 
     double energy2b = pot.eval(xyz1, xyz2, 1);
@@ -92,117 +93,10 @@ double PotentialMolecularMBnrg::u(Box& box, int iMolecule, int jMolecule)
         double elec_energy = electrostatics.GetElectrostatics(grad, nullptr, false);
         total_energy += elec_energy + disp_energy;
         double badEnergy = -10;
-        double highEnergy = 400;
         if (energy2b < badEnergy)
         {
-            for (int x = 0; x <2 ; x++)
-            {
-                double* p = box.getAtomPosition(0);
-                double* q = box.getAtomPosition(3);
-                double dr[3];
-                for (int k=0; k<3; k++) dr[k] = q[k]-p[k];
-                double r2 = sqrt(Vector::squared(dr));
-                for (int k=0; k<3; k++) dr[k]/=r2;
-                double minDistHighEnergy = 100;
-                double maxDistHighEnergy = 0;
-                double step = 0.05;
-                for (int i=0; i<100&&r2>0.01; i++)
-                {
-                    double minDist = 1000;
-                    for (int j=3; j<6; j++)
-                    {
-                        for (int k=0; k<3; k++) xyz2[3*(j-3)+k]+=step*dr[k];
-                        if (isnan(xyz2[3*(j-3)]))
-                        {
-                            printf("%d %f %d\n",  j, box.getAtomPosition(j)[0], i);
-                            exit(0);
-                        }
-                        double dr2[3];
-                        for (int l=0;l<3;l++)
-                        {
-                            for (int k=0; k<3; k++) dr2[k] = xyz2[3*(j-3)+k]-xyz1[3*(l)+k];
-                            double r2_2 = Vector::squared(dr2);
-                            minDist = min(minDist, r2_2);
-                        }
-                    }
-                    double u2 = pot.eval(xyz1, xyz2, 1);
-                    double dist = sqrt(minDist);
-
-                    if (x==1) printf("dist = %f, U = %f\n", dist, u2);
-                    if (x==1&&u2<highEnergy&&dist<0.9)
-                    {
-                        printf("6\n");
-                        printf("%f \n", total_energy);
-                        printf("C %f %f %f\n", xyz1[0], xyz1[1], xyz1[2]);
-                        printf("O %f %f %f\n", xyz1[3], xyz1[4], xyz1[5]);
-                        printf("O %f %f %f\n", xyz1[6], xyz1[7], xyz1[8]);
-
-                        printf("C %f %f %f\n", xyz2[0], xyz2[1], xyz2[2]);
-                        printf("O %f %f %f\n", xyz2[3], xyz2[4], xyz2[5]);
-                        printf("O %f %f %f\n", xyz2[6], xyz2[7], xyz2[8]);
-
-                        break;
-                    }
-                    if (u2 > highEnergy && dist < minDistHighEnergy)
-                    {
-                        minDistHighEnergy = dist;
-                        maxDistHighEnergy = dist;
-                    }
-                    else if (u2 > highEnergy && dist > maxDistHighEnergy)
-                    {
-                        maxDistHighEnergy = dist;
-
-                    }
-                    else if (u2 < badEnergy)
-                    {
-                        minDistHighEnergy = 100;
-                    }
-                }
-                bool bad = false;
-                if (r2 > 0.01&&x==0)
-                {
-                    if (minDistHighEnergy == 100)
-                    {
-                        printf("Never encountered high energy");
-                        exit(0);
-                    }
-                    if (maxDistHighEnergy > 100*step)
-                    {
-                        printf("Never encountered low energy");
-                        exit(0);
-                    }
-                    bool printme = maxDistHighEnergy < minMax || minDistHighEnergy > maxMin;
-                    minMax = min(minMax, maxDistHighEnergy);
-                    maxMin = max(maxMin, minDistHighEnergy);
-                    if (printme) printf("minMax = %g, maxMin = %g\n", minMax, maxMin);
-                    if (maxDistHighEnergy < 0.9)
-                    {
-                        for (int j = firstAtom; j <= lastAtom; j++)
-                        {
-                            double* p = box.getAtomPosition(j);
-                            xyz2[3*(j-firstAtom)] = p[0];
-                            xyz2[3*(j-firstAtom)+1] = p[1];
-                            xyz2[3*(j-firstAtom)+2] = p[2];
-                        }
-                        bad = true;
-                    }
-
-                }
-                if (!bad) break;
-            }
-
-            // printf("6\n");
-            // printf("%f \n", total_energy);
-            // printf("C %f %f %f\n", xyz1[0], xyz1[1], xyz1[2]);
-            // printf("O %f %f %f\n", xyz1[3], xyz1[4], xyz1[5]);
-            // printf("O %f %f %f\n", xyz1[6], xyz1[7], xyz1[8]);
-            //
-            // printf("C %f %f %f\n", xyz2[0], xyz2[1], xyz2[2]);
-            // printf("0 %f %f %f\n", xyz1[3], xyz1[4], xyz1[5]);
-            // printf("O %f %f %f\n", xyz1[6], xyz1[7], xyz1[8]);
-            total_energy = 1000000;
-
-
+            printf("bad configuration at minDist %f", minDist);
+            exit(0);
         }
     }
     return Energy::toSim(total_energy);
