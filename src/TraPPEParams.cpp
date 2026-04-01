@@ -101,6 +101,14 @@ TraPPEParams::TraPPEParams(ChemForm chemForm) : chemForm(chemForm), species(make
 
 }
 
+static const char* chemFormStrings[] = {
+    "CO2"};
+
+std::string TraPPEParams::chemFormToString(ChemForm form) {
+    return chemFormStrings[form];
+}
+
+
 SpeciesSimple TraPPEParams::makeSpecies(ChemForm chemForm)
 {
     if (chemForm == CO2)

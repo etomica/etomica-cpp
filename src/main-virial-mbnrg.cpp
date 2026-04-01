@@ -20,31 +20,26 @@
 #include "unit.h"
 #include "virial.h"
 #include "TraPPEParams.h"
-#include "potential/2b/energy2b.h"
-
 int main(int argc, char** argv) {
-  vector<double> xyz1 = {
-    0.000000, 0.000000, 0.000000,
--0.332280, 1.099680, -0.160915,
-0.332280, -1.099680, 0.160915
-  };
-  vector<double> xyz2 = {
-    -0.062697, 1.144255, 0.511376,
--0.574729, 2.185132, 0.511376,
-0.449335, 0.103379, 0.511376,
-  };
-
-  double energy = e2b::get_2b_energy("co2_archive", "co2_archive", 1, xyz1, xyz2);
-  printf("%f \n", Energy::toSim(energy));
   TraPPEParams TP(TraPPEParams::CO2);
   int nPoints = 2;
   int nDer = 0;
   double temperatureK = 1000;
-  double temperature = Kelvin::toSim(1000);
-  printf("temp: %f\n", temperature);
-  long numSteps = 10000;
+  long numSteps = 100000;
+  for (int i = 1; i < argc; i++) {
+    std::string arg = argv[i];
+
+    if (arg == "--temp" && i + 1 < argc) {
+      temperatureK = std::stod(argv[++i]);
+    } else if (arg == "--steps" && i + 1 < argc) {
+      numSteps = std::stol(argv[++i]);
+    }
+  }
+  double temperature = Kelvin::toSim(temperatureK);
   double sigmaHSRef = 6;
-  printf("Overlap sampling for TraPPE %d at %.1f K for B%d and %d derivatives\n", TP.chemForm,temperatureK, nPoints, nDer);
+  std::string compound_name = TraPPEParams::chemFormToString(TP.chemForm);
+  printf("Overlap sampling for MB-nrg %s at %.1f K for B%d and %d derivatives\n", compound_name.c_str(),temperatureK, nPoints, nDer);
+  std::cout << "Steps: " << numSteps << "\n";
   double vhs = 4.0/3.0*M_PI*sigmaHSRef*sigmaHSRef*sigmaHSRef;
   double HSBn = pow(vhs, nPoints-1)/2;
   for (int i=2; i<=nPoints; i++) HSBn *= i;
@@ -94,14 +89,6 @@ int main(int argc, char** argv) {
     }
 
   }
-  // double e = e2b::get_2b_energy("co2_archive", "co2_archive", 1, xyz1ut, xyz2ut);
-  // printf("%f \n", e);
-  double e1b_1 = potentialMasterIntraRef.computeOneMoleculeIntra(0);
-  double e1b_2 = potentialMasterIntraRef.computeOneMoleculeIntra(1);
-
-  printf("1b = %f %f \n", Energy::fromSim(e1b_1), Energy::fromSim(e1b_2));
-  double u = potentialGroup.u(refBox, 0, 1);
-  printf("sum = %f \n", Energy::fromSim(u+e1b_1+e1b_2));
   // exit(0);
   PotentialMasterVirialMolecular refPotentialMasterTraPPE(TP.speciesList, refBox);
   refPotentialMasterTraPPE.setMoleculePairPotential(0, 0, &potentialGroup);

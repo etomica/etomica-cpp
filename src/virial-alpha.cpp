@@ -142,7 +142,7 @@ void VirialAlpha::runSteps(int numSteps) {
     if (jBestAlpha<numAlpha*0.1 || jBestAlpha>(numAlpha-1)*0.9) alphaSpan *= 2;
     else if (alphaCor < 0.3 && alphaSpan > 0.5 && jBestAlpha>numAlpha*0.2 && jBestAlpha<(numAlpha-1)*0.8) alphaSpan *= 0.25;
     else if (alphaCor < 0.6 && alphaSpan > 0.5 && jBestAlpha>numAlpha*0.2 && jBestAlpha<(numAlpha-1)*0.8) alphaSpan *= 0.6;
-    else if (alphaCor > 0.7) nextCheckFac *= 2;
+    else if (alphaCor > 0.2) nextCheckFac *= 2;
     else if (alphaCor < 0.1 && newAlphaErr/newAlpha < 0.1) allDone = true;
     setAlpha(newAlpha, alphaSpan);
     nextCheck *= nextCheckFac;

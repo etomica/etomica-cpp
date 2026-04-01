@@ -34,6 +34,7 @@ public:
     // Box box;
     bool isFlex = false;
     bool isPolar = false;
+    static std::string chemFormToString(ChemForm form);
 
 private:
     SpeciesSimple makeSpecies(ChemForm chemForm);
