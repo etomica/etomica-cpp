@@ -22,7 +22,7 @@
 #include "TraPPEParams.h"
 int main(int argc, char** argv) {
   TraPPEParams TP(TraPPEParams::CO2);
-  int nPoints = 2;
+  int nPoints = 3;
   int nDer = 0;
   double temperatureK = 1000;
   long numSteps = 100000;
@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
   PotentialHS pHS(6);
   PotentialMolecularAtomic pHSMolecule(TP.speciesList, pHS);
   Box refBox(TP.speciesList);
+  refBox.idx = 0;
   refBox.setBoxSize(5,5,5);
   refBox.setPeriodic(false, false, false);
   refBox.setNumMolecules(0, nPoints);
@@ -97,7 +98,8 @@ int main(int argc, char** argv) {
   PotentialMasterVirialMolecular refPotentialMasterHS(TP.speciesList, refBox);
   refPotentialMasterHS.setMoleculePairPotential(0, 0, &pHSMolecule);
   IntegratorMC refIntegrator(refPotentialMasterHS, seed);
-  ClusterVirial refClusterTraPPE(refPotentialMasterTraPPE, temperature, 0, false);
+  PotentialMolecularMBnrg3body p3BodyRef;
+  ClusterMBX refClusterTraPPE(refPotentialMasterTraPPE, temperature, 0, false, p3BodyRef);
   ClusterChain refClusterHS(refPotentialMasterHS, temperature, 1.0, 0, false);
   MCMoveChainVirial refMove(TP.speciesList, refBox, seed, sigmaHSRef);
   refIntegrator.addMove(&refMove, 1);
@@ -111,6 +113,7 @@ int main(int argc, char** argv) {
   refIntegrator.addMove(&refMoveStretch, 1);
 
   Box targetBox(TP.speciesList);
+  targetBox.idx = 1;
   targetBox.setBoxSize(5,5,5);
   targetBox.setPeriodic(false, false, false);
   targetBox.setNumMolecules(0, nPoints);
@@ -130,9 +133,10 @@ int main(int argc, char** argv) {
   targetPotentialMasterHS.setMoleculePairPotential(0, 0, &pHSMolecule);
   IntegratorMC targetIntegrator(targetPotentialMasterTraPPE, seed);
   Cluster* targetClusterTraPPE0 = nullptr;
+  PotentialMolecularMBnrg3body p3BodyTarget;
   if (anyFlex && nPoints==2 && anyPolar)
   {
-    targetClusterTraPPE0 = new ClusterVirial(targetPotentialMasterTraPPE, temperature, 0, false);
+    targetClusterTraPPE0 = new ClusterMBX(targetPotentialMasterTraPPE, temperature, 0, false, p3BodyTarget);
 
     //flipping for flexible polar B2
     vector<vector <int>> flipPoints = diagrams::getFlipPointsforDiagram("1");
@@ -140,7 +144,9 @@ int main(int argc, char** argv) {
   }
   else
   {
-    targetClusterTraPPE0 = new ClusterVirial(targetPotentialMasterTraPPE, temperature, 0, true);
+    //B3 biconnected
+    targetClusterTraPPE0 = new ClusterMBX(targetPotentialMasterTraPPE, temperature, 0, true, p3BodyTarget);
+    targetClusterTraPPE0 = new ClusterFlipped(*targetClusterTraPPE0, TP.speciesList, targetBox, false);
   }
 
   targetIntegrator.addListener(targetClusterTraPPE0);
@@ -169,7 +175,7 @@ int main(int argc, char** argv) {
   // exit(0);
   double t1 = getTime();
   VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE0);
-  // virialAlpha->targetMeter.box = &targetBox;
+  virialAlpha->targetMeter.box = &targetBox;
   virialAlpha->setVerbose(true);
   virialAlpha->run();
   double t2 = getTime();
@@ -199,7 +205,7 @@ int main(int argc, char** argv) {
   Cluster* targetClusterTraPPE = nullptr;
   if (anyFlex && nPoints==2 && anyPolar)
   {
-    targetClusterTraPPE = new ClusterVirial(targetPotentialMasterTraPPE, temperature, nDer, false);
+    targetClusterTraPPE = new ClusterMBX(targetPotentialMasterTraPPE, temperature, nDer, false, p3BodyTarget);
 
     //flipping for flexible polar B2
     vector<vector <int>> flipPoints = diagrams::getFlipPointsforDiagram("1");
@@ -207,7 +213,7 @@ int main(int argc, char** argv) {
   }
   else
   {
-    targetClusterTraPPE = new ClusterVirial(targetPotentialMasterTraPPE, temperature, nDer, true);
+    targetClusterTraPPE = new ClusterMBX(targetPotentialMasterTraPPE, temperature, nDer, true, p3BodyTarget);
 
   }
 

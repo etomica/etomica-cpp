@@ -6,6 +6,7 @@
 
 #include "integrator.h"
 #include "potential-master.h"
+#include "potential-molecular.h"
 
 class Cluster : public IntegratorListener {
   protected:
@@ -36,13 +37,25 @@ class ClusterVirial : public Cluster {
     int** binomial;
     int moleculePair[2];
     double prefac;
-
+    virtual double computeExtraFQ(int i);
   public:
     ClusterVirial(PotentialMasterVirial& potentialMaster, double temperature, int nDer, bool cached);
     virtual ~ClusterVirial();
 
-    const double* getValues();
+    virtual const double* getValues();
+
 };
+
+class ClusterMBX : public ClusterVirial {
+protected:
+  PotentialMolecularMBnrg3body& p3body;
+  virtual double computeExtraFQ(int i);
+public:
+  ClusterMBX(PotentialMasterVirial& potentialMaster, double temperature, int nDer, bool cached, PotentialMolecularMBnrg3body& p3body);
+  virtual ~ClusterMBX();
+
+};
+
 
 class ClusterChain : public Cluster {
   protected:

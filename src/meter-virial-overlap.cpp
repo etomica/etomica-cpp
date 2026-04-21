@@ -102,11 +102,22 @@ double* MeterVirialOverlap::getData() {
       data[i] = perturbValue / (perturbValue + alpha[i]*pi);
     }
   }
+  // if (idx == 1)
+  // {
+  //   printf("%f \n", primaryValues[0]);
+  // }
+
   if (box)
   {
-    double dr[3];
-    for (int i=0; i<3; i++) {dr[i] = box->getAtomPosition(0)[i] - box->getAtomPosition(3)[i];}
-    double dist = sqrt(Vector::squared(dr));
+    double dr12[3], dr13[3], dr23[3];
+    for (int i=0; i<3; i++) {dr12[i] = box->getAtomPosition(0)[i] - box->getAtomPosition(3)[i];}
+    for (int i=0; i<3; i++) {dr13[i] = box->getAtomPosition(0)[i] - box->getAtomPosition(6)[i];}
+    for (int i=0; i<3; i++) {dr23[i] = box->getAtomPosition(3)[i] - box->getAtomPosition(6)[i];}
+    double dist12 = sqrt(Vector::squared(dr12));
+    double dist13 = sqrt(Vector::squared(dr13));
+    double dist23 = sqrt(Vector::squared(dr23));
+    double dist = std::min({dist12, dist13, dist23});
+    // printf("%f %f %f %fInci \n", dist12, dist13, dist23, dist);
     int iDist = int(dist);
     if (iDist < 100) histogram[iDist]++;
     counter++;

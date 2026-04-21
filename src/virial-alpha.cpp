@@ -94,6 +94,9 @@ void VirialAlpha::analyze(double &jBest) {
   newAlpha = alpha[jb];
   newAlphaErr = AverageRatio::ratioErr(refOverStats[jb][AVG_AVG], refOverStats[jb][AVG_ERR],
                                targetOverStats[jb][AVG_AVG], targetOverStats[jb][AVG_ERR], 0);
+  printf("%d %f %f %f %f\n", jb, refOverStats[jb][AVG_AVG], refOverStats[jb][AVG_ERR],
+                         targetOverStats[jb][AVG_AVG], targetOverStats[jb][AVG_ERR]);
+
 }
 
 void VirialAlpha::getNewAlpha(double &na, double &nae, double &ac) {
@@ -143,7 +146,7 @@ void VirialAlpha::runSteps(int numSteps) {
     else if (alphaCor < 0.3 && alphaSpan > 0.5 && jBestAlpha>numAlpha*0.2 && jBestAlpha<(numAlpha-1)*0.8) alphaSpan *= 0.25;
     else if (alphaCor < 0.6 && alphaSpan > 0.5 && jBestAlpha>numAlpha*0.2 && jBestAlpha<(numAlpha-1)*0.8) alphaSpan *= 0.6;
     else if (alphaCor > 0.2) nextCheckFac *= 2;
-    else if (alphaCor < 0.1 && newAlphaErr/newAlpha < 0.1) allDone = true;
+    else if (alphaCor < 0.1 && newAlphaErr/newAlpha < 0.02) allDone = true;
     setAlpha(newAlpha, alphaSpan);
     nextCheck *= nextCheckFac;
     nextCheck = stepCount + nextCheck;

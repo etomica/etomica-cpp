@@ -54,13 +54,25 @@ public:
 
 };
 
-class PotentialMolecularMBnrg3body : public PotentialMolecular
+class PotentialMolecularMBnrg3body
 {
 protected:
   double* xyz1{};
   double* xyz2{};
   double* xyz3{};
   mbnrg_A1B2_A1B2_A1B2_deg4::mbnrg_A1B2_A1B2_A1B2_deg4_v1 pot;
+  vector<double> grad;
+  elec::Electrostatics electrostatics;
+  elec::Electrostatics electrostatics_pair;
+  vector<double> chg_2b;
+  vector<double> chggrad_2b;
+  vector<double> pol_2b;
+  vector<double> polfac_2b;
+  vector<double> chg;
+  vector<double> chggrad;
+  vector<double> pol;
+  vector<double> polfac;
+
 public:
   PotentialMolecularMBnrg3body();
   virtual ~PotentialMolecularMBnrg3body();

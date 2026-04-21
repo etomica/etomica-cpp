@@ -33,10 +33,11 @@ class Box {
     SpeciesList &speciesList;
     const bool rectangular;
     bool hDirty;
-
     void testTransformVector(double* t);
 
   public:
+    int idx;
+
     Box(SpeciesList &speciesList);
     Box(SpeciesList &speciesList, bool rectangular);
     virtual ~Box();

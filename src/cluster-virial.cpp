@@ -76,6 +76,7 @@ const double* ClusterVirial::getValues() {
       for (int m=1; m<=nDer; m++) fQ[i][m] = fQ[i][m-1]*c;
       continue;
     }
+
     fQ[i][0] = fQ[k][0];
     if (fQ[i][0] == 0) {
       for (int m=1; m<=nDer; m++) fQ[i][m] = 0;
@@ -89,6 +90,7 @@ const double* ClusterVirial::getValues() {
       for (int m=1; m<=nDer; m++) fQ[i][m] = 0;
       continue;
     }
+    fQ[i][0] *= computeExtraFQ(i);
     double c = log(fQ[i][0])/beta;
     for (int m=1; m<=nDer; m++) fQ[i][m] = fQ[i][m-1]*c;
   }
@@ -259,4 +261,8 @@ const double* ClusterVirial::getValues() {
   // }
   // values[0] -= 0.02;
   return values;
+}
+double ClusterVirial::computeExtraFQ(int i)
+{
+  return 1;
 }
