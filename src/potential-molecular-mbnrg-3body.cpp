@@ -62,6 +62,7 @@ PotentialMolecularMBnrg3body::~PotentialMolecularMBnrg3body()
 
 double PotentialMolecularMBnrg3body::u(Box& box, int iMolecule, int jMolecule, int kMolecule)
 {
+    if (true) return 0;
     vector<double> xyz(9*3, 0.0);
     vector<double> xyz_2b(6*3, 0.0);
 
@@ -110,31 +111,20 @@ double PotentialMolecularMBnrg3body::u(Box& box, int iMolecule, int jMolecule, i
     electrostatics.SetNewParameters(xyz, chg, chggrad, pol, polfac, "iter", false, edge_vectors, std::numeric_limits<double>::infinity());
     triplet_total_energy += electrostatics.GetElectrostatics(grad, nullptr, false);
     // printf("triplet total energy: %f \n", triplet_total_energy);
-    double minDist = 1000;
-    for (int m=6; m<9; m++)
-    {
-        double dr23[3];
-        for (int j=3; j<6; j++)
-        {
-            for (int k=0; k<3; k++) dr23[k] = xyz3[3*(m-6)+k]-xyz2[3*(j-3)+k];
-            double r23 = Vector::squared(dr23);
-            minDist = min(minDist, r23);
-            double dr12[3];
-            double dr13[3];
-            for (int l=0;l<3;l++)
-            {
-                for (int k=0; k<3; k++) dr12[k] = xyz2[3*(j-3)+k]-xyz1[3*(l)+k];
-                double r12 = Vector::squared(dr12);
-                for (int k=0; k<3; k++) dr13[k] = xyz3[3*(m-6)+k]-xyz1[3*(l)+k];
-                double r13 = Vector::squared(dr13);
+    double dr23[3];
+    for (int k=0; k<3; k++) dr23[k] = xyz3[k]-xyz2[+k];
+    double r23 = Vector::squared(dr23);
+    double dr12[3];
+    double dr13[3];
+    for (int k=0; k<3; k++) dr12[k] = xyz2[k]-xyz1[k];
+    double r12 = Vector::squared(dr12);
+    for (int k=0; k<3; k++) dr13[k] = xyz3[k]-xyz1[k];
+    double r13 = Vector::squared(dr13);
 
-                minDist = min({minDist, r12, r13});
-            }
-        }
+    double minDist = sqrt(min({r12, r13, r23}));
 
-    }
     if (minDist > 40) return Energy::toSim(energy3b);
-
+    if (true) return Energy::toSim(energy3b);
     int molecules[3] = {iMolecule, jMolecule, kMolecule};
     for (int i = 0; i <= 2; i++)
     {
