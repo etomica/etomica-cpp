@@ -24,7 +24,9 @@ void ClusterFlipped::flip(int iMolecule) {
   }
 }
 
-const double* ClusterFlipped::getValues() {
+const double* ClusterFlipped::getValues(){
+  double array[8];
+
   if (useCache && !cacheDirty) {
     return values;
   }
@@ -50,8 +52,10 @@ const double* ClusterFlipped::getValues() {
       }
     }
   }
+  wrappedCluster.debug = flipit;
 
   const double* foo = wrappedCluster.getValues();
+  array[0] = foo[0];
   for (int i=0; i<nValues; i++) {
     values[i] = foo[i];
   }
@@ -59,6 +63,7 @@ const double* ClusterFlipped::getValues() {
     return values;
   }
   printf("%f ", foo[0]);
+  int index = 1;
 
   while (true) {
     bool didFlipTrue = false;
@@ -72,17 +77,23 @@ const double* ClusterFlipped::getValues() {
       break;
     }
     const double* foo = wrappedCluster.getValues();
+    array[index] = foo[0];
+    index++;
     for (int i=0; i<nValues; i++) {
       values[i] += foo[i];
     }
-    printf("%f ", foo[0]);
 
   }
-  printf("\n");
 
   for  (int i=0; i<nValues; i++) {
     values[i] /= pow(2, numMolecules);
   }
+  printf("CLuster value ");
+  for (double i : array) {
+    printf("%f ", i);
+  }
+  printf("\n");
 
+  wrappedCluster.debug = false;
   return values;
 }

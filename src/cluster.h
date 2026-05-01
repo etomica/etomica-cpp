@@ -21,6 +21,7 @@ class Cluster : public IntegratorListener {
     virtual ~Cluster();
 
     int numValues();
+    bool debug;
     void setCachingEnabled(bool enabled);
     virtual const double* getValues() = 0;
     void moveRejected(MCMove& move, double chi);

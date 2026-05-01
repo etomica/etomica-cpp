@@ -123,8 +123,8 @@ double PotentialMolecularMBnrg3body::u(Box& box, int iMolecule, int jMolecule, i
 
     double minDist = sqrt(min({r12, r13, r23}));
 
-    if (minDist > 40) return Energy::toSim(energy3b);
-    if (true) return Energy::toSim(energy3b);
+    // if (minDist > 40) return Energy::toSim(energy3b);
+    // if (true) return Energy::toSim(energy3b);
     int molecules[3] = {iMolecule, jMolecule, kMolecule};
     for (int i = 0; i <= 2; i++)
     {

@@ -27,7 +27,10 @@ ClusterVirial::~ClusterVirial() {
 
 #define NF  (1 << numMolecules)
 const double* ClusterVirial::getValues() {
-  printf("%d \n", useCache?1:0);
+  Box *box = potentialMaster.getBoxP();
+  if (box->idx == 1 && debug) {
+    printf("%d \n", useCache?1:0);
+  }
   if (useCache && !cacheDirty) return values;
   cacheDirty = false;
 
@@ -43,8 +46,10 @@ const double* ClusterVirial::getValues() {
       moleculePair[1] = iMol2;
       double u12;
       potentialMaster.computeMolecules(moleculePair, 2, u12);
-      printf("%f %d %d \n", u12, iMol2, iMol1);
-      Box *box = potentialMaster.getBoxP();
+      if (box->idx == 1 && debug)       printf("%f %d %d \n", u12, iMol2, iMol1);
+
+
+
       double *r0 = box->getAtomPosition(0);
       double *r1 = box->getAtomPosition(3);
       double dr[3];
@@ -241,7 +246,6 @@ const double* ClusterVirial::getValues() {
   for (int m=1; m<=nDer; m++) {
     values[m] = prefac*fB[NF-1][m];
   }
-  Box *box = potentialMaster.getBoxP();
   double *r0 = box->getAtomPosition(0);
   double *r1 = box->getAtomPosition(3);
   double dr[3];

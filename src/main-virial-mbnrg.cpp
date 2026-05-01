@@ -145,8 +145,8 @@ int main(int argc, char** argv) {
   else
   {
     //B3 biconnected
-    targetClusterTraPPE0 = new ClusterMBX(targetPotentialMasterTraPPE, temperature, 0, true, p3BodyTarget);
-    targetClusterTraPPE0 = new ClusterFlipped(*targetClusterTraPPE0, TP.speciesList, targetBox, false);
+    targetClusterTraPPE0 = new ClusterMBX(targetPotentialMasterTraPPE, temperature, 0, false, p3BodyTarget);
+    targetClusterTraPPE0 = new ClusterFlipped(*targetClusterTraPPE0, TP.speciesList, targetBox, true);
   }
 
   targetIntegrator.addListener(targetClusterTraPPE0);
