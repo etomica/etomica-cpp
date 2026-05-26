@@ -74,7 +74,8 @@ const double* MeterVirialOverlap::getAlpha() {
   return alpha;
 }
 
-double* MeterVirialOverlap::getData() {
+double* MeterVirialOverlap::getData()
+{
   const double* primaryValues = primaryCluster.getValues();
   double pi = fabs(primaryValues[0]);
   if (pi == 0 || pi == std::numeric_limits<double>::infinity() || std::isnan(pi)) {
@@ -106,29 +107,59 @@ double* MeterVirialOverlap::getData() {
   // {
   //   printf("%f \n", primaryValues[0]);
   // }
+  static int count = 0;
 
   if (box)
   {
-    double dr12[3], dr13[3], dr23[3];
+    double dr12[3], dr13[3], dr23[3], shift[3];
     for (int i=0; i<3; i++) {dr12[i] = box->getAtomPosition(0)[i] - box->getAtomPosition(3)[i];}
     for (int i=0; i<3; i++) {dr13[i] = box->getAtomPosition(0)[i] - box->getAtomPosition(6)[i];}
     for (int i=0; i<3; i++) {dr23[i] = box->getAtomPosition(3)[i] - box->getAtomPosition(6)[i];}
     double dist12 = sqrt(Vector::squared(dr12));
     double dist13 = sqrt(Vector::squared(dr13));
     double dist23 = sqrt(Vector::squared(dr23));
-    double dist = std::min({dist12, dist13, dist23});
-    // printf("%f %f %f %fInci \n", dist12, dist13, dist23, dist);
-    int iDist = int(dist);
-    if (iDist < 100) histogram[iDist]++;
-    counter++;
-    if (counter % 10000 == 0)
+    double dist = std::max({dist12, dist13, dist23});
+    count++;
+    if (count % 500 == 0) printf("%d unscaled 12: %f 13: %f 23: %f max: %f \n", count, dist12, dist13, dist23, dist);
+    for (int i=0; i<3; i++) shift[i] = 0.01 * dr12[i];
+    if (count == 2999)
     {
-      for (int i = 0 ; i< 100; i++)
+      printf("%d unscaled 12: %f 13: %f 23: %f max: %f \n", count, dist12, dist13, dist23, dist);
+
+      for (int m = 0; m < 100; m++)
       {
-        if (histogram[i] > 0) printf("%d %f\n", i, histogram[i]/counter);
+        for (int k = 3; k < 6; k++) for (int i=0; i<3; i++) box->getAtomPosition(k)[i] += shift[i];
+
+        for (int i=0; i<3; i++) {dr12[i] = box->getAtomPosition(0)[i] - box->getAtomPosition(3)[i];}
+        for (int i=0; i<3; i++) {dr13[i] = box->getAtomPosition(0)[i] - box->getAtomPosition(6)[i];}
+        for (int i=0; i<3; i++) {dr23[i] = box->getAtomPosition(3)[i] - box->getAtomPosition(6)[i];}
+        dist12 = sqrt(Vector::squared(dr12));
+        dist13 = sqrt(Vector::squared(dr13));
+        dist23 = sqrt(Vector::squared(dr23));
+        dist = std::max({dist12, dist13, dist23});
+        // printf("m: %d 12: %f 13: %f 23: %f max: %f \n", m, dist12, dist13, dist23, dist);
+        primaryCluster.trialNotify();
+        double clusterValue = primaryCluster.getValues()[0];
+        printf("%f %f \n", dist, clusterValue);
       }
+
     }
+    if (count == 3000) exit(0);
+    // int iDist = int(dist);
+    // if (iDist < 100) histogram[iDist]++;
+    // counter++;
+    // if (counter % 10000 == 0)
+    // {
+    //   for (int i = 0 ; i< 100; i++)
+    //   {
+    //     if (histogram[i] > 0) printf("%d %f\n", i, histogram[i]/counter);
+    //   }
+
+
+
+
 
   }
+
   return data;
 }

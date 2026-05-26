@@ -28,9 +28,9 @@ ClusterVirial::~ClusterVirial() {
 #define NF  (1 << numMolecules)
 const double* ClusterVirial::getValues() {
   Box *box = potentialMaster.getBoxP();
-  if (box->idx == 1 && debug) {
-    printf("%d \n", useCache?1:0);
-  }
+  // if (box->idx == 1 && debug) {
+  //   printf("%d \n", useCache?1:0);
+  // }
   if (useCache && !cacheDirty) return values;
   cacheDirty = false;
 
@@ -46,7 +46,7 @@ const double* ClusterVirial::getValues() {
       moleculePair[1] = iMol2;
       double u12;
       potentialMaster.computeMolecules(moleculePair, 2, u12);
-      if (box->idx == 1 && debug)       printf("%f %d %d \n", u12, iMol2, iMol1);
+      // if (box->idx == 1 && debug)       printf("%f %d %d \n", u12, iMol2, iMol1);
 
 
 

@@ -48,7 +48,7 @@ const double* ClusterFlipped::getValues(){
       double dr[3] = {com[0]-com1[0], com[1]-com1[1], com[2]-com1[2]};
       if (dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2] > minR2) {
         flipit = true;
-        printf("%f ", dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);
+        // printf("%f ", dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);
       }
     }
   }
@@ -62,7 +62,7 @@ const double* ClusterFlipped::getValues(){
   if (!flipit) {
     return values;
   }
-  printf("%f ", foo[0]);
+  // printf("%f ", foo[0]);
   int index = 1;
 
   while (true) {
@@ -88,11 +88,11 @@ const double* ClusterFlipped::getValues(){
   for  (int i=0; i<nValues; i++) {
     values[i] /= pow(2, numMolecules);
   }
-  printf("CLuster value ");
-  for (double i : array) {
-    printf("%f ", i);
-  }
-  printf("\n");
+  // printf("CLuster value ");
+  // for (double i : array) {
+  //   printf("%f ", i);
+  // }
+  // printf("\n");
 
   wrappedCluster.debug = false;
   return values;

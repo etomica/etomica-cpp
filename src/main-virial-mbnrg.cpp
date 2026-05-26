@@ -24,8 +24,8 @@ int main(int argc, char** argv) {
   TraPPEParams TP(TraPPEParams::CO2);
   int nPoints = 3;
   int nDer = 0;
-  double temperatureK = 1000;
-  long numSteps = 100000;
+  double temperatureK = 380;
+  long numSteps = 1000000;
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
 
@@ -33,6 +33,8 @@ int main(int argc, char** argv) {
       temperatureK = std::stod(argv[++i]);
     } else if (arg == "--steps" && i + 1 < argc) {
       numSteps = std::stol(argv[++i]);
+    } else if (arg == "--nPoints" && i + 1 < argc) {
+      nPoints = std::stoi(argv[++i]);
     }
   }
   double temperature = Kelvin::toSim(temperatureK);
@@ -47,7 +49,7 @@ int main(int argc, char** argv) {
   anyPolar = anyPolar || TP.isPolar;
   anyFlex = anyFlex || TP.isFlex;
 
-  Random seed;
+  Random seed = 1639844264;
   printf("random seed: %d\n", seed.getSeed());
   printf("Reference diagram: B%d for hard spheres with diameter %.1f Angstroms\n", nPoints, sigmaHSRef);
   printf("B%d HS: %22.15e\n", nPoints, HSBn);

@@ -62,7 +62,7 @@ PotentialMolecularMBnrg3body::~PotentialMolecularMBnrg3body()
 
 double PotentialMolecularMBnrg3body::u(Box& box, int iMolecule, int jMolecule, int kMolecule)
 {
-    if (true) return 0;
+    // if (true) return 0;
     vector<double> xyz(9*3, 0.0);
     vector<double> xyz_2b(6*3, 0.0);
 
@@ -123,7 +123,7 @@ double PotentialMolecularMBnrg3body::u(Box& box, int iMolecule, int jMolecule, i
 
     double minDist = sqrt(min({r12, r13, r23}));
 
-    // if (minDist > 40) return Energy::toSim(energy3b);
+    if (minDist > 40) return Energy::toSim(energy3b);
     // if (true) return Energy::toSim(energy3b);
     int molecules[3] = {iMolecule, jMolecule, kMolecule};
     for (int i = 0; i <= 2; i++)
