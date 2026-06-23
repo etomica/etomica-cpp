@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   int nPoints = 2;
   double temperatureK = 380;
   long step = 10;
-  double minDist = 2.5;
+  double minDist = 2.2;
   double maxDist = 45;
   double stepSize = 0.05;
   long intraSteps = 10;
@@ -160,6 +160,6 @@ int main(int argc, char** argv) {
 
   for (int k=0;k<steps;k++) printf("%f %f %f\n", minDist + k*stepSize, sums[k]/step, 0);
   double avg = totalIntegral/step;
-  double err =0;
+  double err = sqrt((SStotalIntegral - totalIntegral*totalIntegral/step)/(step*(step-1)));
   printf("Integral = %f %f\n", avg, err);
 }
