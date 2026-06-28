@@ -23,7 +23,7 @@
 int main(int argc, char** argv) {
   TraPPEParams TP(TraPPEParams::CO2);
   int nPoints = 2;
-  double temperatureK = 380;
+  double temperatureK = 400;
   long step = 10;
   double minDist = 2.2;
   double maxDist = 45;
@@ -160,6 +160,6 @@ int main(int argc, char** argv) {
 
   for (int k=0;k<steps;k++) printf("%f %f %f\n", minDist + k*stepSize, sums[k]/step, 0);
   double avg = totalIntegral/step;
-  double err = sqrt((SStotalIntegral - totalIntegral*totalIntegral/step)/(step*(step-1)));
+  double err = 0;
   printf("Integral = %f %f\n", avg, err);
 }

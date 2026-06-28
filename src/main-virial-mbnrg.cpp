@@ -22,9 +22,9 @@
 #include "TraPPEParams.h"
 int main(int argc, char** argv) {
   TraPPEParams TP(TraPPEParams::CO2);
-  int nPoints = 3;
+  int nPoints = 2;
   int nDer = 0;
-  double temperatureK = 380;
+  double temperatureK = 400;
   long numSteps = 1000000;
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
@@ -74,24 +74,24 @@ int main(int argc, char** argv) {
 
   // PotentialMasterVirial refPotentialMasterTraPPE = P2PotentialGroupBuilder::builder(potentialGroup, TP.speciesList, TP.species.getNumAtomTypes(), TP.sigma, TP.epsilon, TP.charge, refBox);
   PotentialMolecularMBnrg potentialGroup;
-  std::vector<double> xyz1ut = {6.6630444410e-01,  -3.8357176030e-01, 1.1519802350e-01,  1.7838183644e+00,
-                                    -1.9222069500e-01, -1.7587628680e-01, -4.4811475090e-01, -5.7997649630e-01,
-                                    4.1069507510e-01};
-  std::vector<double> xyz2ut = {2.4803292099e+00,  7.5103875900e-01,  -2.9043390394e+00, 2.2674715176e+00,
-                                    1.8651909097e+00,  -2.6082983571e+00, 2.7020706245e+00,  -3.5351972400e-01,
-                                    -3.2106052081e+00};
-  for (int i = 0; i < 3; i++)
-  {
-    double* r1 = refBox.getAtomPosition(i);
-    double* r2 = refBox.getAtomPosition(3+i);
-
-    for (int j = 0; j < 3; j++)
-    {
-      r1[j] = xyz1ut[3*i+j];
-      r2[j] = xyz2ut[3*i+j];
-    }
-
-  }
+  // std::vector<double> xyz1ut = {6.6630444410e-01,  -3.8357176030e-01, 1.1519802350e-01,  1.7838183644e+00,
+  //                                   -1.9222069500e-01, -1.7587628680e-01, -4.4811475090e-01, -5.7997649630e-01,
+  //                                   4.1069507510e-01};
+  // std::vector<double> xyz2ut = {2.4803292099e+00,  7.5103875900e-01,  -2.9043390394e+00, 2.2674715176e+00,
+  //                                   1.8651909097e+00,  -2.6082983571e+00, 2.7020706245e+00,  -3.5351972400e-01,
+  //                                   -3.2106052081e+00};
+  // for (int i = 0; i < 3; i++)
+  // {
+  //   double* r1 = refBox.getAtomPosition(i);
+  //   double* r2 = refBox.getAtomPosition(3+i);
+  //
+  //   for (int j = 0; j < 3; j++)
+  //   {
+  //     r1[j] = xyz1ut[3*i+j];
+  //     r2[j] = xyz2ut[3*i+j];
+  //   }
+  //
+  // }
   // exit(0);
   PotentialMasterVirialMolecular refPotentialMasterTraPPE(TP.speciesList, refBox);
   refPotentialMasterTraPPE.setMoleculePairPotential(0, 0, &potentialGroup);
@@ -167,14 +167,44 @@ int main(int argc, char** argv) {
 
   // for (int i=3; i<=5 ; i++)
   // {
+  //   targetBox.getAtomPosition(i)[0];
+  // }
+
+  targetIntegrator.setTemperature(temperature);
+  // for (int i=3; i<=5 ; i++)
+  // {
   //   targetBox.getAtomPosition(i)[1]+=5.5;
   // }
-  targetIntegrator.setTemperature(temperature);
+
   // for (int i = 0 ; i <= 10 ; i ++)
   // {
   //   targetIntegrator.doStep();
   // }
   // exit(0);
+  long step = 100;
+  double minDist = 2.2;
+  double maxDist = 45;
+  double stepSize = 0.05;
+  long intraSteps = 100;
+
+  int steps = round((maxDist-minDist)/stepSize)+1;
+  for (int i=0; i < step; i++) {
+    for (int j=0; j < intraSteps; j++) {
+      targetIntegrator.doStep();
+    }
+    for (int k=0;k<steps;k++) {
+      double x2 = minDist + k*stepSize;
+      double disp2[3] = {x2 - targetBox.getAtomPosition(3)[0],-targetBox.getAtomPosition(3)[1] , -targetBox.getAtomPosition(3)[2]};
+      for (int a=3; a<6; a++ ) for (int m=0; m<3; m++)targetBox.getAtomPosition(a)[m]+=disp2[m];
+
+      double disp1[3] = {-targetBox.getAtomPosition(0)[0],-targetBox.getAtomPosition(0)[1] , -targetBox.getAtomPosition(0)[2]};
+      for (int a=0; a<3; a++ )for (int m=0; m<3; m++)targetBox.getAtomPosition(a)[m]+=disp1[m];
+
+
+    }
+    printf("%d steps have finished\n", i+1);
+  }
+
   double t1 = getTime();
   VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE0);
   virialAlpha->targetMeter.box = &targetBox;

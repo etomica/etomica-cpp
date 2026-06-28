@@ -20,7 +20,7 @@ MCMoveMoleculeDisplacementVirial::~MCMoveMoleculeDisplacementVirial() {
 }
 
 bool MCMoveMoleculeDisplacementVirial::doTrial() {
-  if (false) return false;
+  if (true) return false;
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
   }

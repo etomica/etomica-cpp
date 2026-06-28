@@ -78,6 +78,7 @@ double PotentialMolecularMBnrg::u(Box& box, int iMolecule, int jMolecule)
         }
     }
     if (minDist < 1.1) return std::numeric_limits<double>::infinity();
+    // if (minDist > 45) return std::numeric_limits<double>::infinity();
     // if (minDist > 50) printf("molecules too far apart %f\n", minDist);
 
 
