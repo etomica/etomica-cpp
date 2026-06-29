@@ -35,6 +35,7 @@ class MCMoveMoleculeDisplacementVirial : public MCMove {
   private:
     Cluster &cluster;
     double **rOld;
+    double rNew;
     double wOld, wNew;
     int iMolecule;
     int iSpecies;

@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   int nPoints = 2;
   int nDer = 0;
   double temperatureK = 400;
-  long numSteps = 1000000;
+  long numSteps = 10000;
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
 
@@ -181,29 +181,6 @@ int main(int argc, char** argv) {
   //   targetIntegrator.doStep();
   // }
   // exit(0);
-  long step = 100;
-  double minDist = 2.2;
-  double maxDist = 45;
-  double stepSize = 0.05;
-  long intraSteps = 100;
-
-  int steps = round((maxDist-minDist)/stepSize)+1;
-  for (int i=0; i < step; i++) {
-    for (int j=0; j < intraSteps; j++) {
-      targetIntegrator.doStep();
-    }
-    for (int k=0;k<steps;k++) {
-      double x2 = minDist + k*stepSize;
-      double disp2[3] = {x2 - targetBox.getAtomPosition(3)[0],-targetBox.getAtomPosition(3)[1] , -targetBox.getAtomPosition(3)[2]};
-      for (int a=3; a<6; a++ ) for (int m=0; m<3; m++)targetBox.getAtomPosition(a)[m]+=disp2[m];
-
-      double disp1[3] = {-targetBox.getAtomPosition(0)[0],-targetBox.getAtomPosition(0)[1] , -targetBox.getAtomPosition(0)[2]};
-      for (int a=0; a<3; a++ )for (int m=0; m<3; m++)targetBox.getAtomPosition(a)[m]+=disp1[m];
-
-
-    }
-    printf("%d steps have finished\n", i+1);
-  }
 
   double t1 = getTime();
   VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE0);
