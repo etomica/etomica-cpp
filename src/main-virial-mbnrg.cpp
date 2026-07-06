@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   int nPoints = 2;
   int nDer = 0;
   double temperatureK = 400;
-  long numSteps = 10000;
+  long numSteps = 1000000;
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
 

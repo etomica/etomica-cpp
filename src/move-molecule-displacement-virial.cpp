@@ -63,7 +63,7 @@ bool MCMoveMoleculeDisplacementVirial::doTrial() {
 double MCMoveMoleculeDisplacementVirial::getChi(double T) {
   wNew = fabs(cluster.getValues()[0])*rNew*rNew;
   double chi = wNew>wOld ? 1 : wNew/wOld;
-  // if (rNew > 45) chi = 0;
+  if (rNew > 45) chi = 0;
   chiSum += chi;
   return chi;
 }
