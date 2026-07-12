@@ -111,10 +111,13 @@ double* MeterVirialOverlap::getData()
   //
   // if (box)
   // {
-  //   double dr12[3], dr13[3], dr23[3], shift[3];
-  //   for (int i=0; i<3; i++) {dr12[i] = box->getAtomPosition(0)[i] - box->getAtomPosition(3)[i];}
-  //   for (int i=0; i<3; i++) {dr13[i] = box->getAtomPosition(0)[i] - box->getAtomPosition(6)[i];}
-  //   for (int i=0; i<3; i++) {dr23[i] = box->getAtomPosition(3)[i] - box->getAtomPosition(6)[i];}
+  //   double rC1[3], rC2[3];
+  //   for (int i=0; i<3; i++) {rC1[i] = box->getAtomPosition(0)[i];}
+  //   for (int i=0; i<3; i++) {rC2[i] = box->getAtomPosition(3)[i];}
+  //   printf("C1 box %d: %f %f %f\n", idx, rC1[0], rC1[1], rC1[2]);
+  //   printf("C2 box %d: %f %f %f\n", idx, rC2[0], rC2[1], rC2[2]);
+  //
+  // }
   //   double dist12 = sqrt(Vector::squared(dr12));
   //   double dist13 = sqrt(Vector::squared(dr13));
   //   double dist23 = sqrt(Vector::squared(dr23));
