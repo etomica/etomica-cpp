@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     }
   }
   double temperature = Kelvin::toSim(temperatureK);
-  double sigmaHSRef = 6;
+  double sigmaHSRef = 6.025;
   std::string compound_name = TraPPEParams::chemFormToString(TP.chemForm);
   printf("Overlap sampling for MBnrg %s at %.1f K for B%d and %d derivatives\n", compound_name.c_str(),temperatureK, nPoints, nDer);
   std::cout << "Steps: " << numSteps << "\n";
