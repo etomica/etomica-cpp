@@ -73,7 +73,7 @@ class MCMoveMoleculeRotateVirial : public MCMove {
 
 
   public:
-
+    bool fixedCOM = true;
     MCMoveMoleculeRotateVirial(SpeciesList& speciesList, int iSpecies, Box& box, Random& random, double stepSize, Cluster &cluster);
     ~MCMoveMoleculeRotateVirial();
 
@@ -92,6 +92,7 @@ class MCMoveChainVirial : public MCMove {
     long hcount[61];
 
   public:
+    bool fixedCOM = true;
     MCMoveChainVirial(SpeciesList& speciesList, Box& box, Random& random, double sigma);
     ~MCMoveChainVirial();
 
@@ -135,6 +136,8 @@ class MCMoveClusterAngleGeneral : public MCMove
 
   public:
     int idx = -1;
+    bool fixedCOM = true;
+
     MCMoveClusterAngleGeneral(Box &b, PotentialMasterIntra &p, bool oneSide, Random &r, vector<vector <int>> bnd, vector<int *> t, SpeciesList& sl,
                               double stepSize, Cluster &cluster);
 
@@ -166,6 +169,8 @@ private:
   int counter =0;
   double sum = 0;
   double step = 0;
+  int* constraintMap{};
+
   vector<vector <int>> bonding;
   int iMolecule;
   int mySpecies = -1;
@@ -176,6 +181,7 @@ private:
 
 public:
   int idx = -1;
+  bool fixedCOM = true;
   MCMoveClusterStretch(Box &b, PotentialMasterIntra &p, Random &r, vector<vector <int>> bnd, SpeciesList& sl,
                             double stepSize, Cluster &cluster);
 
@@ -183,6 +189,7 @@ public:
 
   // void setBox(Box& p);
   virtual bool doTrial();
+  void setConstraintMap(vector<int> newConstraintMap) {constraintMap = newConstraintMap.data();}
   virtual double getChi(double temperature);
   virtual void acceptNotify();
   virtual void rejectNotify();

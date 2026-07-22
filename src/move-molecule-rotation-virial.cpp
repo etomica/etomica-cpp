@@ -47,6 +47,10 @@ bool MCMoveMoleculeRotateVirial::doTrial() {
   double* center = speciesList.get(iSpecies)->getMoleculeCOM(box, firstAtom, lastAtom);
   double* rfirst = box.getAtomPosition(firstAtom);
   double* rlast = box.getAtomPosition(lastAtom);
+  if (!fixedCOM) {
+    std::copy(rfirst, rfirst+3, center);
+  }
+
   double bvec[] = {rlast[0]-rfirst[0], rlast[1]-rfirst[1], rlast[2]-rfirst[2]};
   for (int iAtom = firstAtom; iAtom <= lastAtom; iAtom++) {
     double* r = box.getAtomPosition(iAtom);

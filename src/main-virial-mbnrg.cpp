@@ -105,14 +105,18 @@ int main(int argc, char** argv) {
   ClusterChain refClusterHS(refPotentialMasterHS, temperature, 1.0, 0, false);
   MCMoveChainVirial refMove(TP.speciesList, refBox, seed, sigmaHSRef);
   refIntegrator.addMove(&refMove, 1);
+  refMove.fixedCOM = false;
   MCMoveMoleculeRotateVirial refMove1(TP.speciesList, 0, refBox, seed, 1.5, refClusterHS);
   refIntegrator.addMove(&refMove1, 1);
   refIntegrator.setTemperature(temperature);
+  refMove1.fixedCOM = false;
   MCMoveClusterAngleGeneral refMoveAngle(refBox, potentialMasterIntraRef, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, refClusterHS);
   refIntegrator.addMove(&refMoveAngle, 1);
+  refMoveAngle.fixedCOM = false;
   refMoveAngle.idx = 0;
   MCMoveClusterStretch refMoveStretch(refBox, potentialMasterIntraRef, seed, TP.bonding, TP.speciesList, 0.1, refClusterHS);
   refIntegrator.addMove(&refMoveStretch, 1);
+  refMoveStretch.fixedCOM = false;
 
   Box targetBox(TP.speciesList);
   targetBox.idx = 1;
@@ -158,12 +162,15 @@ int main(int argc, char** argv) {
   targetIntegrator.addMove(&targetMove0, 1);
   MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMove1, 1);
+  targetMove1.fixedCOM = false;
   MCMoveClusterAngleGeneral targetMoveAngle(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, *targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMoveAngle, 1);
   targetMoveAngle.idx = 1;
+  targetMoveAngle.fixedCOM = false;
   MCMoveClusterStretch targetMoveStretch(targetBox, potentialMasterIntraTarget, seed, TP.bonding, TP.speciesList, 0.1, *targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMoveStretch, 1);
   targetMoveStretch.idx = 1;
+  targetMoveStretch.fixedCOM = false;
 
   // for (int i=3; i<=5 ; i++)
   // {

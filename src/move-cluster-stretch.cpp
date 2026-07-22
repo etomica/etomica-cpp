@@ -110,13 +110,20 @@ bool MCMoveClusterStretch::doTrial() {
   Vector::TE(-1, dr);
   m += transform(dr, iAtomFirst + a, shift);
   m += transformBondedAtoms(dr, a, shift);
-  Vector::TE(-1.0/m, shift);
+  if (fixedCOM) {
+    Vector::TE(-1.0/m, shift);
+
+  }
+  else {
+    Vector::Ev1Mv2(oldPositions[0], box.getAtomPosition(iAtomFirst), shift);
+  }
   na = iAtomLast-iAtomFirst+1;
   for (int i=0; i<na; i++)
   {
     int iAtom = iAtomFirst + i;
     Vector::PE(shift, box.getAtomPosition(iAtom));
   }
+
   numTrials++;
   uNew = potentialMasterIntra.computeOneMoleculeIntra(iMolecule);
   wNew = fabs(cluster.getValues()[0]);
@@ -128,6 +135,9 @@ bool MCMoveClusterStretch::doTrial() {
     // if (sqrt(Vector::dot(box.getAtomPosition(iAtomFirst + 0), box.getAtomPosition(iAtomFirst +1))) > 2) exit(0);
 
   }
+
+
+
   return true;
 }
 

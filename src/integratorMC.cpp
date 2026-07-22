@@ -68,7 +68,7 @@ void IntegratorMC::doStep() {
   {
     double chi = m->getChi(temperature);
     if (chi==0 || (chi<1 && chi<random.nextDouble())) {
-      // printf("%ld chi %e rej\n", stepCount, chi);
+      printf("%ld chi %e rej\n", stepCount, chi);
       m->rejectNotify();
       for (vector<IntegratorListener*>::iterator it = listenersMoveRejected.begin(); it!=listenersMoveRejected.end(); it++) {
         (*it)->moveRejected(*m, chi);
@@ -78,7 +78,7 @@ void IntegratorMC::doStep() {
       m->acceptNotify();
       double du = m->energyChange();
       energy += du;
-      // printf("%ld chi %e acc %f\n", stepCount, chi, du);
+      printf("%ld chi %e acc %f\n", stepCount, chi, du);
       for (vector<IntegratorListener*>::iterator it = listenersMoveAccepted.begin(); it!=listenersMoveAccepted.end(); it++) {
         (*it)->moveAccepted(*m, chi);
       }

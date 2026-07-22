@@ -111,24 +111,23 @@ bool MCMoveClusterAngleGeneral::doTrial() {
     transformBondedAtoms(triplets[d][2], shift);
   }
 
-  if (iMolecule==0 || (constraintMap != nullptr && constraintMap[iMolecule] == 0)) {
-    double mt = 0;
-    int na = iAtomLast-iAtomFirst+1;
-    for (int i=0; i<na; i++)
-    {
-      int iAtom = iAtomFirst + i;
-      int iType = box.getAtomType(iAtom);
-      double m = speciesList.getAtomInfo().getMass(iType);
-      mt += m;
-    }
-    Vector::TE(-1.0/mt, shift);
-    for (int i=0; i<na; i++)
-    {
-      int iAtom = iAtomFirst + i;
-      Vector::PE(shift, box.getAtomPosition(iAtom));
-    }
-
+  double mt = 0;
+  na = iAtomLast-iAtomFirst+1;
+  for (int i=0; i<na; i++)
+  {
+    int iAtom = iAtomFirst + i;
+    int iType = box.getAtomType(iAtom);
+    double m = speciesList.getAtomInfo().getMass(iType);
+    mt += m;
   }
+  Vector::TE(-1.0/mt, shift);
+  for (int i=0; i<na; i++)
+  {
+    int iAtom = iAtomFirst + i;
+    Vector::PE(shift, box.getAtomPosition(iAtom));
+  }
+
+
 
 
 
