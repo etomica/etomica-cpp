@@ -20,8 +20,8 @@ bool MCMoveChainVirial::doTrial() {
   box.getMoleculeInfo(0, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
   double rPrev[3];
   double* com = speciesList.get(iSpecies)->getMoleculeCOM(box, firstAtom, lastAtom);
-  // double* C0 = box.getAtomPosition(firstAtom);
-  // printf("molecule 0 com %f %f %f ", com[0], com[1], com[2]);
+  double* C0 = box.getAtomPosition(firstAtom);
+  printf("molecule 0 C %f %f %f ", C0[0], C0[1], C0[2]);
 
   // if (fabs(com[2]) > 0.1) exit(0);
   std::copy(com, com+3, rPrev);
@@ -45,30 +45,26 @@ bool MCMoveChainVirial::doTrial() {
     double dr2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
     box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
     com = speciesList.get(iSpecies)->getMoleculeCOM(box, firstAtom, lastAtom);
-    // printf("molecule 1 com bfr %f %f %f", com[0], com[1], com[2]);
-
     for (int k=0; k<3; k++) {
-      // dr[k] = -com[k] +
-      com[k] =  rPrev[k] + dr[k]*sigma;
+      dr[k] = -com[k] + rPrev[k] + dr[k]*sigma;
+
     }
-    // printf(" molecule 1 C i: %d %f: %f %f %f\n", i, rand, r[0], r[1], r[2]);
-
     // printf("move %d %e %e\n", iMolecule, dr[0]*dr[0]+dr[1]*dr[1]+dr[2]*dr[2], sigma);
-    // printf("molecule 1 com i = %d, %f %f %f \n", i, com[0], com[1], com[2]);
+    // printf("%f %f %f \n", com[0], com[1], com[2]);
 
-     // for (int iAtom=firstAtom; iAtom<=lastAtom; iAtom++)
-     // {
-     //   double* r = box.getAtomPosition(iAtom);
-     //   //
-     //   // r[0] += dr[0];
-     //   // r[1] += dr[1];
-     //   // r[2] += dr[2];
-     //   if (iAtom==firstAtom)
-     //   {
+    for (int iAtom=firstAtom; iAtom<=lastAtom; iAtom++) {
+      double* r = box.getAtomPosition(iAtom);
 
+      r[0] += dr[0];
+      r[1] += dr[1];
+      r[2] += dr[2];
+      if (iAtom==firstAtom)
+       {
+         printf(" molecule 1 C i: %d %f: %f %f %f\n", i, rand, r[0], r[1], r[2]);
+       }
+// }
 
-//
-//     }
+    }
     for (int k=0; k<3; k++) {
       rPrev[k] = com[k] + dr[k];
     }
