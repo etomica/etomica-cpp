@@ -25,7 +25,9 @@ int main(int argc, char** argv) {
   int nPoints = 2;
   int nDer = 0;
   double temperatureK = 400;
-  long numSteps = 1000000;
+  long numSteps = 10000;
+  double discreteStepSize = 0.05;
+  int discreteCutOff = 45;
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
 
@@ -36,12 +38,23 @@ int main(int argc, char** argv) {
     } else if (arg == "--nPoints" && i + 1 < argc) {
       nPoints = std::stoi(argv[++i]);
     }
+    else if (arg == "--discreteStepSize" && i + 1 < argc) {
+    discreteStepSize = std::stod(argv[++i]);
+    }
+    else if (arg == "--discreteCutOff" && i + 1 < argc) {
+      discreteCutOff = std::stoi(argv[++i]);
+    }
+
+
   }
   double temperature = Kelvin::toSim(temperatureK);
-  double sigmaHSRef = 6;
+  double sigmaHSRef = 6.025;
   std::string compound_name = TraPPEParams::chemFormToString(TP.chemForm);
   printf("Overlap sampling for MBnrg %s at %.1f K for B%d and %d derivatives\n", compound_name.c_str(),temperatureK, nPoints, nDer);
   std::cout << "Steps: " << numSteps << "\n";
+  std::cout << "Discrete CutOff: " << discreteCutOff << "\n";
+  std::cout << "Discrete StepSize: " << discreteStepSize << "\n";
+
   double vhs = 4.0/3.0*M_PI*sigmaHSRef*sigmaHSRef*sigmaHSRef;
   double HSBn = pow(vhs, nPoints-1)/2;
   for (int i=2; i<=nPoints; i++) HSBn *= i;
@@ -51,12 +64,12 @@ int main(int argc, char** argv) {
 
   Random seed = 1639844264;
   printf("random seed: %d\n", seed.getSeed());
-  printf("Reference diagram: B%d for hard spheres with diameter %.1f Angstroms\n", nPoints, sigmaHSRef);
+  printf("Reference diagram: B%d for hard spheres with diameter %.3f Angstroms\n", nPoints, sigmaHSRef);
   printf("B%d HS: %22.15e\n", nPoints, HSBn);
 
 
-  PotentialHS pHS(6);
-  PotentialMolecularAtomic pHSMolecule(TP.speciesList, pHS);
+  PotentialHS pHS(sigmaHSRef);
+  PotentialMolecularAtomicC pHSMolecule(TP.speciesList, pHS);
   Box refBox(TP.speciesList);
   refBox.idx = 0;
   refBox.setBoxSize(5,5,5);
@@ -103,7 +116,7 @@ int main(int argc, char** argv) {
   PotentialMolecularMBnrg3body p3BodyRef;
   ClusterMBX refClusterTraPPE(refPotentialMasterTraPPE, temperature, 0, false, p3BodyRef);
   ClusterChain refClusterHS(refPotentialMasterHS, temperature, 1.0, 0, false);
-  MCMoveChainVirial refMove(TP.speciesList, refBox, seed, sigmaHSRef);
+  MCMoveChainVirial refMove(TP.speciesList, refBox, seed, sigmaHSRef, discreteStepSize);
   refIntegrator.addMove(&refMove, 1);
   refMove.fixedCOM = false;
   MCMoveMoleculeRotateVirial refMove1(TP.speciesList, 0, refBox, seed, 1.5, refClusterHS);
@@ -158,7 +171,7 @@ int main(int argc, char** argv) {
   targetIntegrator.addListener(targetClusterTraPPE0);
   ClusterChain targetClusterHS(targetPotentialMasterHS, temperature, 1, 0, true);
   targetIntegrator.addListener(&targetClusterHS);
-  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0);
+  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0, discreteCutOff);
   targetIntegrator.addMove(&targetMove0, 1);
   MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMove1, 1);
@@ -192,6 +205,8 @@ int main(int argc, char** argv) {
   double t1 = getTime();
   VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE0);
   virialAlpha->targetMeter.box = &targetBox;
+  virialAlpha->refMeter.box = &refBox;
+
   virialAlpha->setVerbose(true);
   virialAlpha->run();
   double t2 = getTime();
@@ -233,11 +248,14 @@ int main(int argc, char** argv) {
 
   }
 
-  MCMoveMoleculeDisplacementVirial targetMove(TP.speciesList, 0, targetBox, seed, targetStepSize, *targetClusterTraPPE);
+  MCMoveMoleculeDisplacementVirial targetMove(TP.speciesList, 0, targetBox, seed, targetStepSize, *targetClusterTraPPE, discreteCutOff);
   MCMoveMoleculeRotateVirial targetRotateMove(TP.speciesList, 0, targetBox, seed, targetStepSize, *targetClusterTraPPE);
+  targetRotateMove.fixedCOM = false;
   MCMoveClusterAngleGeneral targetAngleMove(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, *targetClusterTraPPE);
+  targetAngleMove.fixedCOM = false;
   MCMoveClusterStretch targetStretchMove(targetBox, potentialMasterIntraTarget, seed, TP.bonding, TP.speciesList, 0.1, *targetClusterTraPPE);
   targetStretchMove.idx = 1;
+  targetStretchMove.fixedCOM = false;
   targetIntegrator.addMove(&targetRotateMove, 1);
   // targetAngleMove.idx = 2;
   targetIntegrator.addMove(&targetMove, 1);

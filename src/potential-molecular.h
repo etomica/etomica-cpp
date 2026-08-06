@@ -31,6 +31,18 @@ class PotentialMolecularAtomic : public PotentialMolecular {
     double u(Box& box, int iFirstAtom, int jFirstAtom);
 };
 
+class PotentialMolecularAtomicC : public PotentialMolecular {
+private:
+  Potential& potential;
+  SpeciesList& speciesList;
+
+public:
+  PotentialMolecularAtomicC(SpeciesList& sl, Potential& p);
+  virtual ~PotentialMolecularAtomicC() {}
+  double u(Box& box, int iFirstAtom, int jFirstAtom);
+};
+
+
 class PotentialMolecularMBnrg : public PotentialMolecular
 {
 protected:

@@ -380,6 +380,12 @@ double PotentialHS::ur(double r) {
 }
 
 double PotentialHS::u(double r2) {
+  // if (r2 > 36.00001)
+  // {
+  //   printf("%f %f \n", r2, sigma);
+  //   exit(0);
+  // }
+  //
   return r2>sigma2 ? 0 : INFINITY;
 }
 

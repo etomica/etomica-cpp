@@ -79,6 +79,9 @@ double* MeterVirialOverlap::getData()
   const double* primaryValues = primaryCluster.getValues();
   double pi = fabs(primaryValues[0]);
   if (pi == 0 || pi == std::numeric_limits<double>::infinity() || std::isnan(pi)) {
+    printf("C1 %f %f %f \n", box->getAtomPosition(0)[0], box->getAtomPosition(0)[1], box->getAtomPosition(0)[2]);
+    printf("C2 %f %f %f \n", box->getAtomPosition(3)[0], box->getAtomPosition(3)[1], box->getAtomPosition(3)[2]);
+
     fprintf(stderr, "pi is %f in %d\n", pi, idx);
     abort();
   }

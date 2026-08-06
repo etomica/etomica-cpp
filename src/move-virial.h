@@ -42,11 +42,11 @@ class MCMoveMoleculeDisplacementVirial : public MCMove {
     double pisum[91], piHist[91], histogram[91];
     long hcount[91];
     void addToHistogram(double pi);
-
+    int discreteCutOff;
 
   public:
 
-    MCMoveMoleculeDisplacementVirial(SpeciesList& speciesList, int iSpecies, Box& box, Random& random, double stepSize, Cluster &cluster);
+    MCMoveMoleculeDisplacementVirial(SpeciesList& speciesList, int iSpecies, Box& box, Random& random, double stepSize, Cluster &cluster, int discreteCutOff);
     ~MCMoveMoleculeDisplacementVirial();
 
     virtual bool doTrial();
@@ -88,12 +88,13 @@ class MCMoveChainVirial : public MCMove {
   private:
     SpeciesList& speciesList;
     const double sigma;
+    const double discreteStepSize;
     double histogram[61];
     long hcount[61];
 
   public:
     bool fixedCOM = true;
-    MCMoveChainVirial(SpeciesList& speciesList, Box& box, Random& random, double sigma);
+    MCMoveChainVirial(SpeciesList& speciesList, Box& box, Random& random, double sigma, double discreteStepSize);
     ~MCMoveChainVirial();
 
     virtual bool doTrial();

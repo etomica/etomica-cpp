@@ -27,10 +27,12 @@ MCMoveClusterAngleGeneral::~MCMoveClusterAngleGeneral() {
 // }
 
 bool MCMoveClusterAngleGeneral::doTrial() {
-  if (true)
+  if (false)
   {
     return false;
   }
+  double dummy[3];
+
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
   }
@@ -110,31 +112,41 @@ bool MCMoveClusterAngleGeneral::doTrial() {
 
     transformBondedAtoms(triplets[d][2], shift);
   }
-
-  double mt = 0;
-  na = iAtomLast-iAtomFirst+1;
-  for (int i=0; i<na; i++)
+  Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst), oldPositions[0], dummy);
+  if (Vector::squared(dummy) > 1e-20)
   {
-    int iAtom = iAtomFirst + i;
-    int iType = box.getAtomType(iAtom);
-    double m = speciesList.getAtomInfo().getMass(iType);
-    mt += m;
+    printf("diff too big 0: %e \n", Vector::squared(dummy));
+    exit(0);
   }
-  Vector::TE(-1.0/mt, shift);
-  for (int i=0; i<na; i++)
+  if (fixedCOM)
   {
-    int iAtom = iAtomFirst + i;
-    Vector::PE(shift, box.getAtomPosition(iAtom));
+    double mt = 0;
+    na = iAtomLast-iAtomFirst+1;
+    for (int i=0; i<na; i++)
+    {
+      int iAtom = iAtomFirst + i;
+      int iType = box.getAtomType(iAtom);
+      double m = speciesList.getAtomInfo().getMass(iType);
+      mt += m;
+    }
+    Vector::TE(-1.0/mt, shift);
+    for (int i=0; i<na; i++)
+    {
+      int iAtom = iAtomFirst + i;
+      Vector::PE(shift, box.getAtomPosition(iAtom));
+    }
   }
-
-
-
-
 
 
   numTrials++;
   uNew = potentialMasterIntra.computeOneMoleculeIntra(iMolecule);
   wNew = fabs(cluster.getValues()[0]);
+  Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst), oldPositions[0], dummy);
+  if (Vector::squared(dummy) > 1e-20)
+  {
+    printf("diff too big: %e \n", Vector::squared(dummy));
+    exit(0);
+  }
   return true;
 }
 

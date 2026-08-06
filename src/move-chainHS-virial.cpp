@@ -4,7 +4,9 @@
 
 #include "move-virial.h"
 
-MCMoveChainVirial::MCMoveChainVirial(SpeciesList& sl, Box& b, Random& r, double s) : MCMove(b,r,1), speciesList(sl), sigma(s) {
+MCMoveChainVirial::MCMoveChainVirial(SpeciesList& sl, Box& b, Random& r, double s, double ss) : MCMove(b, r, 1), speciesList(sl),
+  sigma(s), discreteStepSize(ss)
+{
   tunable = false;
 }
 
@@ -32,7 +34,6 @@ bool MCMoveChainVirial::doTrial() {
   for (int iMolecule=1; iMolecule<nm; iMolecule++) {
     double dr[3];
     // random.inSphere(dr);
-    double discreteStepSize = 0.05;
     long n = sigma / discreteStepSize;
     long pSum = n * (n+1) * (1+2*n) / 6;
     long iSum = 0;
