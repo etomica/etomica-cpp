@@ -27,7 +27,7 @@ bool MCMoveClusterStretch::doTrial() {
   {
     return false;
   }
-  double dummy[3];
+  // double dummy[3];
 
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
@@ -111,14 +111,14 @@ bool MCMoveClusterStretch::doTrial() {
   Vector::TE(-1, dr);
   m += transform(dr, iAtomFirst + a, shift);
   m += transformBondedAtoms(dr, a, shift);
-  Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst), oldPositions[0], dummy);
-  double r21 = Vector::squared(dummy);
-  double pC[3] = {box.getAtomPosition(iAtomFirst)[0], box.getAtomPosition(iAtomFirst)[1], box.getAtomPosition(iAtomFirst)[2]};
+  // Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst), oldPositions[0], dummy);
+  // double r21 = Vector::squared(dummy);
+  // double pC[3] = {box.getAtomPosition(iAtomFirst)[0], box.getAtomPosition(iAtomFirst)[1], box.getAtomPosition(iAtomFirst)[2]};
 
   if (fixedCOM) {
     Vector::TE(-1.0/m, shift);
-    printf("you shouldn't be here");
-    exit(0);
+    // printf("you shouldn't be here");
+    // exit(0);
   }
   else {
     Vector::Ev1Mv2(oldPositions[0], box.getAtomPosition(iAtomFirst), shift);
@@ -129,31 +129,31 @@ bool MCMoveClusterStretch::doTrial() {
     int iAtom = iAtomFirst + i;
     Vector::PE(shift, box.getAtomPosition(iAtom));
   }
-  Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst), oldPositions[0], dummy);
-  if (Vector::squared(dummy) > 1e-20)
-  {
-    printf("diff too big 0: %e %e \n", r21, Vector::squared(dummy));
-    printf("%f %f %f \n", box.getAtomPosition(iAtomFirst)[0], box.getAtomPosition(iAtomFirst)[1], box.getAtomPosition(iAtomFirst)[2]);
-    printf("%f %f %f \n", oldPositions[0][0], oldPositions[0][1], oldPositions[0][2]);
-    printf("%f %f %f \n", pC[0], pC[1], pC[2]);
-    printf("%f %f %f \n", shift[0], shift[1], shift[2]);
-    exit(0);
-  }
+  // Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst), oldPositions[0], dummy);
+  // if (Vector::squared(dummy) > 1e-20)
+  // {
+  //   printf("diff too big 0: %e %e \n", r21, Vector::squared(dummy));
+  //   printf("%f %f %f \n", box.getAtomPosition(iAtomFirst)[0], box.getAtomPosition(iAtomFirst)[1], box.getAtomPosition(iAtomFirst)[2]);
+  //   printf("%f %f %f \n", oldPositions[0][0], oldPositions[0][1], oldPositions[0][2]);
+  //   printf("%f %f %f \n", pC[0], pC[1], pC[2]);
+  //   printf("%f %f %f \n", shift[0], shift[1], shift[2]);
+  //   exit(0);
+  // }
 
 
   numTrials++;
   uNew = potentialMasterIntra.computeOneMoleculeIntra(iMolecule);
   wNew = fabs(cluster.getValues()[0]);
-  Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst), oldPositions[0], dummy);
-  if (Vector::squared(dummy) > 1e-20)
-  {
-    printf("diff too big: %e %e \n", r21, Vector::squared(dummy));
-    printf("%f %f %f \n", box.getAtomPosition(iAtomFirst)[0], box.getAtomPosition(iAtomFirst)[1], box.getAtomPosition(iAtomFirst)[2]);
-    printf("%f %f %f \n", oldPositions[0][0], oldPositions[0][1], oldPositions[0][2]);
-    printf("%f %f %f \n", pC[0], pC[1], pC[2]);
-    printf("%f %f %f \n", shift[0], shift[1], shift[2]);
-    exit(0);
-  }
+  // Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst), oldPositions[0], dummy);
+  // if (Vector::squared(dummy) > 1e-20)
+  // {
+  //   printf("diff too big: %e %e \n", r21, Vector::squared(dummy));
+  //   printf("%f %f %f \n", box.getAtomPosition(iAtomFirst)[0], box.getAtomPosition(iAtomFirst)[1], box.getAtomPosition(iAtomFirst)[2]);
+  //   printf("%f %f %f \n", oldPositions[0][0], oldPositions[0][1], oldPositions[0][2]);
+  //   printf("%f %f %f \n", pC[0], pC[1], pC[2]);
+  //   printf("%f %f %f \n", shift[0], shift[1], shift[2]);
+  //   exit(0);
+  // }
 
 
   // printf("%f %f %f \n", box.getAtomPosition(iAtomFirst)[0], box.getAtomPosition(iAtomFirst)[1], box.getAtomPosition(iAtomFirst)[2]);

@@ -33,20 +33,24 @@ bool MCMoveChainVirial::doTrial() {
   std::copy(com, com+3, rPrev);
   for (int iMolecule=1; iMolecule<nm; iMolecule++) {
     double dr[3];
-    // random.inSphere(dr);
-    long n = sigma / discreteStepSize;
-    long pSum = n * (n+1) * (1+2*n) / 6;
-    long iSum = 0;
-    int i;
-    double rand = random.nextDouble();
-    for (i=n;i>0;i--) {
-      iSum += i*i;
-      if (iSum>=pSum*rand) break;
+    if (discreteStepSize == 0) random.inSphere(dr);
+    else
+    {
+      long n = sigma / discreteStepSize;
+      long pSum = n * (n+1) * (1+2*n) / 6;
+      long iSum = 0;
+      int i;
+      double rand = random.nextDouble();
+      for (i=n;i>0;i--) {
+        iSum += i*i;
+        if (iSum>=pSum*rand) break;
+      }
+      dr[0] = i*discreteStepSize/sigma;
+      // printf("%f\n", dr[0]*sigma);
+      // dr[0] = random.nextDouble()*2-1;
+      dr[1] = dr[2] = 0;
+
     }
-    dr[0] = i*discreteStepSize/sigma;
-    // printf("%f\n", dr[0]*sigma);
-    // dr[0] = random.nextDouble()*2-1;
-    dr[1] = dr[2] = 0;
     double dr2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
     box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
     com = speciesList.get(iSpecies)->getMoleculeCOM(box, firstAtom, lastAtom);

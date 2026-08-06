@@ -42,11 +42,14 @@ class MCMoveMoleculeDisplacementVirial : public MCMove {
     double pisum[91], piHist[91], histogram[91];
     long hcount[91];
     void addToHistogram(double pi);
-    int discreteCutOff;
+    double discreteCutOff;
+    const double discreteStepSize;
+
+
 
   public:
 
-    MCMoveMoleculeDisplacementVirial(SpeciesList& speciesList, int iSpecies, Box& box, Random& random, double stepSize, Cluster &cluster, int discreteCutOff);
+    MCMoveMoleculeDisplacementVirial(SpeciesList& speciesList, int iSpecies, Box& box, Random& random, double stepSize, Cluster &cluster, double discreteCutOff, double discreteStepSize);
     ~MCMoveMoleculeDisplacementVirial();
 
     virtual bool doTrial();

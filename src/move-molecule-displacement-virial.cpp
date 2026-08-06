@@ -5,12 +5,15 @@
 #include "move-virial.h"
 #include "alloc2d.h"
 
-MCMoveMoleculeDisplacementVirial::MCMoveMoleculeDisplacementVirial(SpeciesList& sl, int is, Box& b, Random& r, double ss, Cluster& c, int dc) : MCMove(b,r,ss), cluster(c), iSpecies(is), discreteCutOff(dc) {
-  Species *sp = sl.get(iSpecies);
+MCMoveMoleculeDisplacementVirial::MCMoveMoleculeDisplacementVirial(SpeciesList& sl, int is, Box& b, Random& r, double ss, Cluster& c, double dc, double dss) :
+  MCMove(b, r, ss), cluster(c), iSpecies(is), discreteCutOff(dc), discreteStepSize(dss)
+{
+  Species* sp = sl.get(iSpecies);
   int na = sp->getNumAtoms();
   rOld = (double**)malloc2D(na, 3, sizeof(double));
-  for (int i=0; i<=90; i++) {
-    pisum[i] = hcount[i] =0;
+  for (int i = 0; i <= 90; i++)
+  {
+    pisum[i] = hcount[i] = 0;
   }
   maxStepSize = 100;
 }
@@ -31,17 +34,28 @@ bool MCMoveMoleculeDisplacementVirial::doTrial() {
   }
   int iSpecies, iMoleculeInSpecies, firstAtom, lastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
-  double rTemp = box.getAtomPosition(firstAtom)[0];
+  double rTemp = discreteStepSize > 0 ? box.getAtomPosition(firstAtom)[0] : 1;
   wOld = fabs(cluster.getValues()[0])*rTemp*rTemp;
 
   double deltaR[3];
-  double discreteStepSize = 0.05;
-  int n = stepSize /  discreteStepSize;
-  int iStep = random.nextInt(2*n) - n;
-  if (iStep >  -1) iStep++;
-  deltaR[0] = discreteStepSize*iStep;
-  deltaR[1] = 0*stepSize*(random.nextDouble32()-0.5);
-  deltaR[2] = 0*stepSize*(random.nextDouble32()-0.5);
+  if (discreteStepSize > 0)
+  {
+    int n = stepSize /  discreteStepSize;
+    int iStep = random.nextInt(2*n) - n;
+    if (iStep >  -1) iStep++;
+    deltaR[0] = discreteStepSize*iStep;
+    deltaR[1] = 0*stepSize*(random.nextDouble32()-0.5);
+    deltaR[2] = 0*stepSize*(random.nextDouble32()-0.5);
+
+  }
+  else
+  {
+    deltaR[0] = stepSize*(random.nextDouble32()-0.5);;
+    deltaR[1] = stepSize*(random.nextDouble32()-0.5);
+    deltaR[2] = stepSize*(random.nextDouble32()-0.5);
+    // printf("%f %f \n", stepSize, deltaR[0]);
+
+  }
   for (int iAtom = firstAtom; iAtom <= lastAtom; iAtom++) {
     double* r = box.getAtomPosition(iAtom);
     std::copy(r, r+3, rOld[iAtom-firstAtom]);
@@ -54,7 +68,7 @@ bool MCMoveMoleculeDisplacementVirial::doTrial() {
     //   printf("breakpoint \n");
     // }
   }
-  rNew = box.getAtomPosition(firstAtom)[0];
+  rNew = discreteStepSize > 0 ? box.getAtomPosition(firstAtom)[0] : 1;
   cluster.trialNotify();
   numTrials++;
   return true;
@@ -63,6 +77,7 @@ bool MCMoveMoleculeDisplacementVirial::doTrial() {
 double MCMoveMoleculeDisplacementVirial::getChi(double T) {
   wNew = fabs(cluster.getValues()[0])*rNew*rNew;
   double chi = wNew>wOld ? 1 : wNew/wOld;
+  // printf("%f %f %f %f\n", wNew, wOld, chi, discreteCutOff);
   if (rNew > discreteCutOff) chi = 0;
   chiSum += chi;
   return chi;

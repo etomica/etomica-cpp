@@ -31,7 +31,7 @@ bool MCMoveClusterAngleGeneral::doTrial() {
   {
     return false;
   }
-  double dummy[3];
+  // double dummy[3];
 
   if (tunable && numTrials >= adjustInterval) {
     adjustStepSize();
@@ -112,12 +112,12 @@ bool MCMoveClusterAngleGeneral::doTrial() {
 
     transformBondedAtoms(triplets[d][2], shift);
   }
-  Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst), oldPositions[0], dummy);
-  if (Vector::squared(dummy) > 1e-20)
-  {
-    printf("diff too big 0: %e \n", Vector::squared(dummy));
-    exit(0);
-  }
+  // Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst), oldPositions[0], dummy);
+  // if (Vector::squared(dummy) > 1e-20)
+  // {
+  //   printf("diff too big 0: %e \n", Vector::squared(dummy));
+  //   exit(0);
+  // }
   if (fixedCOM)
   {
     double mt = 0;
@@ -141,12 +141,12 @@ bool MCMoveClusterAngleGeneral::doTrial() {
   numTrials++;
   uNew = potentialMasterIntra.computeOneMoleculeIntra(iMolecule);
   wNew = fabs(cluster.getValues()[0]);
-  Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst), oldPositions[0], dummy);
-  if (Vector::squared(dummy) > 1e-20)
-  {
-    printf("diff too big: %e \n", Vector::squared(dummy));
-    exit(0);
-  }
+  // Vector::Ev1Mv2(box.getAtomPosition(iAtomFirst), oldPositions[0], dummy);
+  // if (Vector::squared(dummy) > 1e-20)
+  // {
+  //   printf("diff too big: %e \n", Vector::squared(dummy));
+  //   exit(0);
+  // }
   return true;
 }
 
