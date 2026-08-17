@@ -29,6 +29,7 @@ int main(int argc, char** argv) {
   double maxDist = 45;
   double stepSize = 0.05;
   long intraSteps = 10;
+  bool rigid = false;
 
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
@@ -46,6 +47,10 @@ int main(int argc, char** argv) {
     } else if (arg == "--stepSize" && i + 1 < argc) {
       stepSize = std::stod(argv[++i]);
     }
+    else if (arg == "--rigid" && i + 1 < argc) {
+      rigid = std::stoi(argv[++i]);
+    }
+
 
 
 
@@ -56,8 +61,7 @@ int main(int argc, char** argv) {
   std::cout << "Steps: " << step << "\n";
   std::cout << "Intra Steps: " << intraSteps << "\n";
 
-  bool anyFlex = false;
-  anyFlex = anyFlex || TP.isFlex;
+  bool anyFlex = TP.isFlex && !rigid;
 
   Random seed = 1639844264;
   printf("random seed: %d\n", seed.getSeed());
@@ -111,10 +115,10 @@ int main(int argc, char** argv) {
   MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, seed, 0.1, dummyCluster);
   targetIntegrator.addMove(&targetMove1, 0.1);
   MCMoveClusterAngleGeneral targetMoveAngle(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, dummyCluster);
-  targetIntegrator.addMove(&targetMoveAngle, 1);
+  if (anyFlex) targetIntegrator.addMove(&targetMoveAngle, 1);
   targetMoveAngle.idx = 1;
   MCMoveClusterStretch targetMoveStretch(targetBox, potentialMasterIntraTarget, seed, TP.bonding, TP.speciesList, 0.1, dummyCluster);
-  targetIntegrator.addMove(&targetMoveStretch, 1);
+  if (anyFlex) targetIntegrator.addMove(&targetMoveStretch, 1);
   targetMoveStretch.idx = 1;
 
   for (int i=3; i<=5 ; i++)

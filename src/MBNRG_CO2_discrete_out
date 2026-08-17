@@ -1,7 +1,7 @@
 CO2 B2 at 400 K: (all in sim units)
-Paesani MBX: -103.487
-Discrete stepping MBX (10k steps): -132.9869
-Mayer sampling MBX: ...
+Paesani MBX Quadrature: -103.487
+Discrete stepping MBX (10k steps) Quadrature: -132.9869
+Continuous/Discrete Mayer sampling MBX: -112.8 +- 0.6
 TraPPE: -89.426 +- 0.028
 experiment: -96.97 +- 1.2
 
@@ -9,43 +9,89 @@ Overlap sampling for MBnrg CO2 at 400.0 K for B2 and 0 derivatives
 Steps: 10000000
 Discrete CutOff: 100
 Discrete StepSize: 0.01
+FixedCOM flag: 0
 random seed: 1639844264
 Reference diagram: B2 for hard spheres with diameter 6.025 Angstroms
 B2 HS:  9.161356071264346e+02
 nSpheres = 3
 isFlex = true
 Diagram
-0.433474 0.010155 0.334566 0.015321 0.345308 0.295430
-alpha  avg:  2.883534721327485e-01   err:  1.48328e-02   cor:  0.3453
-0.399517 0.009067 0.378870 0.017665 0.483615 0.505038
-alpha  avg:  3.044714838767690e-01   err:  1.57886e-02   cor:  0.5050
-0.390597 0.007027 0.335911 0.014712 0.166849 0.202460
-alpha  avg:  3.533681710047585e-01   err:  1.67315e-02   cor:  0.2025
-0.368221 0.005478 0.358461 0.012871 0.059114 0.059002
-alpha  avg:  3.797835674092158e-01   err:  1.47664e-02   cor:  0.0591
-alpha steps: 32000
-alpha  avg:  3.797835674092158e-01   err:  1.47664e-02   cor:  0.0591
-alpha time: 179.648
+0.433474 0.010155 0.296241 0.014161 0.284816 0.282351
+alpha  avg:  3.188783568094838e-01   err:  1.69749e-02   cor:  0.2848
+0.364075 0.008551 0.354918 0.018335 0.497677 0.511149
+alpha  avg:  3.705667367805650e-01   err:  2.10288e-02   cor:  0.5111
+0.355522 0.007299 0.351613 0.013290 0.039170 0.042844
+alpha  avg:  3.475366947077810e-01   err:  1.49489e-02   cor:  0.0428
+0.362823 0.005337 0.358215 0.012904 0.166804 0.166901
+alpha  avg:  3.794079885135362e-01   err:  1.47632e-02   cor:  0.1669
+0.365881 0.003760 0.358771 0.007166 0.173209 0.172070
+alpha  avg:  3.590187888698123e-01   err:  8.06441e-03   cor:  0.1732
+alpha steps: 78000
+alpha  avg:  3.590187888698123e-01   err:  8.06441e-03   cor:  0.1732
+alpha time: 439.520
 
-target step size: 3.566164
-target move acceptance: 0.504
-final reference step fraction: 0.1104
-actual reference step fraction: 0.1110
-reference blocks: 542 of size 2048
-target blocks: 542 of size 16384
-alpha check:                3.693930535372133e-01  error:  1.05175e-03
-full average:              -1.124875400383637e+02  error:  6.07031e-01
-reference ratio:            2.826103578158433e+00  error:  5.05484e-03   cor:  0.00000
+target step size: 3.501510
+target move acceptance: 0.513
+final reference step fraction: 0.1000
+actual reference step fraction: 0.1001
+reference blocks: 977 of size 1024
+target blocks: 549 of size 16384
+alpha check:                3.720717062525478e-01  error:  1.49306e-03
+full average:              -1.128637304293366e+02  error:  6.23771e-01
+reference ratio:            2.738344243549816e+00  error:  4.78255e-03   cor:  0.00000
 reference average:          1.000000000000000e+00  error:  0.00000e+00  acor:  0.00000
-reference overlap average:  3.538440727114566e-01  error:  6.32894e-04  acor:  0.01284
-target ratio:              -9.136851399466136e-01  error:  4.65193e-03   cor: -0.07419
-target average:            -3.323961096056273e-01  error:  1.57938e-03  acor:  0.03203
-target overlap average:     3.637972153350870e-01  error:  8.05921e-04  acor: -0.02840
-time: 90803.780
+reference overlap average:  3.651841810449892e-01  error:  6.37798e-04  acor: -0.00531
+target ratio:              -9.396486702923376e-01  error:  4.92710e-03   cor: -0.38361
+target average:            -3.311067174692623e-01  error:  1.79826e-03  acor:  0.06157
+target overlap average:     3.523728899294355e-01  error:  1.27306e-03  acor:  0.34767
+time: 85332.351
+Overlap sampling for MBnrg CO2 at 400.0 K for B2 and 0 derivatives
+Steps: 10000000
+Discrete CutOff: inf
+Discrete StepSize: 0
+FixedCOM flag: 1
+random seed: 1639844264
+Reference diagram: B2 for hard spheres with diameter 6.025 Angstroms
+B2 HS:  9.161356071264346e+02
+nSpheres = 3
+isFlex = true
+Diagram
+0.350385 0.008525 0.281427 0.036979 0.632133 0.657737
+alpha  avg:  4.685560160096743e-01   err:  6.26132e-02   cor:  0.6577
+0.255773 0.004975 0.192803 0.027433 0.776226 0.794357
+alpha  avg:  1.040368876368395e+00   err:  1.49590e-01   cor:  0.7944
+0.448866 0.004930 0.284286 0.009719 0.146665 0.221869
+alpha  avg:  3.674217680444957e-01   err:  1.31934e-02   cor:  0.2219
+0.379821 0.003545 0.345813 0.009143 0.029085 0.024944
+alpha  avg:  3.561135142815515e-01   err:  9.98450e-03   cor:  0.0291
+0.358504 0.002355 0.354927 0.008015 0.403460 0.403586
+alpha  avg:  3.711066531706562e-01   err:  8.72821e-03   cor:  0.4036
+0.365993 0.001078 0.363955 0.003336 -0.051936 -0.048732
+alpha  avg:  3.617054940525197e-01   err:  3.48236e-03   cor: -0.0487
+alpha steps: 652000
+alpha  avg:  3.617054940525197e-01   err:  3.48236e-03   cor: -0.0487
+alpha time: 4136.307
+
+target step size: 6.122644
+target move acceptance: 0.503
+final reference step fraction: 0.0897
+actual reference step fraction: 0.0905
+reference blocks: 883 of size 1024
+target blocks: 555 of size 16384
+alpha check:                3.687889748147234e-01  error:  1.01476e-03
+full average:              -1.118414548582453e+02  error:  5.66772e-01
+reference ratio:            2.757604421809901e+00  error:  4.16624e-03   cor:  0.00000
+reference average:          1.000000000000000e+00  error:  0.00000e+00  acor:  0.00000
+reference overlap average:  3.626335931618754e-01  error:  5.47874e-04  acor: -0.00576
+target ratio:              -9.307218423693296e-01  error:  4.50208e-03   cor:  0.01481
+target average:            -3.310282939189189e-01  error:  1.39747e-03  acor:  0.00472
+target overlap average:     3.556683413341019e-01  error:  8.17944e-04  acor:  0.03470
+time: 98799.944
 Overlap sampling for MBnrg CO2 at 400.0 K for B2 and 0 derivatives
 Steps: 10000000
 Discrete CutOff: 100
 Discrete StepSize: 0.05
+FixedCOM flag: 0
 random seed: 1639844264
 Reference diagram: B2 for hard spheres with diameter 6.025 Angstroms
 B2 HS:  9.161356071264346e+02
@@ -62,7 +108,7 @@ alpha  avg:  3.533090027926119e-01   err:  1.67265e-02   cor:  0.2027
 alpha  avg:  3.799820262073108e-01   err:  1.47758e-02   cor:  0.0591
 alpha steps: 32000
 alpha  avg:  3.799820262073108e-01   err:  1.47758e-02   cor:  0.0591
-alpha time: 179.906
+alpha time: 202.477
 
 target step size: 3.566164
 target move acceptance: 0.505
@@ -78,11 +124,12 @@ reference overlap average:  3.532874179914841e-01  error:  6.22791e-04  acor:  0
 target ratio:              -9.092225237484870e-01  error:  4.61882e-03   cor: -0.07248
 target average:            -3.296896990607767e-01  error:  1.54599e-03  acor: -0.01072
 target overlap average:     3.626061722509382e-01  error:  8.42338e-04  acor:  0.00684
-time: 89167.658
+time: 96076.363
 Overlap sampling for MBnrg CO2 at 400.0 K for B2 and 0 derivatives
 Steps: 10000000
 Discrete CutOff: 45
 Discrete StepSize: 0.05
+FixedCOM flag: 0
 random seed: 1639844264
 Reference diagram: B2 for hard spheres with diameter 6.025 Angstroms
 B2 HS:  9.161356071264346e+02
@@ -99,7 +146,7 @@ alpha  avg:  3.533090027926119e-01   err:  1.67265e-02   cor:  0.2027
 alpha  avg:  3.799820262073108e-01   err:  1.47758e-02   cor:  0.0591
 alpha steps: 32000
 alpha  avg:  3.799820262073108e-01   err:  1.47758e-02   cor:  0.0591
-alpha time: 179.363
+alpha time: 202.082
 
 target step size: 3.566164
 target move acceptance: 0.503
@@ -115,41 +162,45 @@ reference overlap average:  3.539096387779115e-01  error:  6.04749e-04  acor: -0
 target ratio:              -9.163437871734026e-01  error:  4.54115e-03   cor:  0.01935
 target average:            -3.337871327119715e-01  error:  1.51476e-03  acor:  0.04575
 target overlap average:     3.642597214977439e-01  error:  6.94034e-04  acor: -0.00850
-time: 89324.988
+time: 95872.680
 Overlap sampling for MBnrg CO2 at 400.0 K for B2 and 0 derivatives
 Steps: 10000000
 Discrete CutOff: 45
 Discrete StepSize: 0.01
+FixedCOM flag: 0
 random seed: 1639844264
 Reference diagram: B2 for hard spheres with diameter 6.025 Angstroms
 B2 HS:  9.161356071264346e+02
 nSpheres = 3
 isFlex = true
 Diagram
-0.433474 0.010155 0.334566 0.015321 0.345308 0.295430
-alpha  avg:  2.883534721327485e-01   err:  1.48328e-02   cor:  0.3453
-0.399517 0.009067 0.378870 0.017665 0.483615 0.505038
-alpha  avg:  3.044714838767690e-01   err:  1.57886e-02   cor:  0.5050
-0.390597 0.007027 0.335911 0.014712 0.166849 0.202460
-alpha  avg:  3.533681710047585e-01   err:  1.67315e-02   cor:  0.2025
-0.368221 0.005478 0.358461 0.012871 0.059114 0.059002
-alpha  avg:  3.797835674092158e-01   err:  1.47664e-02   cor:  0.0591
-alpha steps: 32000
-alpha  avg:  3.797835674092158e-01   err:  1.47664e-02   cor:  0.0591
-alpha time: 179.797
+0.433474 0.010155 0.296241 0.014161 0.284816 0.282351
+alpha  avg:  3.188783568094838e-01   err:  1.69749e-02   cor:  0.2848
+0.364075 0.008551 0.354918 0.018335 0.497677 0.511149
+alpha  avg:  3.705667367805650e-01   err:  2.10288e-02   cor:  0.5111
+0.355522 0.007299 0.351613 0.013290 0.039170 0.042844
+alpha  avg:  3.475366947077810e-01   err:  1.49489e-02   cor:  0.0428
+0.362823 0.005337 0.358215 0.012904 0.166804 0.166901
+alpha  avg:  3.794079885135362e-01   err:  1.47632e-02   cor:  0.1669
+0.365881 0.003760 0.358771 0.007166 0.173209 0.172070
+alpha  avg:  3.590187888698123e-01   err:  8.06441e-03   cor:  0.1732
+alpha steps: 78000
+alpha  avg:  3.590187888698123e-01   err:  8.06441e-03   cor:  0.1732
+alpha time: 496.082
 
-target step size: 3.566164
-target move acceptance: 0.503
-final reference step fraction: 0.1130
-actual reference step fraction: 0.1134
-reference blocks: 553 of size 2048
-target blocks: 541 of size 16384
-alpha check:                3.681192176478773e-01  error:  9.36005e-04
-full average:              -1.125275178390893e+02  error:  5.76778e-01
-reference ratio:            2.834225141451240e+00  error:  4.87540e-03   cor:  0.00000
+target step size: 3.501510
+target move acceptance: 0.510
+final reference step fraction: 0.1065
+actual reference step fraction: 0.1068
+reference blocks: 521 of size 2048
+target blocks: 545 of size 16384
+alpha check:                3.683760277481252e-01  error:  1.04355e-03
+full average:              -1.125319017761847e+02  error:  6.11707e-01
+reference ratio:            2.755461842621738e+00  error:  4.88168e-03   cor:  0.00000
 reference average:          1.000000000000000e+00  error:  0.00000e+00  acor:  0.00000
-reference overlap average:  3.528301211413144e-01  error:  6.06934e-04  acor: -0.05438
-target ratio:              -9.166365128511333e-01  error:  4.42588e-03   cor: -0.04045
-target average:            -3.336648711876155e-01  error:  1.51047e-03  acor:  0.03523
-target overlap average:     3.640100154310616e-01  error:  6.81595e-04  acor: -0.03626
-time: 89036.760
+reference overlap average:  3.629155681025619e-01  error:  6.42955e-04  acor:  0.00275
+target ratio:              -9.427425720181115e-01  error:  4.84479e-03   cor: -0.00492
+target average:            -3.334452497849771e-01  error:  1.55060e-03  acor: -0.02387
+target overlap average:     3.536970321295420e-01  error:  7.81840e-04  acor:  0.04089
+time: 95857.488
+
