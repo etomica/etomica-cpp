@@ -25,10 +25,11 @@ int main(int argc, char** argv) {
   int nPoints = 2;
   int nDer = 0;
   double temperatureK = 400;
-  long numSteps = 10000;
+  long numSteps = 1000000;
   double discreteStepSize = 0;
   double discreteCutOff = std::numeric_limits<double>::infinity();
   bool fixedCOMflag = true;
+  bool rigid = false;
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
 
@@ -45,6 +46,13 @@ int main(int argc, char** argv) {
     else if (arg == "--discreteCutOff" && i + 1 < argc) {
       discreteCutOff = std::stod(argv[++i]);
     }
+    else if (arg == "--fixedCOMflag" && i + 1 < argc) {
+      fixedCOMflag = std::stoi(argv[++i]);
+    }
+    else if (arg == "--rigid" && i + 1 < argc) {
+      rigid = std::stoi(argv[++i]);
+    }
+
 
 
   }
@@ -55,13 +63,14 @@ int main(int argc, char** argv) {
   std::cout << "Steps: " << numSteps << "\n";
   std::cout << "Discrete CutOff: " << discreteCutOff << "\n";
   std::cout << "Discrete StepSize: " << discreteStepSize << "\n";
+  std::cout << "FixedCOM flag: " << fixedCOMflag << "\n";
+
 
   double vhs = 4.0/3.0*M_PI*sigmaHSRef*sigmaHSRef*sigmaHSRef;
   double HSBn = pow(vhs, nPoints-1)/2;
   for (int i=2; i<=nPoints; i++) HSBn *= i;
-  bool anyPolar = false, anyFlex = false;
-  anyPolar = anyPolar || TP.isPolar;
-  anyFlex = anyFlex || TP.isFlex;
+  bool anyPolar = TP.isPolar;
+  bool anyFlex = TP.isFlex && !rigid;
 
   Random seed = 1639844264;
   printf("random seed: %d\n", seed.getSeed());
@@ -87,6 +96,7 @@ int main(int argc, char** argv) {
   PotentialMasterIntraMBnrg potentialMasterIntraRef(refBox);
   int nSpheres = TP.species.getNumAtoms();
   printf("nSpheres = %d\n", nSpheres);
+  //flexible corrections
   bool isFlex = TP.isFlex && (TP.diagram.empty() || TP.diagram != "BC");
   printf("isFlex = %s\n", isFlex ? "true" : "false");
   printf("Diagram %s\n" , TP.diagram.c_str());
@@ -130,11 +140,11 @@ int main(int argc, char** argv) {
   refIntegrator.setTemperature(temperature);
   refMove1.fixedCOM = fixedCOMflag;
   MCMoveClusterAngleGeneral refMoveAngle(refBox, potentialMasterIntraRef, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, refClusterHS);
-  refIntegrator.addMove(&refMoveAngle, 1);
+  if (anyFlex) refIntegrator.addMove(&refMoveAngle, 1);
   refMoveAngle.fixedCOM = fixedCOMflag;
   refMoveAngle.idx = 0;
   MCMoveClusterStretch refMoveStretch(refBox, potentialMasterIntraRef, seed, TP.bonding, TP.speciesList, 0.1, refClusterHS);
-  refIntegrator.addMove(&refMoveStretch, 1);
+  if (anyFlex) refIntegrator.addMove(&refMoveStretch, 1);
   refMoveStretch.fixedCOM = fixedCOMflag;
 
   Box targetBox(TP.speciesList);
@@ -183,11 +193,11 @@ int main(int argc, char** argv) {
   targetIntegrator.addMove(&targetMove1, 1);
   targetMove1.fixedCOM = fixedCOMflag;
   MCMoveClusterAngleGeneral targetMoveAngle(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, *targetClusterTraPPE0);
-  targetIntegrator.addMove(&targetMoveAngle, 1);
+  if (anyFlex) targetIntegrator.addMove(&targetMoveAngle, 1);
   targetMoveAngle.idx = 1;
   targetMoveAngle.fixedCOM = fixedCOMflag;
   MCMoveClusterStretch targetMoveStretch(targetBox, potentialMasterIntraTarget, seed, TP.bonding, TP.speciesList, 0.1, *targetClusterTraPPE0);
-  targetIntegrator.addMove(&targetMoveStretch, 1);
+  if (anyFlex) targetIntegrator.addMove(&targetMoveStretch, 1);
   targetMoveStretch.idx = 1;
   targetMoveStretch.fixedCOM = fixedCOMflag;
 
@@ -265,8 +275,8 @@ int main(int argc, char** argv) {
   targetIntegrator.addMove(&targetRotateMove, 1);
   // targetAngleMove.idx = 2;
   targetIntegrator.addMove(&targetMove, 1);
-  targetIntegrator.addMove(&targetAngleMove, 1);
-  targetIntegrator.addMove(&targetStretchMove, 1);
+  if (anyFlex) targetIntegrator.addMove(&targetAngleMove, 1);
+  if (anyFlex) targetIntegrator.addMove(&targetStretchMove, 1);
 
   targetIntegrator.addListener(targetClusterTraPPE);
   targetIntegrator.setTuning(false);
