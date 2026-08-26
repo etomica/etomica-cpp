@@ -60,6 +60,7 @@ int main(int argc, char** argv) {
   printf("Integration for MBnrg %s at %.1f K for B2 with dist: %f-%f and step size: %f\n", compound_name.c_str(),temperatureK, minDist, maxDist, stepSize);
   std::cout << "Steps: " << step << "\n";
   std::cout << "Intra Steps: " << intraSteps << "\n";
+  std::cout << "rigid: " << rigid << "\n";
 
   bool anyFlex = TP.isFlex && !rigid;
 

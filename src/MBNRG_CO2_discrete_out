@@ -1,7 +1,7 @@
 CO2 B2 at 400 K: (all in sim units)
 Paesani MBX Quadrature: -103.487
 Discrete stepping MBX (10k steps) Quadrature: -132.9869
-Continuous/Discrete Mayer sampling MBX: -112.8 +- 0.6
+Continuous/Discrete Mayer sampling MBX: -112.8 +- 0.6ls
 TraPPE: -89.426 +- 0.028
 experiment: -96.97 +- 1.2
 

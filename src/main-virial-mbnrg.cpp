@@ -26,10 +26,10 @@ int main(int argc, char** argv) {
   int nDer = 0;
   double temperatureK = 400;
   long numSteps = 1000000;
-  double discreteStepSize = 0;
-  double discreteCutOff = std::numeric_limits<double>::infinity();
-  bool fixedCOMflag = true;
-  bool rigid = false;
+  double discreteStepSize = 0.05;
+  double discreteCutOff = 45;
+  bool fixedCOMflag = false;
+  bool rigid = true;
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
 
@@ -64,6 +64,7 @@ int main(int argc, char** argv) {
   std::cout << "Discrete CutOff: " << discreteCutOff << "\n";
   std::cout << "Discrete StepSize: " << discreteStepSize << "\n";
   std::cout << "FixedCOM flag: " << fixedCOMflag << "\n";
+  std::cout << "rigid: " << rigid << "\n";
 
 
   double vhs = 4.0/3.0*M_PI*sigmaHSRef*sigmaHSRef*sigmaHSRef;
@@ -242,8 +243,8 @@ int main(int argc, char** argv) {
   delete virialAlpha;
   targetIntegrator.removeMove(&targetMove0);
   targetIntegrator.removeMove(&targetMove1);
-  targetIntegrator.removeMove(&targetMoveAngle);
-  targetIntegrator.removeMove(&targetMoveStretch);
+  if (anyFlex) targetIntegrator.removeMove(&targetMoveAngle);
+  if (anyFlex) targetIntegrator.removeMove(&targetMoveStretch);
 
   targetIntegrator.removeListener(targetClusterTraPPE0);
 
