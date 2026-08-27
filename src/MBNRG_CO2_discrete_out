@@ -204,3 +204,54 @@ target average:            -3.334452497849771e-01  error:  1.55060e-03  acor: -0
 target overlap average:     3.536970321295420e-01  error:  7.81840e-04  acor:  0.04089
 time: 95857.488
 
+Overlap sampling for MBnrg CO2 at 400.0 K for B2 and 0 derivatives
+Steps: 10000000
+Discrete CutOff: 45
+Discrete StepSize: 0.05
+FixedCOM flag: 0
+rigid: 1
+random seed: 1639844264
+Reference diagram: B2 for hard spheres with diameter 6.025 Angstroms
+B2 HS:  9.161356071264346e+02
+nSpheres = 3
+isFlex = true
+Diagram
+0.457355 0.009313 0.307430 0.012922 0.179081 0.207319
+alpha  avg:  3.318651692375529e-01   err:  1.54999e-02   cor:  0.2073
+0.304345 0.006897 0.301435 0.023084 0.592513 0.596463
+alpha  avg:  4.301769562919056e-01   err:  3.44166e-02   cor:  0.5965
+0.358104 0.005938 0.357695 0.011146 0.089958 0.084571
+alpha  avg:  3.706882133709941e-01   err:  1.30848e-02   cor:  0.0900
+0.360138 0.004096 0.359535 0.007790 0.296912 0.297771
+alpha  avg:  3.644032361977797e-01   err:  8.92012e-03   cor:  0.2978
+0.364098 0.002011 0.360703 0.004810 0.205242 0.205627
+alpha  avg:  3.609985789133136e-01   err:  5.21176e-03   cor:  0.2056
+0.363558 0.001035 0.359037 0.002906 0.151518 0.151763
+alpha  avg:  3.655542104098986e-01   err:  3.13618e-03   cor:  0.1518
+alpha steps: 462000
+alpha  avg:  3.655542104098986e-01   err:  3.13618e-03   cor:  0.1518
+alpha time: 939.471
+
+target step size: 3.632012
+target move acceptance: 0.498
+final reference step fraction: 0.0990
+actual reference step fraction: 0.0991
+reference blocks: 968 of size 1024
+target blocks: 549 of size 16384
+alpha check:                3.636000812572514e-01  error:  6.15239e-04
+full average:              -1.100056925407960e+02  error:  4.12875e-01
+reference ratio:            2.782429168848199e+00  error:  3.28378e-03   cor:  0.00000
+reference average:          1.000000000000000e+00  error:  0.00000e+00  acor:  0.00000
+reference overlap average:  3.593981874528563e-01  error:  4.24156e-04  acor: -0.00858
+target ratio:              -9.139611248608143e-01  error:  3.25629e-03   cor:  0.06485
+target average:            -3.302413301172586e-01  error:  1.08069e-03  acor:  0.03277
+target overlap average:     3.613297339835440e-01  error:  4.38132e-04  acor:  0.02086
+time: 18729.636
+
+
+Integration for MBnrg CO2 at 400.0 K for B2 with dist: 2.200000-45.000000 and step size: 0.050000
+Steps: 10000
+Intra Steps: 10000
+rigid: 1
+random seed: 1639844264
+Integral = -131.590791 0.000000
