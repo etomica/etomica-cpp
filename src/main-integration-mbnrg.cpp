@@ -25,9 +25,9 @@ int main(int argc, char** argv) {
   int nPoints = 2;
   double temperatureK = 400;
   long step = 10;
-  double minDist = 2.2;
-  double maxDist = 45;
-  double stepSize = 0.05;
+  double minDist = 0;
+  double maxDist = 7;
+  double stepSize = 6;
   long intraSteps = 10;
   bool rigid = false;
 

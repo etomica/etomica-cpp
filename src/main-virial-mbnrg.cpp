@@ -26,8 +26,8 @@ int main(int argc, char** argv) {
   int nDer = 0;
   double temperatureK = 400;
   long numSteps = 1000000;
-  double discreteStepSize = 0.05;
-  double discreteCutOff = 45;
+  double discreteStepSize = 6;
+  double discreteCutOff = 7;
   bool fixedCOMflag = false;
   bool rigid = true;
   for (int i = 1; i < argc; i++) {
@@ -68,7 +68,20 @@ int main(int argc, char** argv) {
 
 
   double vhs = 4.0/3.0*M_PI*sigmaHSRef*sigmaHSRef*sigmaHSRef;
+  printf("vhs: %f\n", vhs);
+  if (discreteStepSize > 0) {
+    vhs = 0;
+    int n = sigmaHSRef/discreteStepSize;
+    long pSum = n * (n+1) * (1+2*n) / 6;
+
+    vhs = 4.0 * M_PI * discreteStepSize * discreteStepSize * discreteStepSize * pSum;
+    printf("discrete vhs: %f\n", vhs);
+
+  }
+  exit(0);
   double HSBn = pow(vhs, nPoints-1)/2;
+
+
   for (int i=2; i<=nPoints; i++) HSBn *= i;
   bool anyPolar = TP.isPolar;
   bool anyFlex = TP.isFlex && !rigid;
