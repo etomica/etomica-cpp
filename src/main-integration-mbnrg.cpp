@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
   double maxDist = 7;
   double stepSize = 6;
   long intraSteps = 10;
-  bool rigid = false;
+  bool rigid = true;
 
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];

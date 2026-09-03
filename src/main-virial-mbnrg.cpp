@@ -72,13 +72,13 @@ int main(int argc, char** argv) {
   if (discreteStepSize > 0) {
     vhs = 0;
     int n = sigmaHSRef/discreteStepSize;
-    long pSum = n * (n+1) * (1+2*n) / 6;
+    int pSum = n * (n+1) * (1+2*n) / 6;
 
     vhs = 4.0 * M_PI * discreteStepSize * discreteStepSize * discreteStepSize * pSum;
     printf("discrete vhs: %f\n", vhs);
 
   }
-  exit(0);
+  // exit(0);
   double HSBn = pow(vhs, nPoints-1)/2;
 
 
@@ -201,7 +201,9 @@ int main(int argc, char** argv) {
   targetIntegrator.addListener(targetClusterTraPPE0);
   ClusterChain targetClusterHS(targetPotentialMasterHS, temperature, 1, 0, true);
   targetIntegrator.addListener(&targetClusterHS);
-  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0, discreteCutOff, discreteStepSize);
+  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, seed, 6.0, *targetClusterTraPPE0, discreteCutOff, discreteStepSize);
+
+  targetMove0.tunable = false;
   targetIntegrator.addMove(&targetMove0, 1);
   MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0);
   targetIntegrator.addMove(&targetMove1, 1);

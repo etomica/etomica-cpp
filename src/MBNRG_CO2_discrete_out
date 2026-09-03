@@ -255,3 +255,57 @@ Intra Steps: 10000
 rigid: 1
 random seed: 1639844264
 Integral = -131.590791 0.000000
+
+Overlap sampling for MBnrg CO2 at 400.0 K for B2 and 0 derivatives
+Steps: 10000000
+Discrete CutOff: 7
+Discrete StepSize: 6
+FixedCOM flag: 0
+rigid: 1
+vhs: 916.135607
+discrete vhs: 2714.336053
+random seed: 1639844264
+Reference diagram: B2 for hard spheres with diameter 6.025 Angstroms
+B2 HS:  2.714336052701581e+03
+nSpheres = 3
+isFlex = true
+Diagram
+0 0.355463 0.006610 0.519865 0.014755
+alpha  avg:  8.208499862389880e-02   err:  2.32009e-02   cor:  0.0000
+0.561264 0.007722 0.274444 0.011313 0.207746 0.313840
+alpha  avg:  6.179259897719871e-02   err:  2.68538e-03   cor:  0.3138
+0.528813 0.006067 0.297532 0.008808 0.109818 0.130145
+alpha  avg:  6.003411563692262e-02   err:  1.90603e-03   cor:  0.1301
+0.419353 0.003975 0.413010 0.009571 0.017087 0.018222
+alpha  avg:  6.096189464395017e-02   err:  1.52625e-03   cor:  0.0182
+0.417124 0.002703 0.414862 0.004729 -0.067914 -0.069226
+alpha  avg:  6.129395079751290e-02   err:  8.03707e-04   cor: -0.0679
+alpha steps: 78000
+alpha  avg:  6.129395079751290e-02   err:  8.03707e-04   cor: -0.0679
+alpha time: 130.898
+
+target step size: 6.000000
+target move acceptance: 0.111
+final reference step fraction: 0.3940
+actual reference step fraction: 0.3938
+reference blocks: 961 of size 4096
+target blocks: 740 of size 8192
+alpha check:                6.121579492399525e-02  error:  6.47350e-05
+full average:              -1.476554077560177e+02  error:  1.26551e-01
+reference ratio:            2.418039251649939e+00  error:  1.30136e-03   cor:  0.00000
+reference average:          1.000000000000000e+00  error:  0.00000e+00  acor:  0.00000
+reference overlap average:  4.135582163596617e-01  error:  2.22572e-04  acor: -0.00611
+target ratio:              -2.146008674519949e+00  error:  1.43145e-03   cor: -0.71890
+target average:            -8.886326145481419e-01  error:  7.69096e-04  acor:  0.05216
+target overlap average:     4.140862174040020e-01  error:  3.76940e-04  acor:  0.05134
+time: 15738.160
+
+Integration for MBnrg CO2 at 400.0 K for B2 with dist: 0.000000-7.000000 and step size: 6.000000
+Steps: 10000
+Intra Steps: 10000
+rigid: 1
+random seed: 1639844264
+isFlex = true
+0.000000 0.500000 -712346.222874
+6.000000 -0.052488 -712346.222874
+Integral = -71.234622 0.000000
