@@ -145,7 +145,7 @@ void VirialProduction::runSteps(long numSteps) {
       double tFrac = ((double)targetSteps)/totalSteps;
       double idf = std::max(std::min(idealTargetFraction,0.99),0.01);
       runRef = tFrac > idf;
-      // runRef = true;
+      runRef = true;
     }
 
     if (runRef) {

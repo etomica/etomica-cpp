@@ -116,6 +116,7 @@ double* VirialAlpha::getAlphaStatistics() {
 void VirialAlpha::run() {
   while (!allDone) {
     runSteps(1000);
+    break;
   }
 }
 

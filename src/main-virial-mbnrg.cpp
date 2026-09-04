@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   int nPoints = 2;
   int nDer = 0;
   double temperatureK = 400;
-  long numSteps = 1000000;
+  long numSteps = 10000;
   double discreteStepSize = 6;
   double discreteCutOff = 7;
   bool fixedCOMflag = false;
@@ -183,13 +183,14 @@ int main(int argc, char** argv) {
   IntegratorMC targetIntegrator(targetPotentialMasterTraPPE, seed);
   Cluster* targetClusterTraPPE0 = nullptr;
   PotentialMolecularMBnrg3body p3BodyTarget;
-  if (anyFlex && nPoints==2 && anyPolar)
+  printf("anyPolar %d \n", anyPolar);
+  if (nPoints==2 && anyPolar)
   {
     targetClusterTraPPE0 = new ClusterMBX(targetPotentialMasterTraPPE, temperature, 0, false, p3BodyTarget);
 
     //flipping for flexible polar B2
     vector<vector <int>> flipPoints = diagrams::getFlipPointsforDiagram("1");
-    targetClusterTraPPE0 = new ClusterFlippedPoints(*targetClusterTraPPE0, TP.speciesList, targetBox, false, flipPoints, 3);
+    if (!rigid) targetClusterTraPPE0 = new ClusterFlippedPoints(*targetClusterTraPPE0, TP.speciesList, targetBox, false, flipPoints, 3);
   }
   else
   {
@@ -235,6 +236,7 @@ int main(int argc, char** argv) {
   // exit(0);
 
   double t1 = getTime();
+
   VirialAlpha *virialAlpha = new VirialAlpha(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE0);
   virialAlpha->targetMeter.box = &targetBox;
   virialAlpha->refMeter.box = &refBox;
@@ -266,13 +268,14 @@ int main(int argc, char** argv) {
   double targetStepSize = targetMove0.getStepSize();
   printf("target step size: %f\n", targetStepSize);
   Cluster* targetClusterTraPPE = nullptr;
-  if (anyFlex && nPoints==2 && anyPolar)
+  printf("anyPOlar=%d \n", anyPolar);
+  if (nPoints==2 && anyPolar)
   {
     targetClusterTraPPE = new ClusterMBX(targetPotentialMasterTraPPE, temperature, nDer, false, p3BodyTarget);
 
     //flipping for flexible polar B2
     vector<vector <int>> flipPoints = diagrams::getFlipPointsforDiagram("1");
-    targetClusterTraPPE = new ClusterFlippedPoints(*targetClusterTraPPE, TP.speciesList, targetBox, false, flipPoints, 3);
+    if (!rigid) targetClusterTraPPE = new ClusterFlippedPoints(*targetClusterTraPPE, TP.speciesList, targetBox, false, flipPoints, 3);
   }
   else
   {
@@ -296,8 +299,14 @@ int main(int argc, char** argv) {
 
   targetIntegrator.addListener(targetClusterTraPPE);
   targetIntegrator.setTuning(false);
+  MeterVirialDirect directMeter(refClusterHS, refClusterTraPPE);
+  Average directAverage(1, 10, 1000, false);
+  DataPump directPump(directMeter, 1, &directAverage);
+  refIntegrator.addListener(&directPump);
+
   VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE, alpha, HSBn);
   virialProduction.runSteps(numSteps);
+  printf("%f %f\n", directAverage.getStatistics()[0][AVG_AVG], directAverage.getStatistics()[0][AVG_ERR]);
   double t3 = getTime();
   double acceptance = targetMove.getAcceptance();
   printf("target move acceptance: %5.3f\n", acceptance);
