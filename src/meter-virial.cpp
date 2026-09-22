@@ -26,6 +26,6 @@ double* MeterVirialDirect::getData() {
     data[j] = tarValues[j] / pi;
   }
   data[nData-1] = refCluster.getValues()[0] / pi;
-  printf("%f %f \n", refCluster.getValues()[0], pi);
+  // printf("%f %f Data: %f \n", refCluster.getValues()[0], pi, data[1]);
   return data;
 }

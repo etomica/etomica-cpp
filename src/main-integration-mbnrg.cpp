@@ -24,11 +24,11 @@ int main(int argc, char** argv) {
   TraPPEParams TP(TraPPEParams::CO2);
   int nPoints = 2;
   double temperatureK = 400;
-  long step = 10;
+  long step = 40000;
   double minDist = 0;
   double maxDist = 7;
   double stepSize = 6;
-  long intraSteps = 10;
+  long intraSteps = 40000;
   bool rigid = true;
 
   for (int i = 1; i < argc; i++) {
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
 
   bool anyFlex = TP.isFlex && !rigid;
 
-  Random seed = 1639844264;
+  Random seed;
   printf("random seed: %d\n", seed.getSeed());
 
   bool isFlex = TP.isFlex && (TP.diagram.empty() || TP.diagram != "BC");
@@ -160,11 +160,19 @@ int main(int argc, char** argv) {
     }
     totalIntegral +=thisIntegral;
     SStotalIntegral += thisIntegral*thisIntegral;
-    printf("%d steps have finished\n", i+1);
+    if ((i+1) % 1000 == 0) printf("%d steps have finished\n", i+1);
   }
 
-  for (int k=0;k<steps;k++) printf("%f %f %f\n", minDist + k*stepSize, sums[k]/step, 0);
+  for (int k=0;k<steps;k++)
+  {
+    SS[k]*=step;
+    double s = (SS[k]-(sums[k]*sums[k]))/(step*(step-1.0));
+    printf("%f %f %f\n", minDist + k*stepSize, sums[k]/step, sqrt(s/step));
+
+  }
   double avg = totalIntegral/step;
-  double err = 0;
+  SStotalIntegral*=step;
+  double var = (SStotalIntegral-(totalIntegral*totalIntegral))/(step*(step-1.0));
+  double err = sqrt(var/step);
   printf("Integral = %f %f\n", avg, err);
 }

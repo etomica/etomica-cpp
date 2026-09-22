@@ -80,12 +80,12 @@ double MCMoveMoleculeRotateVirial::getChi(double T) {
 }
 
 void MCMoveMoleculeRotateVirial::acceptNotify() {
-  //printf("accepted\n");
+  // printf("accepted\n");
   numAccepted++;
 }
 
 void MCMoveMoleculeRotateVirial::rejectNotify() {
-  //printf("rejected\n");
+  // printf("rejected\n");
   int iSpecies, iMoleculeInSpecies, firstAtom, lastAtom;
   box.getMoleculeInfo(iMolecule, iSpecies, iMoleculeInSpecies, firstAtom, lastAtom);
   for (int iAtom = firstAtom; iAtom <= lastAtom; iAtom++) {

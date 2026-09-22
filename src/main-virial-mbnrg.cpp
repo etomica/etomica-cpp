@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   int nPoints = 2;
   int nDer = 0;
   double temperatureK = 400;
-  long numSteps = 10000;
+  long numSteps = 100000;
   double discreteStepSize = 6;
   double discreteCutOff = 7;
   bool fixedCOMflag = false;
@@ -300,13 +300,13 @@ int main(int argc, char** argv) {
   targetIntegrator.addListener(targetClusterTraPPE);
   targetIntegrator.setTuning(false);
   MeterVirialDirect directMeter(refClusterHS, refClusterTraPPE);
-  Average directAverage(1, 10, 1000, false);
+  Average directAverage(2, 10, 1000, false);
   DataPump directPump(directMeter, 1, &directAverage);
   refIntegrator.addListener(&directPump);
 
   VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE, alpha, HSBn);
   virialProduction.runSteps(numSteps);
-  printf("%f %f\n", directAverage.getStatistics()[0][AVG_AVG], directAverage.getStatistics()[0][AVG_ERR]);
+  printf("Average: %f Error: %f\n", directAverage.getStatistics()[1][AVG_AVG], directAverage.getStatistics()[1][AVG_ERR]);
   double t3 = getTime();
   double acceptance = targetMove.getAcceptance();
   printf("target move acceptance: %5.3f\n", acceptance);
