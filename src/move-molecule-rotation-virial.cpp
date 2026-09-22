@@ -35,10 +35,10 @@ bool MCMoveMoleculeRotateVirial::doTrial() {
   }
   int nm = box.getNumMolecules(iSpecies);
   iMolecule = box.getGlobalMoleculeIndex(iSpecies, random.nextInt(nm));
-  // iMolecule = 1;
+  iMolecule = 1;
   wOld = fabs(cluster.getValues()[0]);
   int axis = random.nextInt(3);
-  // axis = 1;
+  axis = 1;
   double theta = stepSize*2*(random.nextDouble32()-0.5);
   // theta = M_PI;
   mat.setSimpleAxisAngle(axis, theta);

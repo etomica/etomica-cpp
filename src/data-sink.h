@@ -155,3 +155,35 @@ class History : public DataSink {
     virtual void reset();
 };
 
+class Histogram : public DataSink {
+protected:
+  Meter* xMeter;
+  int nData, HistogramSize;
+  // 0: scrolling, 1: complete, 2: collapsing discard, 3: collapsing avg
+  int HistogramType;
+  long count;
+  double *collapseSum;
+  double **histogram;
+  long **data;
+  double xMin;
+  double xMax;
+  double* xData;
+
+  void collapseDiscard();
+  void collapseAverage();
+  void dispose();
+  void unset();
+
+public:
+  Histogram(int nData, int HistogramType, int HistogramSize, Meter* xMeter, double xmin, double xmax);
+  virtual ~Histogram();
+  virtual void addData(double* x);
+  double** getHistogram();
+  void setHistogramType(int type);
+  long getRawCount() {return count;}
+  int getHistogramSize();
+  void setNumData(int newNumData);
+  int getNumData();
+  virtual void reset();
+  double* getxData();
+};
