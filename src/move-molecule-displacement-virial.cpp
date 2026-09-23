@@ -78,13 +78,14 @@ double MCMoveMoleculeDisplacementVirial::getChi(double T) {
   wNew = fabs(cluster.getValues()[0])*rNew*rNew;
   double chi = wNew>wOld ? 1 : wNew/wOld;
   // printf("%f %f %f %f\n", wNew, wOld, chi, discreteCutOff);
-  if (rNew > discreteCutOff) chi = 0;
+  if (fabs(rNew) > discreteCutOff) chi = 0;
+  // printf("%f %f %f \n", rNew, wNew, chi);
   chiSum += chi;
   return chi;
 }
 
 void MCMoveMoleculeDisplacementVirial::acceptNotify() {
-  // printf("accepted\n");
+  printf("accepted\n");
   numAccepted++;
   addToHistogram(wNew);
 }

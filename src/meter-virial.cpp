@@ -17,15 +17,15 @@ MeterVirialDirect::~MeterVirialDirect() {
 
 double* MeterVirialDirect::getData() {
   const double* tarValues = targetCluster.getValues();
-  double pi = fabs(tarValues[0]);
-  if (pi == 0 || pi == std::numeric_limits<double>::infinity() || std::isnan(pi)) {
-    fprintf(stderr, "pi is %f\n", pi);
-    abort();
-  }
+  // double pi = fabs(tarValues[0]);
+  // if (pi == 0 || pi == std::numeric_limits<double>::infinity() || std::isnan(pi)) {
+  //   fprintf(stderr, "pi is %f\n", pi);
+  //   abort();
+  // }
   for (int j=0; j<nData-1; j++) {
-    data[j] = tarValues[j] / pi;
+    data[j] = tarValues[j];
   }
-  data[nData-1] = refCluster.getValues()[0] / pi;
+  data[nData-1] = refCluster.getValues()[0];
   // printf("%f %f Data: %f \n", refCluster.getValues()[0], pi, data[1]);
   return data;
 }

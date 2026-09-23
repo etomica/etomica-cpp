@@ -153,6 +153,7 @@ void VirialProduction::runSteps(long numSteps) {
       refSteps += subSteps;
     }
     else {
+
       targetIntegrator.doSteps(subSteps);
       targetSteps += subSteps;
     }

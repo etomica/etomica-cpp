@@ -74,11 +74,11 @@ class MCMoveMoleculeRotateVirial : public MCMove {
     int total = 0;
     bool first = true;
 
-
   public:
     bool fixedCOM = true;
     MCMoveMoleculeRotateVirial(SpeciesList& speciesList, int iSpecies, Box& box, Random& random, double stepSize, Cluster &cluster);
     ~MCMoveMoleculeRotateVirial();
+    int idx = 0;
 
     virtual bool doTrial();
     virtual double getChi(double temperature);

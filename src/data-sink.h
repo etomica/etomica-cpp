@@ -4,8 +4,11 @@
 
 #pragma once
 
+#include <cstdio>
 #include <math.h>
 #include <vector>
+
+#include "box.h"
 
 using namespace std;
 
@@ -186,4 +189,24 @@ public:
   int getNumData();
   virtual void reset();
   double* getxData();
+};
+class DataWriter : public DataSink {
+protected:
+  Meter* xMeter;
+  int nData;
+  long count;
+  FILE* f;
+  int iLastTheta = -1000000;
+
+  void dispose();
+
+public:
+  Box* box;
+  DataWriter(int nData, Meter* xMeter, const char* filename);
+  virtual ~DataWriter();
+  virtual void addData(double* x);
+  long getRawCount() {return count;}
+  void setNumData(int newNumData);
+  int getNumData();
+
 };

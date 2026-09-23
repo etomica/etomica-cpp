@@ -104,9 +104,11 @@ void Histogram::addData(double* x) {
 
           int newHistogramSize = ceil((newxMax - newxMin)/deltax);
           printf("realloc %f %d %d\n", x[i], HistogramSize, newHistogramSize);
+
+          long** copy = (long**)copy2D((unsigned char**)data, nData, HistogramSize, sizeof(long));
           data = (long**)realloc2D((void**)data, nData, newHistogramSize, sizeof(long));
-          for (int k=0; k<newHistogramSize; k++) {
-            printf("%d %d\n", k, data[1][k]);
+          for (int k=0; k<nData; k++) {
+            std::copy(copy[k], copy[k]+HistogramSize, data[k]);
           }
           xData = (double*)realloc(xData, HistogramSize*sizeof(double));
 

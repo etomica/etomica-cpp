@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   int nPoints = 2;
   int nDer = 0;
   double temperatureK = 400;
-  long numSteps = 1000000;
+  long numSteps = 10000000;
   double discreteStepSize = 6;
   double discreteCutOff = 7;
   bool fixedCOMflag = false;
@@ -210,6 +210,7 @@ int main(int argc, char** argv) {
   targetMove0.tunable = false;
   targetIntegrator.addMove(&targetMove0, 1);
   MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0);
+  targetMove1.idx = 1;
   targetIntegrator.addMove(&targetMove1, 1);
   targetMove1.fixedCOM = fixedCOMflag;
   MCMoveClusterAngleGeneral targetMoveAngle(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, *targetClusterTraPPE0);
@@ -254,7 +255,7 @@ int main(int argc, char** argv) {
   virialAlpha->getNewAlpha(alpha, alphaErr, alphaCor);
   printf("alpha  avg: %22.15e   err: %12.5e   cor: % 6.4f\n", alpha, alphaErr, alphaCor);
   printf("alpha time: %4.3f\n\n", t2-t1);
-  // alpha = 1;
+  alpha = 1;
   // exit(0);
   long blockSize = virialAlpha->getTargetAverage().getBlockSize();
   if (blockSize > numSteps/10) {
@@ -288,6 +289,7 @@ int main(int argc, char** argv) {
 
   MCMoveMoleculeDisplacementVirial targetMove(TP.speciesList, 0, targetBox, seed, targetStepSize, *targetClusterTraPPE, discreteCutOff, discreteStepSize);
   MCMoveMoleculeRotateVirial targetRotateMove(TP.speciesList, 0, targetBox, seed, targetStepSize, *targetClusterTraPPE);
+  targetRotateMove.idx = 1;
   targetRotateMove.fixedCOM = fixedCOMflag;
   MCMoveClusterAngleGeneral targetAngleMove(targetBox, potentialMasterIntraTarget, false, seed, TP.bonding, TP.triplets, TP.speciesList, 0.1, *targetClusterTraPPE);
   targetAngleMove.fixedCOM = fixedCOMflag;
@@ -304,19 +306,43 @@ int main(int argc, char** argv) {
   targetIntegrator.setTuning(false);
   MeterVirialDirect directMeter(refClusterHS, refClusterTraPPE);
   Average directAverage(2, 10, 1000, false);
-  Histogram directHistogram(2, 1, 100, &directMeter, -0.1, 0.1);
+  Histogram directHistogram(2, 0, 1000, &directMeter, -0.12, -0.04);
   DataPump directPump(directMeter, 1, &directAverage);
+  DataWriter directWriter(2, &directMeter, "writer.dat");
+  directWriter.box = &refBox;
   directPump.addDataSink(&directHistogram);
+  directPump.addDataSink(&directWriter);
   refIntegrator.addListener(&directPump);
+
+  MeterVirialDirect directMeterTarget(targetClusterHS, *targetClusterTraPPE);
+  Average directAverageTarget(2, 10, 1000, false);
+  Histogram directHistogramTarget(2, 0, 10, &directMeterTarget, -0.12, -0.04);
+  DataPump directPumpTarget(directMeterTarget, 1, &directAverageTarget);
+  DataWriter directWriterTarget(2, &directMeterTarget, "writer_target.dat");
+  directWriterTarget.box = &targetBox;
+  directPumpTarget.addDataSink(&directHistogramTarget);
+  directPumpTarget.addDataSink(&directWriterTarget);
+  targetIntegrator.addListener(&directPumpTarget);
+
 
   VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE, alpha, HSBn);
   virialProduction.runSteps(numSteps);
   printf("Average: %f Error: %f\n", directAverage.getStatistics()[1][AVG_AVG], directAverage.getStatistics()[1][AVG_ERR]);
   double* histogram = directHistogram.getHistogram()[1];
   double* xData = directHistogram.getxData();
-  for (int i = 0; i < 100 ; i++) {
-    printf("%e %e\n", xData[i], histogram[i]);
+  FILE* f = fopen("histogram.dat", "w");
+  for (int i = 0; i < directHistogram.getHistogramSize() ; i++) {
+    fprintf(f, "%e %e\n", xData[i], histogram[i]);
   }
+  fclose(f);
+  histogram = directHistogramTarget.getHistogram()[1];
+  xData = directHistogramTarget.getxData();
+  f = fopen("histogram_target.dat", "w");
+  for (int i = 0; i < directHistogramTarget.getHistogramSize() ; i++) {
+    fprintf(f, "%e %e\n", xData[i], histogram[i]);
+  }
+  fclose(f);
+
   double t3 = getTime();
   double acceptance = targetMove.getAcceptance();
   printf("target move acceptance: %5.3f\n", acceptance);

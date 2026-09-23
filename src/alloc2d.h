@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <stdlib.h>
+#include <algorithm>
 
 inline static void** malloc2D(int rows, int cols, size_t s) {
   void* raw = malloc(s*rows*cols);
@@ -30,6 +31,16 @@ inline static void** realloc2D(void** array, int rows, int cols, size_t s) {
     newArray[i] = ((char*)newRaw)+s*cols*i;
   }
   return newArray;
+}
+
+inline static unsigned char** copy2D(unsigned char** array, int rows, int cols, size_t s)
+{
+  unsigned char** copy = (unsigned char**)malloc2D(rows, cols, s);
+  for (int i=0; i<rows; i++)
+  {
+    std::copy(array[i], array[i]+cols*s, copy[i]);
+  }
+  return copy;
 }
 
 inline static void** realloc2D0(void** array, int rows, int totalRows, int cols, size_t s) {
