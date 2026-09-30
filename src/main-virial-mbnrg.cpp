@@ -26,8 +26,8 @@ int main(int argc, char** argv) {
   int nDer = 0;
   double temperatureK = 400;
   long numSteps = 100000;
-  double discreteStepSize = 6;
-  double discreteCutOff = 7;
+  double discreteStepSize = 0.05;
+  double discreteCutOff = 45;
   bool fixedCOMflag = false;
   bool rigid = true;
   for (int i = 1; i < argc; i++) {

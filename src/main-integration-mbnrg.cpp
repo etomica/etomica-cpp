@@ -24,11 +24,11 @@ int main(int argc, char** argv) {
   TraPPEParams TP(TraPPEParams::CO2);
   int nPoints = 2;
   double temperatureK = 400;
-  long step = 40000;
+  long step = 10000;
   double minDist = 0;
-  double maxDist = 7;
-  double stepSize = 6;
-  long intraSteps = 40000;
+  double maxDist = 45;
+  double stepSize = 0.05;
+  long intraSteps = 10000;
   bool rigid = true;
 
   for (int i = 1; i < argc; i++) {
@@ -160,7 +160,8 @@ int main(int argc, char** argv) {
     }
     totalIntegral +=thisIntegral;
     SStotalIntegral += thisIntegral*thisIntegral;
-    if ((i+1) % 1000 == 0) printf("%d steps have finished\n", i+1);
+    printf("%d steps have finished\n", i+1);
+
   }
 
   for (int k=0;k<steps;k++)

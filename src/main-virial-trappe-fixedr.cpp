@@ -26,9 +26,9 @@ int main(int argc, char** argv) {
   int nDer = 0;
   double temperatureK = 400;
   long numSteps = 10000000;
-  double discreteStepSize = 0;
-  double discreteCutOff = std::numeric_limits<double>::infinity();;
-  bool fixedCOMflag = true;
+  double discreteStepSize = 0.05;
+  double discreteCutOff = 45;
+  bool fixedCOMflag = false;
   bool rigid = true;
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
@@ -205,9 +205,9 @@ int main(int argc, char** argv) {
   targetIntegrator.addListener(targetClusterTraPPE0);
   ClusterChain targetClusterHS(targetPotentialMasterHS, temperature, 1, 0, true);
   targetIntegrator.addListener(&targetClusterHS);
-  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0, discreteCutOff, discreteStepSize);
+  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, seed, 6, *targetClusterTraPPE0, discreteCutOff, discreteStepSize);
 
-  // targetMove0.tunable = false;
+  targetMove0.tunable = false;
   targetIntegrator.addMove(&targetMove0, 1);
   MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0);
   targetMove1.idx = 1;

@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   int nPoints = 2;
   double temperatureK = 400;
   long step = 10000;
-  double minDist = 2.2;
+  double minDist = 0;
   double maxDist = 45;
   double stepSize = 0.05;
   long intraSteps = 10000;
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
   //   targetIntegrator.doStep();
   // }
   // exit(0);
-  int steps = round((maxDist-minDist)/stepSize)+1;
+  int steps = floor((maxDist-minDist)/stepSize)+1;
   double* sums = new double[steps];
   double* SS = new double[steps];
   double totalIntegral = 0;
