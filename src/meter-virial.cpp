@@ -17,7 +17,7 @@ MeterVirialDirect::~MeterVirialDirect() {
 
 double* MeterVirialDirect::getData() {
   const double* tarValues = targetCluster.getValues();
-  // double pi = fabs(tarValues[0]);
+  double pi = fabs(tarValues[0]);
   // if (pi == 0 || pi == std::numeric_limits<double>::infinity() || std::isnan(pi)) {
   //   fprintf(stderr, "pi is %f\n", pi);
   //   abort();

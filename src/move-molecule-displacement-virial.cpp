@@ -85,7 +85,7 @@ double MCMoveMoleculeDisplacementVirial::getChi(double T) {
 }
 
 void MCMoveMoleculeDisplacementVirial::acceptNotify() {
-  printf("accepted\n");
+  // printf("accepted\n");
   numAccepted++;
   addToHistogram(wNew);
 }

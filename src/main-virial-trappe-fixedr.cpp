@@ -26,9 +26,9 @@ int main(int argc, char** argv) {
   int nDer = 0;
   double temperatureK = 400;
   long numSteps = 10000000;
-  double discreteStepSize = 6;
-  double discreteCutOff = 7;
-  bool fixedCOMflag = false;
+  double discreteStepSize = 0;
+  double discreteCutOff = std::numeric_limits<double>::infinity();;
+  bool fixedCOMflag = true;
   bool rigid = true;
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
@@ -205,9 +205,9 @@ int main(int argc, char** argv) {
   targetIntegrator.addListener(targetClusterTraPPE0);
   ClusterChain targetClusterHS(targetPotentialMasterHS, temperature, 1, 0, true);
   targetIntegrator.addListener(&targetClusterHS);
-  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, seed, 6.0, *targetClusterTraPPE0, discreteCutOff, discreteStepSize);
+  MCMoveMoleculeDisplacementVirial targetMove0(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0, discreteCutOff, discreteStepSize);
 
-  targetMove0.tunable = false;
+  // targetMove0.tunable = false;
   targetIntegrator.addMove(&targetMove0, 1);
   MCMoveMoleculeRotateVirial targetMove1(TP.speciesList, 0, targetBox, seed, 1.5, *targetClusterTraPPE0);
   targetMove1.idx = 1;
@@ -327,7 +327,8 @@ int main(int argc, char** argv) {
 
   VirialProduction virialProduction(refIntegrator, targetIntegrator, refClusterHS, refClusterTraPPE, targetClusterHS, *targetClusterTraPPE, alpha, HSBn);
   virialProduction.runSteps(numSteps);
-  printf("Average: %f Error: %f\n", directAverage.getStatistics()[1][AVG_AVG], directAverage.getStatistics()[1][AVG_ERR]);
+  printf("Average target integral in the reference system: %f Error: %f\n", directAverage.getStatistics()[1][AVG_AVG], directAverage.getStatistics()[1][AVG_ERR]);
+
   double* histogram = directHistogram.getHistogram()[1];
   double* xData = directHistogram.getxData();
   FILE* f = fopen("histogram.dat", "w");
@@ -347,12 +348,12 @@ int main(int argc, char** argv) {
   double acceptance = targetMove.getAcceptance();
   printf("target move acceptance: %5.3f\n", acceptance);
   virialProduction.printResults(nullptr);
+
   // for (int i=0; i<=5 ; i++)
   // {
   //   double *r = targetBox.getAtomPosition(i);
   //   printf("%f %f %f \n", r[0], r[1], r[2]);
   // }
-
   printf("time: %4.3f\n", t3-t2);
 }
 

@@ -57,7 +57,7 @@ endforeach()
 
 
 # Mains
-set(MAIN_NAMES virial-trappe virial-mbnrg integration-mbnrg virial-trappe-fixedr)
+set(MAIN_NAMES virial-trappe virial-mbnrg integration-mbnrg integration-trappe virial-trappe-fixedr)
 
 # ----- Build each main-* executable -----
 foreach(name ${MAIN_NAMES})
