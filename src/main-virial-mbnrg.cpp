@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   int nPoints = 2;
   int nDer = 0;
   double temperatureK = 400;
-  long numSteps = 100000;
+  long numSteps = 10000000;
   double discreteStepSize = 0.05;
   double discreteCutOff = 45;
   bool fixedCOMflag = false;

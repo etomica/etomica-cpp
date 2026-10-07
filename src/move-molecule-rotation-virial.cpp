@@ -40,7 +40,7 @@ bool MCMoveMoleculeRotateVirial::doTrial() {
   int axis = random.nextInt(3);
   // axis = 1;
   double theta = stepSize*2*(random.nextDouble32()-0.5);
-  // theta = 0;  // axis = 1;
+  // theta = 0;
 
   mat.setSimpleAxisAngle(axis, theta);
   int iSpecies, iMoleculeInSpecies, firstAtom, lastAtom;

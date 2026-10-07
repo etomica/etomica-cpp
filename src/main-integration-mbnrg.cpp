@@ -24,11 +24,11 @@ int main(int argc, char** argv) {
   TraPPEParams TP(TraPPEParams::CO2);
   int nPoints = 2;
   double temperatureK = 400;
-  long step = 10000;
+  long step = 40000;
   double minDist = 0;
   double maxDist = 45;
   double stepSize = 0.05;
-  long intraSteps = 10000;
+  long intraSteps = 40000;
   bool rigid = true;
 
   for (int i = 1; i < argc; i++) {
