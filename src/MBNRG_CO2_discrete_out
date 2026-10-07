@@ -400,3 +400,60 @@ target ratio:              -2.148438813924400e+00  error:  1.39995e-02   cor: -0
 target average:            -8.869823619631901e-01  error:  5.75760e-03  acor:  0.16424
 target overlap average:     4.128497196264123e-01  error:  2.85485e-03  acor:  0.20748
 time: 510.817
+
+Integration for MBnrg CO2 at 400.0 K for B2 with dist: 0.000000-45.000000 and step size: 0.050000
+Steps: 100000
+Intra Steps: 100000
+rigid: 1
+random seed: -701656942
+isFlex = true
+Integral = -110.390952 0.658139
+
+Overlap sampling for MBnrg CO2 at 400.0 K for B2 and 0 derivatives
+Steps: 10000000
+Discrete CutOff: 45
+Discrete StepSize: 0.05
+FixedCOM flag: 0
+rigid: 1
+vhs: 916.135607
+discrete vhs: 916.119834
+random seed: 1639844264
+Reference diagram: B2 for hard spheres with diameter 6.025 Angstroms
+B2 HS:  9.161198337133197e+02
+nSpheres = 3
+isFlex = true
+Diagram
+anyPolar 1
+0.457355 0.009313 0.307430 0.012922 0.179081 0.207319
+alpha  avg:  3.318651692375529e-01   err:  1.54999e-02   cor:  0.2073
+0.304345 0.006897 0.301435 0.023084 0.592513 0.596463
+alpha  avg:  4.301769562918963e-01   err:  3.44166e-02   cor:  0.5965
+0.358104 0.005938 0.357695 0.011146 0.089958 0.084571
+alpha  avg:  3.706882133709584e-01   err:  1.30848e-02   cor:  0.0900
+0.360138 0.004096 0.359535 0.007790 0.296912 0.297771
+alpha  avg:  3.644032361977755e-01   err:  8.92012e-03   cor:  0.2978
+0.364098 0.002011 0.360703 0.004810 0.205242 0.205627
+alpha  avg:  3.609985789133104e-01   err:  5.21176e-03   cor:  0.2056
+0.365456 0.000999 0.360551 0.002810 -0.069002 -0.068288
+alpha  avg:  3.591309410753872e-01   err:  2.96627e-03   cor: -0.0683
+alpha steps: 462000
+alpha  avg:  3.591309410753872e-01   err:  2.96627e-03   cor: -0.0683
+alpha time: 1099.157
+
+target step size: 3.493511
+anyPOlar=1
+Average: -0.075297 Error: 0.000658
+target move acceptance: 0.507
+final reference step fraction: 0.1077
+actual reference step fraction: 0.1081
+reference blocks: 527 of size 2048
+target blocks: 544 of size 16384
+alpha check:                3.632652620635030e-01  error:  5.82822e-04
+full average:              -1.102061155892768e+02  error:  3.99750e-01
+reference ratio:            2.756971921913540e+00  error:  3.27617e-03   cor:  0.00000
+reference average:          1.000000000000000e+00  error:  0.00000e+00  acor:  0.00000
+reference overlap average:  3.627167879555069e-01  error:  4.31025e-04  acor: -0.01112
+target ratio:              -9.234915567200476e-01  error:  3.16492e-03   cor:  0.18663
+target average:            -3.311536452349494e-01  error:  1.01274e-03  acor: -0.03999
+target overlap average:     3.585887091497656e-01  error:  3.86541e-04  acor: -0.01385
+time: 34342.785
