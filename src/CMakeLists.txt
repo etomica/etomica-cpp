@@ -21,8 +21,8 @@ set(BASE_CFLAGS "${BASE_CFLAGS} -msse2")
 
 set(BASE_FLAGS "-Wall")
 # MBX paths (always on)
-set(MBX_INCLUDE_DIR /home/raghu/MBX_backup/include)
-set(MBX_LIBRARY_DIR /home/raghu/MBX_backup/lib)
+set(MBX_INCLUDE_DIR /home/raghu/MBX/include)
+set(MBX_LIBRARY_DIR /home/raghu/MBX/lib)
 # Optimization/debug/profile flags
 if (DEBUG)
     set(BASE_FLAGS "${BASE_FLAGS} -O0 -g -DDEBUG")
@@ -71,11 +71,11 @@ foreach(name ${MAIN_NAMES})
     )
 
     target_include_directories(${name} PRIVATE
-            /home/raghu/MBX_backup/include
+            /home/raghu/MBX/include
     )
 
     target_link_directories(${name} PRIVATE
-            /home/raghu/MBX_backup/lib
+            /home/raghu/MBX/lib
     )
 
     target_link_libraries(${name} PRIVATE
