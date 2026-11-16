@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <cstdio>
+#include <mbx_version.h>
 
 #include "potential-master.h"
 #include "integrator.h"
@@ -57,7 +58,9 @@ int main(int argc, char** argv) {
   }
   double temperature = Kelvin::toSim(temperatureK);
   std::string compound_name = TraPPEParams::chemFormToString(TP.chemForm);
-  printf("Integration for MBnrg %s at %.1f K for B2 with dist: %f-%f and step size: %f\n", compound_name.c_str(),temperatureK, minDist, maxDist, stepSize);
+  std::string MBNrg_version = MBX_VERSION;
+
+  printf("Integration for MBnrg %s %s at %.1f K for B2 with dist: %f-%f and step size: %f\n", MBNrg_version.c_str(), compound_name.c_str(),temperatureK, minDist, maxDist, stepSize);
   std::cout << "Steps: " << step << "\n";
   std::cout << "Intra Steps: " << intraSteps << "\n";
   std::cout << "rigid: " << rigid << "\n";

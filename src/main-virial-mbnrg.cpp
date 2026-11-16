@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <cstdio>
+#include <mbx_version.h>
 
 #include "potential-master.h"
 #include "integrator.h"
@@ -59,7 +60,8 @@ int main(int argc, char** argv) {
   double temperature = Kelvin::toSim(temperatureK);
   double sigmaHSRef = 6.025;
   std::string compound_name = TraPPEParams::chemFormToString(TP.chemForm);
-  printf("Overlap sampling for MBnrg %s at %.1f K for B%d and %d derivatives\n", compound_name.c_str(),temperatureK, nPoints, nDer);
+  std::string MBNrg_version = MBX_VERSION;
+  printf("Overlap sampling for MBnrg %s %s at %.1f K for B%d and %d derivatives\n", MBNrg_version.c_str(), compound_name.c_str(),temperatureK, nPoints, nDer);
   std::cout << "Steps: " << numSteps << "\n";
   std::cout << "Discrete CutOff: " << discreteCutOff << "\n";
   std::cout << "Discrete StepSize: " << discreteStepSize << "\n";
