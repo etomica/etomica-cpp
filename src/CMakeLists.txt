@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 project(MyProject CXX)
+find_package(OpenMP REQUIRED)
 
+find_library(FFTW3_LIBRARY
+        NAMES fftw3
+        REQUIRED
+)
 # ----- Options matching Makefile conditionals -----
 option(DEBUG "Enable debug build" OFF)
 option(PROFILE "Enable profiling" OFF)
@@ -16,8 +21,8 @@ set(BASE_CFLAGS "${BASE_CFLAGS} -msse2")
 
 set(BASE_FLAGS "-Wall")
 # MBX paths (always on)
-set(MBX_INCLUDE_DIR /home/raghu/MBX/include)
-set(MBX_LIBRARY_DIR /home/raghu/MBX/lib)
+set(MBX_INCLUDE_DIR /home/raghu/MBX_backup/include)
+set(MBX_LIBRARY_DIR /home/raghu/MBX_backup/lib)
 # Optimization/debug/profile flags
 if (DEBUG)
     set(BASE_FLAGS "${BASE_FLAGS} -O0 -g -DDEBUG")
@@ -58,7 +63,6 @@ endforeach()
 
 # Mains
 set(MAIN_NAMES virial-trappe virial-mbnrg integration-mbnrg integration-trappe virial-trappe-fixedr)
-
 # ----- Build each main-* executable -----
 foreach(name ${MAIN_NAMES})
     add_executable(${name}
@@ -67,16 +71,19 @@ foreach(name ${MAIN_NAMES})
     )
 
     target_include_directories(${name} PRIVATE
-            /home/raghu/MBX/include
+            /home/raghu/MBX_backup/include
     )
 
     target_link_directories(${name} PRIVATE
-            /home/raghu/MBX/lib
+            /home/raghu/MBX_backup/lib
     )
 
     target_link_libraries(${name} PRIVATE
             mbx
             m
+            OpenMP::OpenMP_CXX
+            ${FFTW3_LIBRARY}
+
     )
 endforeach()
 
