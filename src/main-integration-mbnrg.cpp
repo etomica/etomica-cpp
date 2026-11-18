@@ -25,11 +25,11 @@ int main(int argc, char** argv) {
   TraPPEParams TP(TraPPEParams::CO2);
   int nPoints = 2;
   double temperatureK = 400;
-  long step = 10;
-  double minDist = 0;
-  double maxDist = 45;
+  long step = 120000;
+  double minDist = 7.5;
+  double maxDist = 7.5;
   double stepSize = 0.05;
-  long intraSteps = 10;
+  long intraSteps = 120000;
   bool rigid = true;
 
   for (int i = 1; i < argc; i++) {
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 
   bool anyFlex = TP.isFlex && !rigid;
 
-  Random seed;
+  Random seed = 1639844264;
   printf("random seed: %d\n", seed.getSeed());
 
   bool isFlex = TP.isFlex && (TP.diagram.empty() || TP.diagram != "BC");
@@ -141,6 +141,8 @@ int main(int argc, char** argv) {
   double totalIntegral = 0;
   double SStotalIntegral = 0;
   for (int l=0; l<steps; l++) sums[l]=SS[l]=0;
+  FILE* file = fopen("75.xyz", "w");
+
   for (int i=0; i < step; i++) {
     for (int j=0; j < intraSteps; j++) {
       targetIntegrator.doStep();
@@ -153,6 +155,18 @@ int main(int argc, char** argv) {
 
       double disp1[3] = {-targetBox.getAtomPosition(0)[0],-targetBox.getAtomPosition(0)[1] , -targetBox.getAtomPosition(0)[2]};
       for (int a=0; a<3; a++ )for (int m=0; m<3; m++)targetBox.getAtomPosition(a)[m]+=disp1[m];
+      if (file == nullptr) {
+        printf("Error opening file!\n");
+        return 1;
+      }
+      fprintf(file, "%f\n0.0\n", maxDist);
+      fprintf(file, "C %f %f %f \n", targetBox.getAtomPosition(0)[0], targetBox.getAtomPosition(0)[1], targetBox.getAtomPosition(0)[2]);
+      fprintf(file, "O %f %f %f \n", targetBox.getAtomPosition(1)[0], targetBox.getAtomPosition(1)[1], targetBox.getAtomPosition(1)[2]);
+      fprintf(file, "O %f %f %f \n", targetBox.getAtomPosition(2)[0], targetBox.getAtomPosition(2)[1], targetBox.getAtomPosition(2)[2]);
+
+      fprintf(file, "C %f %f %f \n", targetBox.getAtomPosition(3)[0], targetBox.getAtomPosition(3)[1], targetBox.getAtomPosition(3)[2]);
+      fprintf(file, "O %f %f %f \n", targetBox.getAtomPosition(4)[0], targetBox.getAtomPosition(4)[1], targetBox.getAtomPosition(4)[2]);
+      fprintf(file, "O %f %f %f \n", targetBox.getAtomPosition(5)[0], targetBox.getAtomPosition(5)[1], targetBox.getAtomPosition(5)[2]);
       double value = targetClusterTraPPE0->getValues()[0]; //integrand
       sums[k]+=value;
       double fac = (k==0||k==steps-1)?0.5:1;
@@ -166,7 +180,7 @@ int main(int argc, char** argv) {
     printf("%d steps have finished\n", i+1);
 
   }
-
+  fclose(file);
   for (int k=0;k<steps;k++)
   {
     SS[k]*=step;
